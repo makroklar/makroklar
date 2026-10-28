@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router';
+import type { ReactNode } from 'react';
 // Poppins lokal gehostet (DSGVO) – keine Anfragen an Google Fonts
 import '@fontsource/poppins/300.css';
 import '@fontsource/poppins/400.css';
@@ -10,10 +10,10 @@ import '@fontsource/poppins/900.css';
 import styles from './GuestLayout.module.css';
 
 // Layout der Gastansicht (Figma-Datei 2) – mobile-first, Inhalt kommt später
-export function GuestLayout() {
+export function GuestLayout({ children }: { children: ReactNode }) {
   return (
     <div className={styles.layout} data-area="guest">
-      <Outlet />
+      {children}
     </div>
   );
 }
