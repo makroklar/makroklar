@@ -46,6 +46,7 @@ Alle Seiten sind aktuell Platzhalter. Jeder Bereich hat sein eigenes Layout: Die
 | `/business/menu` | Restaurantansicht | `areas/business/MenuPage.tsx`          |
 | `/guest`         | Gastansicht       | `areas/guest/MenuPage.tsx`             |
 | `/guest/dish`    | Gastansicht       | `areas/guest/DishDetailPage.tsx`       |
+| `/debug`         | Entwicklung       | `debug/DebugPage.tsx` – listet alle Routen automatisch auf |
 
 ## Ordnerstruktur
 
@@ -53,6 +54,7 @@ Alle Seiten sind aktuell Platzhalter. Jeder Bereich hat sein eigenes Layout: Die
 src/
 ├── main.tsx                     # Einstiegspunkt
 ├── App.tsx                      # Router – bindet die routes.tsx der 3 Bereiche ein
+├── debug/                       # /debug – Übersicht aller Routen
 │
 ├── areas/
 │   ├── landing/                 # Landingpage
