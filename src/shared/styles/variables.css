@@ -40,40 +40,46 @@
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08);
 }
 
-/* Gastansicht – Farben und Typografie aus Figma (Datei „Gastansicht“) */
-[data-area='guest'] {
-  /* Farben – Marke */
+/* Gemeinsame Marken-Werte für Gastansicht und Landingpage (Figma) */
+[data-area='guest'],
+[data-area='landing'] {
   --color-primary: #00604b;
-  --color-primary-light: #eff3f0;
   --color-primary-transparent: rgb(0 96 75 / 0.25);
   --color-accent: #d1d739;
-  --color-secondary: #fcc010;
-
-  /* Farben – Text & Flächen */
-  --color-text: #1a1d20;
   --color-text-strong: #000000;
-  --color-icon: #1e1e1e;
-  --color-background: #ffffff;
-  --color-surface: #f9f9f7;
   --color-border: #d4e0d9;
 
-  /* Typografie – Poppins wird lokal über @fontsource eingebunden */
+  /* Poppins wird lokal über @fontsource eingebunden */
   --font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  --font-size-2xs: 0.5rem; /* 8px */
   --font-size-xs: 0.625rem; /* 10px */
   --font-size-sm: 0.75rem; /* 12px */
   --font-size-md: 0.875rem; /* 14px */
   --font-size-lg: 1rem; /* 16px */
   --font-size-xl: 1.25rem; /* 20px */
   --font-size-2xl: 1.5rem; /* 24px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+}
+
+/* Gastansicht – Figma-Datei „Gastansicht“ */
+[data-area='guest'] {
+  /* Farben */
+  --color-primary-light: #eff3f0;
+  --color-secondary: #fcc010;
+  --color-text: #1a1d20;
+  --color-icon: #1e1e1e;
+  --color-background: #ffffff;
+  --color-surface: #f9f9f7;
+
+  /* Typografie */
+  --font-size-2xs: 0.5rem; /* 8px */
   --font-size-3xl: 1.875rem; /* 30px */
 
   --font-weight-light: 300;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 700;
   --font-weight-extrabold: 800;
   --font-weight-black: 900;
 
@@ -84,4 +90,28 @@
   /* Schatten */
   --shadow-card: 0 1px 5px rgb(0 0 0 / 0.25);
   --shadow-card-lg: 0 1px 13px rgb(0 0 0 / 0.25);
+}
+
+/* Landingpage – Figma-Datei „Desktop-App“, Frame „Public Website / Redesign“ */
+[data-area='landing'] {
+  /* Farben */
+  --color-accent-light: #f0f2ba;
+  --color-text: #141f1a;
+  --color-text-muted: #5c6b63;
+  --color-text-subtle: #4f5e57;
+  --color-background: #f1f5f2;
+  --color-surface: #ffffff;
+
+  /* Typografie */
+  --font-size-2xs: 0.5625rem; /* 9px */
+  --font-size-caption: 0.6875rem; /* 11px */
+  --font-size-body-sm: 0.8125rem; /* 13px */
+  --font-size-3xl: 2.25rem; /* 36px */
+  --font-size-4xl: 2.5rem; /* 40px */
+  --font-size-5xl: 3.375rem; /* 54px */
+
+  /* Schatten */
+  --shadow-sm: 0 6px 14px rgb(5 41 31 / 0.16);
+  --shadow-card: 0 10px 24px rgb(5 41 31 / 0.12);
+  --shadow-card-lg: 0 16px 30px rgb(5 41 31 / 0.16);
 }
