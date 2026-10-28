@@ -18,7 +18,7 @@ node -v
 ## Projekt starten
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/chiaradjml/makroklar
 cd makroklar
 npm install
 npm run dev
