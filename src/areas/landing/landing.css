@@ -37,8 +37,22 @@
   scroll-margin-top: 96px;
 }
 
+.float-slow {
+  animation: float-slow 14s ease-in-out infinite alternate;
+}
+
+@keyframes float-slow {
+  to {
+    transform: translate(32px, -24px) scale(1.08);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-area='landing'] {
     scroll-behavior: auto;
+  }
+
+  .float-slow {
+    animation: none;
   }
 }
