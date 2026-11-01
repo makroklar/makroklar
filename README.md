@@ -42,6 +42,7 @@ Alle Seiten sind aktuell Platzhalter. Jeder Bereich hat sein eigenes Layout: Die
 | ---------------- | ----------------- | ----------------------------- | ---------------------------------- |
 | `/`              | Landingpage       | `(landing)/page.tsx`          | `landing/HomePage.tsx`             |
 | `/kontakt`       | Landingpage       | `(landing)/kontakt/page.tsx`  | `landing/ContactPage.tsx`          |
+| `/preise`, `/hilfe`, `/anleitung`, `/ueber-uns`, `/impressum`, `/datenschutz` | Landingpage | `(landing)/<name>/page.tsx` | `landing/*Page.tsx` |
 | `/business`      | Restaurantansicht | `business/page.tsx`           | `business/DashboardPage.tsx`       |
 | `/business/menu` | Restaurantansicht | `business/menu/page.tsx`      | `business/MenuPage.tsx`            |
 | `/guest`         | Gastansicht       | `guest/page.tsx`              | `guest/MenuPage.tsx`               |
@@ -57,7 +58,7 @@ src/
 ├── app/                         # Routen (Next.js App Router)
 │   ├── layout.tsx               # Wurzel-Layout: <html>, globale Styles
 │   ├── not-found.tsx            # 404-Seite
-│   ├── (landing)/               # Landingpage: /, /kontakt
+│   ├── (landing)/               # Landingpage und Unterseiten
 │   ├── business/                # Restaurantansicht: /business, /business/menu
 │   ├── guest/                   # Gastansicht: /guest, /guest/dish
 │   └── debug/                   # /debug
@@ -103,7 +104,9 @@ src/
 
 Leere Ordner enthalten eine `.gitkeep`, damit Git sie mit hochlädt. Die Datei löschen, sobald die erste Komponente im Ordner liegt.
 
-Styling läuft über **CSS Modules**: Zu jeder Komponente gehört eine `Name.module.css` im selben Ordner. Farben, Abstände usw. immer über die Variablen aus `variables.css` (z. B. `var(--color-primary)`), nicht fest eintragen.
+Die Landingpage nutzt **Tailwind CSS**, shadcn/ui-Bausteine und Motion; das gilt nur für `src/areas/landing/` (`landing.css`). Für das Kontaktformular `.env.example` nach `.env.local` kopieren und ausfüllen. Sichtbare Platzhalter (`<Todo>`) vor der Veröffentlichung ersetzen.
+
+In den anderen Bereichen läuft Styling über **CSS Modules**: Zu jeder Komponente gehört eine `Name.module.css` im selben Ordner. Farben, Abstände usw. immer über die Variablen aus `variables.css` (z. B. `var(--color-primary)`), nicht fest eintragen.
 
 ## Zusammenarbeit (3 Personen)
 
