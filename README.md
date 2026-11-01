@@ -41,7 +41,7 @@ Alle Seiten sind aktuell Platzhalter. Jeder Bereich hat sein eigenes Layout: Die
 | URL              | Bereich           | Route (`src/app/`)            | Seite (`src/areas/`)               |
 | ---------------- | ----------------- | ----------------------------- | ---------------------------------- |
 | `/`              | Landingpage       | `(landing)/page.tsx`          | `landing/HomePage.tsx`             |
-| `/contact`       | Landingpage       | `(landing)/contact/page.tsx`  | `landing/ContactPage.tsx`          |
+| `/kontakt`       | Landingpage       | `(landing)/kontakt/page.tsx`  | `landing/ContactPage.tsx`          |
 | `/business`      | Restaurantansicht | `business/page.tsx`           | `business/DashboardPage.tsx`       |
 | `/business/menu` | Restaurantansicht | `business/menu/page.tsx`      | `business/MenuPage.tsx`            |
 | `/guest`         | Gastansicht       | `guest/page.tsx`              | `guest/MenuPage.tsx`               |
@@ -57,7 +57,7 @@ src/
 ├── app/                         # Routen (Next.js App Router)
 │   ├── layout.tsx               # Wurzel-Layout: <html>, globale Styles
 │   ├── not-found.tsx            # 404-Seite
-│   ├── (landing)/               # Landingpage: /, /contact
+│   ├── (landing)/               # Landingpage: /, /kontakt
 │   ├── business/                # Restaurantansicht: /business, /business/menu
 │   ├── guest/                   # Gastansicht: /guest, /guest/dish
 │   └── debug/                   # /debug

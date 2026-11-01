@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import '@fontsource/poppins/400.css';
 import '@fontsource/poppins/500.css';
 import '@fontsource/poppins/700.css';
+import './landing.css';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import styles from './LandingLayout.module.css';
