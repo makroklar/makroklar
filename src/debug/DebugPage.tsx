@@ -1,49 +1,58 @@
-import { Link, type RouteObject } from 'react-router';
-import { landingRoutes } from '../areas/landing/routes';
-import { businessRoutes } from '../areas/business/routes';
-import { guestRoutes } from '../areas/guest/routes';
+import fs from 'node:fs';
+import path from 'node:path';
+import Link from 'next/link';
 import styles from './DebugPage.module.css';
 
+const APP_DIR = path.join(process.cwd(), 'src', 'app');
+
+// Oberster Ordner in src/app → Bereich; Routengruppen wie (landing) tauchen nicht in der URL auf
 const areas = [
-  { name: 'Landingpage', routes: landingRoutes },
-  { name: 'Restaurantansicht', routes: businessRoutes },
-  { name: 'Gastansicht', routes: guestRoutes },
+  { name: 'Landingpage', folder: '(landing)' },
+  { name: 'Restaurantansicht', folder: 'business' },
+  { name: 'Gastansicht', folder: 'guest' },
 ];
 
-/** Sammelt alle aufrufbaren Pfade aus der Routen-Konfiguration (Layouts ohne eigene Seite werden übersprungen) */
-function collectPaths(routes: RouteObject[], parentPath = ''): string[] {
-  return routes.flatMap((route) => {
-    let path = parentPath;
-    if (route.path) {
-      path = route.path.startsWith('/') ? route.path : `${parentPath.replace(/\/$/, '')}/${route.path}`;
-    }
+/** Sammelt alle aufrufbaren Pfade: jeder Ordner mit page.tsx ist eine Seite */
+function collectPaths(dir: string, urlPath: string): string[] {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const ownPath = entries.some((entry) => entry.name === 'page.tsx') ? [urlPath || '/'] : [];
 
-    const isPage = route.index || (route.path && route.element && !route.children);
-    const ownPath = isPage ? [path || '/'] : [];
-
-    return route.children ? [...ownPath, ...collectPaths(route.children, path)] : ownPath;
-  });
+  return [
+    ...ownPath,
+    ...entries
+      .filter((entry) => entry.isDirectory())
+      .flatMap((entry) => {
+        const isGroup = entry.name.startsWith('(') && entry.name.endsWith(')');
+        const segment = isGroup ? '' : `/${entry.name}`;
+        return collectPaths(path.join(dir, entry.name), urlPath + segment);
+      }),
+  ];
 }
 
 export function DebugPage() {
   return (
     <main className={styles.page}>
       <h1>Debug: alle Routen</h1>
-      <p className={styles.hint}>Wird automatisch aus den routes.tsx der Bereiche erzeugt.</p>
+      <p className={styles.hint}>Wird automatisch aus den Ordnern in src/app erzeugt.</p>
 
-      {areas.map((area) => (
-        <section key={area.name} className={styles.area}>
-          <h2>{area.name}</h2>
-          <ul className={styles.list}>
-            {collectPaths(area.routes).map((path) => (
-              <li key={path}>
-                {/* Pfade mit Parametern (z. B. :id) lassen sich nicht direkt verlinken */}
-                {path.includes(':') ? <code>{path}</code> : <Link to={path}>{path}</Link>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {areas.map((area) => {
+        const isGroup = area.folder.startsWith('(');
+        const paths = collectPaths(path.join(APP_DIR, area.folder), isGroup ? '' : `/${area.folder}`);
+
+        return (
+          <section key={area.name} className={styles.area}>
+            <h2>{area.name}</h2>
+            <ul className={styles.list}>
+              {paths.map((url) => (
+                <li key={url}>
+                  {/* Pfade mit Parametern (z. B. [id]) lassen sich nicht direkt verlinken */}
+                  {url.includes('[') ? <code>{url}</code> : <Link href={url}>{url}</Link>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
     </main>
   );
 }
