@@ -1,5 +1,6 @@
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { DishCard } from './components/menu/DishCard';
+import { OnboardingDialogDemo } from './OnboardingDialogDemo';
 import styles from './ComponentsPage.module.css';
 
 // Übersicht aller Komponenten der mobilen Gastansicht mit Beispieldaten
@@ -20,6 +21,11 @@ export function ComponentsPage() {
           protein={38}
           carbs={133}
         />
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>OnboardingDialog</h2>
+        <OnboardingDialogDemo />
       </section>
     </main>
   );
