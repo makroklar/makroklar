@@ -1,6 +1,7 @@
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { DishCard } from './components/menu/DishCard';
+import { OccupancyBadge } from './components/menu/OccupancyBadge';
 import { OnboardingDialogDemo } from './OnboardingDialogDemo';
 import styles from './ComponentsPage.module.css';
 
@@ -9,6 +10,11 @@ export function ComponentsPage() {
   return (
     <main className={styles.page}>
       <h1 className={styles.title}>Komponenten</h1>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>OccupancyBadge</h2>
+        <OccupancyBadge status="Normaler Betrieb" />
+      </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>CategoryTabs</h2>
