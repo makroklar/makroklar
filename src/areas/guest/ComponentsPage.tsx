@@ -4,6 +4,7 @@ import { DishHero } from './components/dish-detail/DishHero';
 import { LogoHeader } from './components/layout/LogoHeader';
 import { DishCard } from './components/menu/DishCard';
 import { OccupancyBadge } from './components/menu/OccupancyBadge';
+import { InjectionHintDialogDemo } from './InjectionHintDialogDemo';
 import { MenuHeaderDemo } from './MenuHeaderDemo';
 import { OnboardingDialogDemo } from './OnboardingDialogDemo';
 import styles from './ComponentsPage.module.css';
@@ -67,7 +68,7 @@ export function ComponentsPage() {
 
         <section className={styles.group} aria-labelledby="group-detailansicht">
           <h2 id="group-detailansicht" className={styles.groupTitle}>
-            Detailansicht
+            Seite: Detailansicht
           </h2>
 
           <section className={styles.section}>
@@ -75,6 +76,11 @@ export function ComponentsPage() {
             <div className={styles.fullBleed}>
               <DishHero name="Pizza Margherita" image={pizzaMargherita} backHref="/guest" />
             </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>InjectionHintDialog</h3>
+            <InjectionHintDialogDemo />
           </section>
         </section>
       </div>
