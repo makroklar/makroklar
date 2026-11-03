@@ -1,4 +1,5 @@
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
+import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { DishCard } from './components/menu/DishCard';
 import { OnboardingDialogDemo } from './OnboardingDialogDemo';
 import styles from './ComponentsPage.module.css';
@@ -8,6 +9,11 @@ export function ComponentsPage() {
   return (
     <main className={styles.page}>
       <h1 className={styles.title}>Komponenten</h1>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>CategoryTabs</h2>
+        <CategoryTabsDemo />
+      </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>DishCard</h2>
