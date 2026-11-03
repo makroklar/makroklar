@@ -1,4 +1,5 @@
 import Image, { type StaticImageData } from 'next/image';
+import { FadeScroll } from '@/shared/components/fade-scroll/FadeScroll';
 import styles from './DishCard.module.css';
 
 export type DishCardProps = {
@@ -32,12 +33,12 @@ export function DishCard({ name, description, price, image, kcal, fat, protein, 
         </div>
         <p className={styles.description}>{description}</p>
 
-        <ul className={styles.nutrients}>
+        <FadeScroll as="ul" className={styles.nutrients} aria-label="Nährwerte">
           <li className={styles.chip}>{kcal} Kcal</li>
           <li className={styles.chip}>{fat}g Fett</li>
           <li className={styles.chip}>{protein}g Protein</li>
           <li className={`${styles.chip} ${styles.chipCarbs}`}>{carbs}g KH</li>
-        </ul>
+        </FadeScroll>
       </div>
     </article>
   );
