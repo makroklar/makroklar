@@ -1,0 +1,8 @@
+.footer {
+  margin-top: auto;
+  padding: var(--space-3) 18px var(--space-3);
+  font-size: var(--font-size-2xs);
+  line-height: normal;
+  text-align: right;
+  color: var(--color-text-strong);
+}
