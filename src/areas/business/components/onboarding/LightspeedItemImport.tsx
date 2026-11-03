@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getItems } from '../../data/lightspeedItems';
 import type { ImportedMenuItem } from '../../types/importedMenuItem';
+import { useBusinessDraft } from '../../state/BusinessDraftContext';
+import { getImportedItemKey, mergeImportedItems } from '../../state/businessDraft';
 import styles from './LightspeedItemImport.module.css';
 
 interface ItemDraft extends ImportedMenuItem {
@@ -40,11 +43,29 @@ function validDraft(item: ItemDraft): boolean {
   );
 }
 
+function createItemDraft(item: ImportedMenuItem, selected = false): ItemDraft {
+  return {
+    ...item,
+    accountingGroup: item.accountingGroup ? { ...item.accountingGroup } : null,
+    prices: item.prices.map((price) => ({ ...price })),
+    selected,
+    nameInput: item.name,
+    amountInput:
+      item.selectedPriceIndex === null
+        ? ''
+        : String(item.prices[item.selectedPriceIndex].amount),
+  };
+}
+
 export function LightspeedItemImport() {
-  const [items, setItems] = useState<ItemDraft[]>([]);
+  const router = useRouter();
+  const { importedItems, acceptItems } = useBusinessDraft();
+  const [items, setItems] = useState<ItemDraft[]>(() =>
+    importedItems.map((item) => createItemDraft(item, true)),
+  );
+  const [sourceLoaded, setSourceLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [acceptedItems, setAcceptedItems] = useState<ImportedMenuItem[]>([]);
   const selectedItems = items.filter((item) => item.selected);
   const invalidSelection = selectedItems.some((item) => !validDraft(item));
 
@@ -53,17 +74,18 @@ export function LightspeedItemImport() {
     setError(null);
     try {
       const loaded = await getItems();
-      setItems(
-        loaded.map((item) => ({
-          ...item,
-          selected: false,
-          nameInput: item.name,
-          amountInput:
-            item.selectedPriceIndex === null
-              ? ''
-              : String(item.prices[item.selectedPriceIndex].amount),
-        })),
-      );
+      const acceptedKeys = new Set(importedItems.map(getImportedItemKey));
+      setItems((current) => {
+        const currentById = new Map(
+          current.map((item) => [getImportedItemKey(item), item]),
+        );
+        return mergeImportedItems(loaded, importedItems).map(
+          (item) =>
+            currentById.get(getImportedItemKey(item)) ??
+            createItemDraft(item, acceptedKeys.has(getImportedItemKey(item))),
+        );
+      });
+      setSourceLoaded(true);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -103,16 +125,8 @@ export function LightspeedItemImport() {
       selectedPriceIndex: item.selectedPriceIndex,
     }));
 
-    // Repeated acceptance updates the same source item rather than duplicating it.
-    setAcceptedItems((current) => {
-      const bySourceId = new Map(
-        current.map((item) => [`${item.source}:${item.sourceId}`, item]),
-      );
-      selected.forEach((item) =>
-        bySourceId.set(`${item.source}:${item.sourceId}`, item),
-      );
-      return [...bySourceId.values()];
-    });
+    acceptItems(selected);
+    router.push('/business/onboarding/menu/pos/complete');
   }
 
   return (
@@ -121,12 +135,13 @@ export function LightspeedItemImport() {
         Lightspeed – lokale Beispielartikel
       </h2>
       <p className={styles.notice}>
-        Demo mit lokalen Daten, ohne Verbindung zu Lightspeed. Auswahl und
-        Änderungen gelten nur in dieser Ansicht und gehen beim Anbieterwechsel
-        oder Neuladen verloren. Preise werden für diese Demo in EUR angezeigt.
+        Demo mit lokalen Daten, ohne Verbindung zu Lightspeed. Übernommene Artikel
+        bleiben beim Seitenwechsel im Business-Bereich verfügbar. Nur übernommene
+        Änderungen stehen den nächsten Schritten zur Verfügung. Ein Neuladen
+        löscht den Entwurf. Preise werden für diese Demo in EUR angezeigt.
       </p>
 
-      {items.length === 0 ? (
+      {!sourceLoaded && (
         <button
           className={styles.primaryButton}
           type="button"
@@ -135,10 +150,11 @@ export function LightspeedItemImport() {
         >
           {loading ? 'Beispieldaten werden geladen…' : 'Beispielartikel laden'}
         </button>
-      ) : (
+      )}
+      {items.length > 0 && (
         <>
           <p className={styles.summary} role="status">
-            {items.length} Beispielartikel geladen, {selectedItems.length} ausgewählt.
+            {items.length} Artikel in der Vorschau, {selectedItems.length} ausgewählt.
           </p>
           <div className={styles.toolbar}>
             <button className={styles.secondaryButton} type="button" onClick={() => selectAll(true)}>
@@ -257,10 +273,10 @@ export function LightspeedItemImport() {
 
       {error && <p className={styles.error} role="alert">{error}</p>}
       <div role="status" className={styles.accepted}>
-        {acceptedItems.length > 0 && (
+        {importedItems.length > 0 && (
           <p>
-            {acceptedItems.length} Demo-Artikel wurden nur in dieser Ansicht
-            temporär übernommen. Es wurden keine Daten dauerhaft gespeichert.
+            {importedItems.length} Demo-Artikel im gemeinsamen Business-Entwurf.
+            Es wurden keine Daten dauerhaft gespeichert.
           </p>
         )}
       </div>

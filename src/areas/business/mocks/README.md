@@ -18,8 +18,24 @@ JSON source with a backend request once the real collection response is verified
 keep `mapLightspeedItem()` and the internal UI model at that boundary.
 Multiple prices are retained without automatically selecting one.
 
-The preview uses React state only. Provider changes, leaving the page, or a reload
-can discard the draft and any temporarily accepted items. There is no persistence.
+Accepted items live in `BusinessDraftProvider`, mounted in `BusinessLayout`.
+Business pages can access them through `useBusinessDraft()` across client-side
+navigation. The context only knows the internal `ImportedMenuItem` model; it does
+not import the JSON fixture, its reader, or the Lightspeed DTO.
+
+Unaccepted edits remain local to the preview. Returning to it restores accepted
+names, prices, and selections; loading the catalog adds the other example items
+without replacing the accepted values. Reloading the page resets the context.
+There is no persistence. `resetDraft()` is available to explicitly clear the draft.
+
+Accepting the reviewed selection opens `/business/onboarding/menu/pos/complete`.
+That view deliberately retains the Figma prototype's connection-success copy;
+there is no real Lightspeed connection or background import. It returns to POS
+selection when the in-memory draft is empty. The next-stage button remains
+disabled until the purchases screen is implemented.
 
 Run the fixture/adapter tests from the repository root:
 `node --test src/areas/business/data/lightspeedItems.test.mjs`
+
+Draft merge/restore tests:
+`node --test src/areas/business/state/businessDraft.test.mjs`

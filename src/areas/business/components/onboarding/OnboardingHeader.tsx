@@ -8,6 +8,7 @@ import styles from './OnboardingHeader.module.css';
 
 export function OnboardingHeader() {
   const pathname = usePathname();
+  const isConfirmation = pathname === '/business/onboarding/menu/pos/complete';
   const currentIndex = Math.max(
     0,
     onboardingSteps.findIndex(
@@ -25,11 +26,13 @@ export function OnboardingHeader() {
         : onboardingSteps[currentIndex - 1].href;
 
   return (
-    <header className={styles.header}>
-      <Link className={styles.navigationLink} href={backHref}>
-        <ArrowIcon direction="left" />
-        <span>Zurück</span>
-      </Link>
+    <header className={styles.header} data-confirmation={isConfirmation}>
+      {!isConfirmation && (
+        <Link className={`${styles.navigationLink} ${styles.backLink}`} href={backHref}>
+          <ArrowIcon direction="left" />
+          <span>Zurück</span>
+        </Link>
+      )}
       <div className={styles.progressGroup}>
         <p className={styles.progressLabel} id="onboarding-progress-label">
           Schritt {currentStep} von {totalSteps}.
