@@ -51,7 +51,12 @@
   font: inherit;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.continueButton:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: var(--space-1);
 }
 
 .visuallyHidden {

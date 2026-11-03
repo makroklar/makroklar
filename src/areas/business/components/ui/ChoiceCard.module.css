@@ -61,7 +61,7 @@
   margin-top: var(--space-3);
   font-size: var(--choice-description-size);
   font-weight: var(--font-weight-light);
-  line-height: 1.3;
+  line-height: var(--choice-description-line-height, 1.3);
 }
 
 .visuallyHidden {

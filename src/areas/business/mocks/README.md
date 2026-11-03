@@ -31,8 +31,11 @@ There is no persistence. `resetDraft()` is available to explicitly clear the dra
 Accepting the reviewed selection opens `/business/onboarding/menu/pos/complete`.
 That view deliberately retains the Figma prototype's connection-success copy;
 there is no real Lightspeed connection or background import. It returns to POS
-selection when the in-memory draft is empty. The next-stage button remains
-disabled until the purchases screen is implemented.
+selection when the in-memory draft is empty. Its next-stage link opens
+`/business/onboarding/purchases` to select multiple food sources. These choices
+also live in `BusinessDraftProvider` and are cleared by reload or `resetDraft()`.
+No supplier, supermarket, or regional import is performed. The purchases screen's
+next-stage button remains disabled until the following views are implemented.
 
 Run the fixture/adapter tests from the repository root:
 `node --test src/areas/business/data/lightspeedItems.test.mjs`

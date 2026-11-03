@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import checkCircle from './assets/check-circle.svg';
@@ -48,15 +49,13 @@ export function PosImportCompletePage() {
         </p>
       </header>
       <Image className={styles.check} src={checkCircle} alt="" />
-      <button
+      <Link
         className={styles.continueButton}
-        type="button"
-        disabled
-        title="Der nächste Schritt wird noch umgesetzt."
+        href="/business/onboarding/purchases"
       >
         <span>Weiter</span>
         <ArrowIcon tone="accent" />
-      </button>
+      </Link>
     </section>
   );
 }

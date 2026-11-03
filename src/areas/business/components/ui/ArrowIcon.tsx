@@ -2,7 +2,7 @@ import styles from './ArrowIcon.module.css';
 
 interface ArrowIconProps {
   direction?: 'left' | 'right';
-  tone?: 'primary' | 'accent';
+  tone?: 'primary' | 'accent' | 'inherit';
 }
 
 export function ArrowIcon({
