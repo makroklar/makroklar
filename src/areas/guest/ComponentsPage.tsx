@@ -1,5 +1,6 @@
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
+import { DishHero } from './components/dish-detail/DishHero';
 import { LogoHeader } from './components/layout/LogoHeader';
 import { DishCard } from './components/menu/DishCard';
 import { OccupancyBadge } from './components/menu/OccupancyBadge';
@@ -16,7 +17,7 @@ export function ComponentsPage() {
 
         <section className={styles.group} aria-labelledby="group-uebersicht">
           <h2 id="group-uebersicht" className={styles.groupTitle}>
-            Übersicht
+            Seite: Übersicht
           </h2>
 
           <section className={styles.section}>
@@ -61,6 +62,19 @@ export function ComponentsPage() {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>OnboardingDialog</h3>
             <OnboardingDialogDemo />
+          </section>
+        </section>
+
+        <section className={styles.group} aria-labelledby="group-detailansicht">
+          <h2 id="group-detailansicht" className={styles.groupTitle}>
+            Detailansicht
+          </h2>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>DishHero</h3>
+            <div className={styles.fullBleed}>
+              <DishHero name="Pizza Margherita" image={pizzaMargherita} backHref="/guest" />
+            </div>
           </section>
         </section>
       </div>
