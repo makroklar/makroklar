@@ -1,0 +1,27 @@
+.scroller {
+  --fade-size: 32px;
+  --fade-start: 0px;
+  --fade-end: 0px;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroller[data-fade-start] {
+  --fade-start: var(--fade-size);
+}
+
+.scroller[data-fade-end] {
+  --fade-end: var(--fade-size);
+}

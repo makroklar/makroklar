@@ -1,0 +1,11 @@
+/* Logo 188 × 41, 18 px Abstand zum folgenden Kopfbereich wie in Figma.
+   Oben ohne die Statusleiste des iPhone-Rahmens (Figma: 65 px) */
+.header {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5) 0 18px;
+}
+
+.header img {
+  display: block;
+}

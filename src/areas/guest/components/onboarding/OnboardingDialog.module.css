@@ -1,0 +1,54 @@
+/* Karte 275 × 361 aus Figma, Text 19 px links / 21 px rechts eingerückt */
+.dialog {
+  width: 275px;
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: 32px 21px 29px 19px;
+  font-family: var(--font-family);
+  color: var(--color-text-strong);
+  background: var(--color-primary-light);
+  border: none;
+  border-radius: 10px;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.25);
+}
+
+.title {
+  margin: 0 0 13px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: normal;
+}
+
+.text {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: normal;
+}
+
+.text + .text {
+  margin-top: 21px;
+}
+
+.button {
+  display: block;
+  width: 213px;
+  max-width: 100%;
+  height: 43px;
+  margin: 30px auto 0;
+  font-family: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  background: var(--color-primary);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
