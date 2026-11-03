@@ -1,0 +1,105 @@
+.page {
+  --radius-welcome-card: 16px;
+  --radius-welcome-button: 10px;
+  --shadow-welcome-card: 0 1px 5px rgb(0 0 0 / 0.25);
+  --font-size-welcome-title: 2.25rem;
+  --font-size-welcome-action: 1.5rem;
+  --space-back-link: 5px;
+
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-7) var(--space-5);
+  padding-inline: clamp(var(--space-5), 10vw, 9.5rem);
+}
+
+.brand {
+  display: flex;
+  align-self: flex-end;
+}
+
+.card {
+  width: 100%;
+  max-width: 49rem;
+  min-height: 35.4375rem;
+  padding: clamp(var(--space-5), 4vw, var(--space-7));
+  background: var(--color-surface);
+  border-radius: var(--radius-welcome-card);
+  box-shadow: var(--shadow-welcome-card);
+}
+
+.backLink {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--space-back-link);
+  margin-bottom: var(--space-5);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.backLink:focus-visible,
+.startButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.content {
+  display: grid;
+  width: 100%;
+  max-width: 38rem;
+  gap: var(--space-4);
+  margin-inline: auto;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-welcome-title);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.accent {
+  color: var(--color-accent);
+}
+
+.copy {
+  display: grid;
+  gap: var(--space-5);
+  font-size: var(--font-size-lg);
+}
+
+.copy p {
+  margin: 0;
+}
+
+.startButton {
+  display: flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+  padding: var(--space-2) var(--space-5);
+  border: 0;
+  border-radius: var(--radius-welcome-button);
+  background: var(--color-primary);
+  color: var(--color-accent);
+  font: inherit;
+  font-size: var(--font-size-welcome-action);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+}

@@ -1,0 +1,84 @@
+.header {
+  --font-size-onboarding-navigation: 0.75rem;
+  --space-back-link: 5px;
+  --height-progress: 6px;
+  --radius-progress: 3px;
+
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.navigationLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-back-link);
+  color: var(--color-text);
+  font-size: var(--font-size-onboarding-navigation);
+  text-decoration: none;
+}
+
+.navigationLink:hover {
+  text-decoration: underline;
+}
+
+.navigationLink:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
+}
+
+.cancelLink {
+  justify-self: end;
+}
+
+.progressGroup {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: var(--space-4);
+}
+
+.progressLabel {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.progress {
+  appearance: none;
+  width: 100%;
+  max-width: 18.75rem;
+  height: var(--height-progress);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-progress);
+  background: var(--color-progress-track);
+  color: var(--color-primary);
+}
+
+.progress::-webkit-progress-bar {
+  border-radius: var(--radius-progress);
+  background: var(--color-progress-track);
+}
+
+.progress::-webkit-progress-value {
+  border-radius: var(--radius-progress);
+  background: var(--color-primary);
+}
+
+.progress::-moz-progress-bar {
+  border-radius: var(--radius-progress);
+  background: var(--color-primary);
+}
+
+@media (max-width: 36rem) {
+  .header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .progressGroup {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

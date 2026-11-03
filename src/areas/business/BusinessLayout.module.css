@@ -1,4 +1,22 @@
 .layout {
+  --color-primary: #00604b;
+  --color-accent: #d1d739;
+  --color-background: #eff3f0;
+  --color-surface: #f9f9f7;
+  --color-text: #000000;
+  --color-text-strong: #1a1d20;
+
+  --font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
   display: flex;
   min-height: 100vh;
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text);
+  background: var(--color-background);
 }

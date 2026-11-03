@@ -1,0 +1,26 @@
+.icon {
+  --size-arrow: 20px;
+
+  display: inline-block;
+  width: var(--size-arrow);
+  height: var(--size-arrow);
+  flex-shrink: 0;
+  color: var(--color-primary);
+  background-color: currentColor;
+  -webkit-mask: url('../../assets/init-arrow.svg') center / contain no-repeat;
+  mask: url('../../assets/init-arrow.svg') center / contain no-repeat;
+}
+
+.icon[data-direction='left'] {
+  transform: scaleX(-1);
+}
+
+.icon[data-tone='accent'] {
+  color: var(--color-accent);
+}
+
+@media (forced-colors: active) {
+  .icon {
+    background-color: CanvasText;
+  }
+}
