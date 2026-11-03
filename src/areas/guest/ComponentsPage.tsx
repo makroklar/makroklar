@@ -2,6 +2,7 @@ import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { DishCard } from './components/menu/DishCard';
 import { OccupancyBadge } from './components/menu/OccupancyBadge';
+import { MenuHeaderDemo } from './MenuHeaderDemo';
 import { OnboardingDialogDemo } from './OnboardingDialogDemo';
 import styles from './ComponentsPage.module.css';
 
@@ -10,6 +11,14 @@ export function ComponentsPage() {
   return (
     <main className={styles.page}>
       <h1 className={styles.title}>Komponenten</h1>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>MenuHeader</h2>
+        {/* Volle Bildschirmbreite wie in der echten Speisekarte */}
+        <div className={styles.fullBleed}>
+          <MenuHeaderDemo />
+        </div>
+      </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>OccupancyBadge</h2>

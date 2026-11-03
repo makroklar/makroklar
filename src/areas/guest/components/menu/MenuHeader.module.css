@@ -1,0 +1,25 @@
+/* Fläche 393 × 220 aus Figma, Inhalt 24 px vom Rand – die Kategorien laufen rechts bis zum Bildschirmrand */
+.header {
+  display: flex;
+  flex-direction: column;
+  padding: 19px 0 21px 24px;
+  color: var(--color-text);
+  background: var(--color-primary-light);
+}
+
+.name {
+  margin: 0 24px 12px 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: normal;
+}
+
+.notice {
+  margin: 9px 24px 0 0;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
+.tabs {
+  margin-top: 30px;
+}
