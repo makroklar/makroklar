@@ -43,10 +43,14 @@ export function Header() {
     return () => observer.disconnect();
   }, [pathname]);
 
+  // Fixed statt sticky: Das Schrumpfen verschiebt so nicht den Inhalt (sonst Flackern
+  // durch Scroll-Korrektur). Der Platzhalter hält die Höhe des großen Headers frei.
   return (
+    <>
+    <div aria-hidden className="h-[72px] lg:h-[92px]" />
     <header
       className={cn(
-        'sticky top-0 z-40 border-b transition-all duration-300',
+        'fixed inset-x-0 top-0 z-40 border-b transition-all duration-300',
         scrolled ? 'border-line bg-card/85 shadow-soft backdrop-blur-md' : 'border-transparent bg-card',
       )}
     >
@@ -89,5 +93,6 @@ export function Header() {
         </div>
       </div>
     </header>
+    </>
   );
 }
