@@ -1,0 +1,70 @@
+/* Karte 345 × 189 aus Figma: 16 px Innenabstand inkl. Rahmen, Spalten 59 px breit mit 13 px Abstand */
+.card {
+  width: 100%;
+  padding: 12px 15px 15px 16px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-text-strong);
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+/* Titel und Spaltenköpfe stehen unten bündig, wie in Figma */
+.card thead th {
+  padding: 0;
+  vertical-align: bottom;
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: normal;
+}
+
+.columnHead {
+  width: 59px;
+  padding-bottom: 2px !important;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-light);
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.lastColumn {
+  width: calc(59px + 13px);
+  padding-left: 13px !important;
+}
+
+.ingredient,
+.value {
+  padding: 10px 0 0;
+  vertical-align: middle;
+}
+
+/* Erste Zeile 18 px unter den Spaltenköpfen */
+tbody tr:first-child .ingredient,
+tbody tr:first-child .value {
+  padding-top: 18px;
+}
+
+.ingredient {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: normal;
+}
+
+.chip {
+  display: block;
+  width: 59px;
+  height: 24px;
+  padding: 4px 5px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--color-secondary);
+  border-radius: 8px;
+}

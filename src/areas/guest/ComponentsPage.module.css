@@ -39,6 +39,10 @@
   margin: 0 calc(-1 * var(--space-3));
 }
 
+.detailInset {
+  padding: 0 25px 0 23px;
+}
+
 .demoButton {
   align-self: flex-start;
   padding: var(--space-2) var(--space-4);

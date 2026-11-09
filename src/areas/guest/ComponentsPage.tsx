@@ -1,6 +1,7 @@
 import pizzaMargheritaCard from '../../../public/images/guest/dishes/pizza-margherita.png';
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
+import { CarbsBreakdown } from './components/dish-detail/CarbsBreakdown';
 import { DishHero } from './components/dish-detail/DishHero';
 import { DishInfo } from './components/dish-detail/DishInfo';
 import { LogoHeader } from './components/layout/LogoHeader';
@@ -93,6 +94,20 @@ export function ComponentsPage() {
                 carbs={136}
                 fpe={4.4}
                 fpeHours="6-8"
+              />
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>CarbsBreakdown</h3>
+            {/* Seitenabstände wie in Figma: 23 px links, 25 px rechts */}
+            <div className={`${styles.fullBleed} ${styles.detailInset}`}>
+              <CarbsBreakdown
+                ingredients={[
+                  { name: 'Pizzateig', amount: 280, carbsPerPortion: 130, carbsPer100g: 46 },
+                  { name: 'Tomatensoße', amount: 80, carbsPerPortion: 4, carbsPer100g: 5 },
+                  { name: 'Mozzarella', amount: 100, carbsPerPortion: 2, carbsPer100g: 2 },
+                ]}
               />
             </div>
           </section>
