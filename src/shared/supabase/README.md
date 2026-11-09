@@ -4,6 +4,20 @@ Gemeinsame Datenbankstruktur und Zugriffsregeln fuer alle Bereiche von makroklar
 
 - `migrations/`: versionierte SQL-Dateien fuer Tabellen, Beziehungen, Grants und RLS-Policies.
 - `checks/`: eigenstaendige SQL-Pruefungen, getrennt von den Migrationen.
+- `imports/`: separates BLS-Importwerkzeug und Dateimanifest; siehe [BLS-Import](imports/README.md).
+
+Die zweite Migration `20261109000200_create_bls_catalog.sql` bereitet den globalen
+BLS-Referenzkatalog vor. Sie wurde am 2026-11-10 ueber die CLI auf `makroklar-dev`
+angewendet; der Migration-History-Eintrag wurde anschliessend bestaetigt.
+`checks/bls_catalog.sql` pruefte Constraints, Beziehungen, RLS und Rollenrechte
+erfolgreich. Alle Testdaten wurden per `ROLLBACK` entfernt. RLS ist aktiv und jede
+BLS-Tabelle hat eine SELECT-Policy. Am 2026-11-10 wurde BLS 4.0 (2025) vollstaendig
+importiert: eine aktive Ausgabe, 7.140 Lebensmittel, 138 Definitionen und 985.320
+Werte. Quelle, Anzahlen, alle Definitionen und eine Stichprobe wurden geprueft;
+ein zweiter Lauf meldete `already_imported`, ohne Duplikate anzulegen.
+Der Katalog belegt einschliesslich Indizes rund 175,1 MiB. Die Oberflaechen sind
+noch nicht mit dem BLS-Katalog verbunden. Das Importwerkzeug laeuft ohne `--apply`
+weiterhin als lokaler Dry-run, ohne Datenbankverbindung.
 
 ## Lokale CLI-Einrichtung
 

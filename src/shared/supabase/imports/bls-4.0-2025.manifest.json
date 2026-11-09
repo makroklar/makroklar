@@ -1,0 +1,25 @@
+{
+  "source": "bls",
+  "version": "4.0",
+  "releaseYear": 2025,
+  "sourceUrl": "https://blsdb.de/",
+  "foodCount": 7140,
+  "nutrientCount": 138,
+  "files": [
+    {
+      "role": "data",
+      "name": "BLS_4_0_Daten_2025_DE.xlsx",
+      "sha256": "524bbefe25b691f5cb3de7a9f3e27fa2967aebfeabf217d99414ba7806e78c60"
+    },
+    {
+      "role": "components",
+      "name": "BLS_4_0_Components_DE_EN.xlsx",
+      "sha256": "359aefcd2086f45e62ff3dbd0c8536306e594a5806ac325d8bf86f484561bdf4"
+    },
+    {
+      "role": "documentation",
+      "name": "BLS_4_0_Dokumentation_DE.pdf",
+      "sha256": "6d83913f9b705399f86795a9c3afcb2d0454d1129bfb24ce53da911c5a6a24b6"
+    }
+  ]
+}
