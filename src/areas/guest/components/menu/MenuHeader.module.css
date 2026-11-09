@@ -2,7 +2,8 @@
 .header {
   display: flex;
   flex-direction: column;
-  padding: 19px 0 21px 24px;
+  /* Auf breiten Bildschirmen beginnt der Inhalt bündig mit der Spalte der Gerichte */
+  padding: 19px 0 21px calc(var(--content-inset) + 24px);
   color: var(--color-text);
   background: var(--color-primary-light);
 }

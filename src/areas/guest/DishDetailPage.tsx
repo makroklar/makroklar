@@ -10,7 +10,9 @@ import styles from './DishDetailPage.module.css';
 export function DishDetailPage() {
   return (
     <main className={styles.page}>
-      <DishHero name={dish.name} image={dish.heroImage} backHref="/guest" />
+      <div className={styles.hero}>
+        <DishHero name={dish.name} image={dish.heroImage} backHref="/guest" />
+      </div>
 
       <div className={styles.info}>
         <DishInfo

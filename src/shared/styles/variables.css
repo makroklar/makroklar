@@ -87,6 +87,11 @@
   --line-height-snug: 1.35;
   --line-height-normal: 1.5;
 
+  /* Layout: maximale Inhaltsbreite auf Tablets, Foldables und Desktop (drei Karten à ca. 375 px) */
+  --content-max-width: 1200px;
+  /* Seitlicher Abstand, damit der Inhalt bei breiten Bildschirmen mittig in --content-max-width steht */
+  --content-inset: max(0px, calc((100% - var(--content-max-width)) / 2));
+
   /* Schatten */
   --shadow-card: 0 1px 5px rgb(0 0 0 / 0.25);
   --shadow-card-lg: 0 1px 13px rgb(0 0 0 / 0.25);
