@@ -1,0 +1,29 @@
+/* Abstände zwischen den Blöcken aus dem 393 px breiten Figma-Frame „Detailansicht“ */
+.page {
+  flex: 1;
+  padding-bottom: 40px;
+}
+
+.info {
+  margin-top: 37px;
+}
+
+/* Karte 23 px vom linken, 25 px vom rechten Rand */
+.carbs {
+  margin-top: 50px;
+  padding: 0 25px 0 23px;
+}
+
+/* Texte 30 px vom linken Rand */
+.ingredients,
+.allergens {
+  padding: 0 21px 0 30px;
+}
+
+.ingredients {
+  margin-top: 48px;
+}
+
+.allergens {
+  margin-top: 24px;
+}
