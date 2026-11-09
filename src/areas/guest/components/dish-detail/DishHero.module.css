@@ -31,19 +31,22 @@
   margin-left: calc(50% - 159.5px);
 }
 
+/* Nicht beschneiden: der Schatten der Pizza reicht unten über den Rahmen hinaus.
+   Der überstehende Teil des PNG ist durchsichtig */
 .imageWrapper {
   position: relative;
   aspect-ratio: 307 / 301;
-  overflow: hidden;
 }
 
-/* Das freigestellte PNG wird oben 15 % beschnitten, wie in der DishCard */
+/* Das freigestellte PNG sitzt 15 % höher, damit die Pizza im Rahmen steht wie in Figma */
 .image {
   position: absolute;
   top: -15%;
   left: 0;
   width: 100%;
   height: auto;
+  /* Der durchsichtige Überstand darf den Hinweis darunter nicht verdecken */
+  pointer-events: none;
   /* Schatten folgt der Form der Pizza statt dem Rechteck */
   filter: drop-shadow(var(--shadow-card-lg));
 }
