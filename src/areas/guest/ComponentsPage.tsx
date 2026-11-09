@@ -2,6 +2,7 @@ import pizzaMargheritaCard from '../../../public/images/guest/dishes/pizza-margh
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { CarbsBreakdown } from './components/dish-detail/CarbsBreakdown';
+import { DishAllergens } from './components/dish-detail/DishAllergens';
 import { DishHero } from './components/dish-detail/DishHero';
 import { DishInfo } from './components/dish-detail/DishInfo';
 import { DishIngredients } from './components/dish-detail/DishIngredients';
@@ -120,6 +121,13 @@ export function ComponentsPage() {
               <DishIngredients
                 ingredients={['Pizzateig', 'Tomatensoße', 'Mozzarella', 'Olivenöl', 'frisches Basilikum']}
               />
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>DishAllergens</h3>
+            <div className={`${styles.fullBleed} ${styles.textInset}`}>
+              <DishAllergens allergens={['Glutenhaltiges Getreide', 'Milch (Laktose)']} />
             </div>
           </section>
 
