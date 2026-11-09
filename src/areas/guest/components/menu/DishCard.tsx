@@ -23,7 +23,7 @@ export function DishCard({ name, description, price, image, kcal, fat, protein, 
   return (
     <article className={styles.dishCard}>
       <div className={styles.imageWrapper}>
-        <Image className={styles.image} src={image} alt={name} width={1635} height={2000} sizes="120px" />
+        <Image className={styles.image} src={image} alt={name} fill sizes="117px" />
       </div>
 
       <div className={styles.card}>

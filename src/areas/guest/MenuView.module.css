@@ -1,0 +1,21 @@
+.menu {
+  flex: 1;
+}
+
+/* Karten 20 px unter dem Kopfbereich, 9 px vom linken / 15 px vom rechten Rand, 14 px Abstand wie in Figma */
+.dishes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 20px 15px var(--space-3) 9px;
+  list-style: none;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--font-size-md);
+  text-align: center;
+  color: var(--color-text);
+}

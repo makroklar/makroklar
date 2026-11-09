@@ -1,3 +1,4 @@
+import pizzaMargheritaCard from '../../../public/images/guest/dishes/pizza-margherita.png';
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { DishHero } from './components/dish-detail/DishHero';
@@ -52,7 +53,7 @@ export function ComponentsPage() {
               name="Pizza Margherita"
               description="mit fruchtiger Tomatensoße, cremigem Mozzarella und frischem Basilikum"
               price={13.9}
-              image={pizzaMargherita}
+              image={pizzaMargheritaCard}
               kcal={950}
               fat={34}
               protein={38}

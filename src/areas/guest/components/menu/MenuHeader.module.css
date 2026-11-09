@@ -16,7 +16,8 @@
 
 .notice {
   margin: 9px 24px 0 0;
-  font-size: var(--font-size-xs);
+  /* 12 px statt 10 px aus Figma – besser lesbar */
+  font-size: var(--font-size-sm);
   line-height: var(--line-height-snug);
 }
 
