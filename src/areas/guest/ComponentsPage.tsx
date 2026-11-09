@@ -4,6 +4,7 @@ import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { CarbsBreakdown } from './components/dish-detail/CarbsBreakdown';
 import { DishHero } from './components/dish-detail/DishHero';
 import { DishInfo } from './components/dish-detail/DishInfo';
+import { DishIngredients } from './components/dish-detail/DishIngredients';
 import { LogoHeader } from './components/layout/LogoHeader';
 import { DishCard } from './components/menu/DishCard';
 import { OccupancyBadge } from './components/menu/OccupancyBadge';
@@ -108,6 +109,16 @@ export function ComponentsPage() {
                   { name: 'Tomatensoße', amount: 80, carbsPerPortion: 4, carbsPer100g: 5 },
                   { name: 'Mozzarella', amount: 100, carbsPerPortion: 2, carbsPer100g: 2 },
                 ]}
+              />
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>DishIngredients</h3>
+            {/* Text 30 px vom linken Rand wie in Figma */}
+            <div className={`${styles.fullBleed} ${styles.textInset}`}>
+              <DishIngredients
+                ingredients={['Pizzateig', 'Tomatensoße', 'Mozzarella', 'Olivenöl', 'frisches Basilikum']}
               />
             </div>
           </section>

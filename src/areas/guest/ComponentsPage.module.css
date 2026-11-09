@@ -43,6 +43,10 @@
   padding: 0 25px 0 23px;
 }
 
+.textInset {
+  padding: 0 21px 0 30px;
+}
+
 .demoButton {
   align-self: flex-start;
   padding: var(--space-2) var(--space-4);
