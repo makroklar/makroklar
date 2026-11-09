@@ -1,11 +1,16 @@
 .dishCard {
   position: relative;
+  /* Füllt die Höhe seiner Rasterzelle, damit Karten in einer Zeile gleich hoch sind */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding-top: 7px;
   padding-bottom: 3px;
   color: var(--color-text);
 }
 
-/* Bildausschnitt 117 × 115 – das Bild füllt ihn, egal welches Seitenverhältnis es hat */
+/* Bildausschnitt 117 × 115 – das Bild füllt ihn, egal welches Seitenverhältnis es hat.
+   Nicht beschneiden, sonst fehlt unten der Schatten */
 .imageWrapper {
   position: absolute;
   z-index: 1;
@@ -13,7 +18,6 @@
   left: 0;
   width: 117px;
   aspect-ratio: 112 / 110;
-  overflow: hidden;
 }
 
 .image {
@@ -23,6 +27,9 @@
 }
 
 .card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   margin-left: 60px;
   padding: 10px 10px 10px 60px;
   background: var(--color-surface);
@@ -53,16 +60,19 @@
   color: var(--color-text-strong);
 }
 
+/* Mindestens zwei Zeilen hoch, damit Karten mit kurzer Beschreibung nicht kleiner werden */
 .description {
-  margin: 3px 0 0;
+  min-height: calc(2 * var(--line-height-snug) * 1em);
+  margin: 3px 0 6px;
   font-size: var(--font-size-xs);
   line-height: var(--line-height-snug);
 }
 
+/* Bei gestreckten Karten unten an der Karte */
 .nutrients {
   display: flex;
   gap: 5px;
-  margin: 6px 0 0;
+  margin: auto 0 0;
   padding: 0;
   list-style: none;
 }
