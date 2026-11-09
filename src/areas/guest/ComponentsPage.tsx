@@ -2,6 +2,7 @@ import pizzaMargheritaCard from '../../../public/images/guest/dishes/pizza-margh
 import pizzaMargherita from '../../../public/images/guest/pizza-margherita.png';
 import { CategoryTabsDemo } from './CategoryTabsDemo';
 import { DishHero } from './components/dish-detail/DishHero';
+import { DishInfo } from './components/dish-detail/DishInfo';
 import { LogoHeader } from './components/layout/LogoHeader';
 import { DishCard } from './components/menu/DishCard';
 import { OccupancyBadge } from './components/menu/OccupancyBadge';
@@ -76,6 +77,23 @@ export function ComponentsPage() {
             <h3 className={styles.sectionTitle}>DishHero</h3>
             <div className={styles.fullBleed}>
               <DishHero name="Pizza Margherita" image={pizzaMargherita} backHref="/guest" />
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>DishInfo</h3>
+            <div className={styles.fullBleed}>
+              <DishInfo
+                name="Pizza Margherita"
+                price={13.9}
+                duration="ca. 15-25min"
+                kcal={950}
+                fat={34}
+                protein={38}
+                carbs={136}
+                fpe={4.4}
+                fpeHours="6-8"
+              />
             </div>
           </section>
 

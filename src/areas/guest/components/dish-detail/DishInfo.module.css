@@ -1,0 +1,130 @@
+/* Fläche 393 × 294 aus Figma, Inhalt 30 px vom linken Rand */
+.info {
+  padding: 24px 24px 35px 30px;
+  color: var(--color-text);
+  background: var(--color-primary-light);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 27px;
+}
+
+.price {
+  margin: 7px 0 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: 27px;
+}
+
+/* Wie die Auslastungs-Anzeige, aber mit 16-px-Uhr und 12-px-Text */
+.duration {
+  display: inline-flex;
+  align-items: center;
+  margin: 12px 0 0 -4px;
+  padding: 4px 6px;
+  color: var(--color-text-strong);
+  background: var(--color-primary-transparent);
+  border-radius: 8px;
+}
+
+.durationIcon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-icon);
+}
+
+.durationLabel {
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.durationLabel strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.portionLabel {
+  margin: 11px 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 17px;
+}
+
+/* Kacheln 55 × 49 mit 9 px Abstand, das „i“ 7 px daneben */
+.nutrientRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 0 -3px;
+}
+
+.nutrients {
+  display: flex;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 55px;
+  height: 49px;
+  padding: 5px;
+  text-align: center;
+  white-space: nowrap;
+  background: var(--color-accent);
+  border-radius: 8px;
+}
+
+.tileHighlight {
+  background: var(--color-secondary);
+}
+
+.tileValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+}
+
+.tileLabel {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+}
+
+.infoButton {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.infoButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 12 px statt 10 px aus Figma, wie der gleiche Hinweis im Kopfbereich der Speisekarte */
+.notice {
+  margin: 19px 0 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-snug);
+}
