@@ -1,0 +1,58 @@
+/*
+ * Tailwind nur für die Landing Page.
+ * Bewusst ohne Preflight und ohne CSS-Layer: So bleiben Restaurant- und Gastansicht
+ * unberührt, und Klassen schlagen die Element-Regeln aus shared/styles/global.css.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' source('./');
+
+/* Werte kommen aus shared/styles/variables.css – hier keine neuen Farben eintragen */
+@theme inline {
+  --color-brand: var(--color-primary);
+  --color-brand-tint: var(--color-primary-transparent);
+  --color-lime: var(--color-accent);
+  --color-lime-soft: var(--color-accent-light);
+  --color-ink: var(--color-text);
+  --color-ink-muted: var(--color-text-muted);
+  --color-ink-subtle: var(--color-text-subtle);
+  --color-page: var(--color-background);
+  --color-card: var(--color-surface);
+  --color-line: var(--color-border);
+
+  --font-sans: var(--font-family);
+
+  --shadow-soft: var(--shadow-sm);
+  --shadow-panel: var(--shadow-card);
+  --shadow-panel-lg: var(--shadow-card-lg);
+
+  --radius-card: var(--radius-lg);
+}
+
+[data-area='landing'] {
+  scroll-behavior: smooth;
+}
+
+/* Sprungziele nicht unter dem festen Header verstecken */
+[data-area='landing'] [id] {
+  scroll-margin-top: 96px;
+}
+
+.float-slow {
+  animation: float-slow 14s ease-in-out infinite alternate;
+}
+
+@keyframes float-slow {
+  to {
+    transform: translate(32px, -24px) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-area='landing'] {
+    scroll-behavior: auto;
+  }
+
+  .float-slow {
+    animation: none;
+  }
+}
