@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getItems } from '../../data/lightspeedItems';
+import { saveMenuItems } from '../../data/saveMenuAction';
 import type { ImportedMenuItem } from '../../types/importedMenuItem';
 import { useBusinessDraft } from '../../state/BusinessDraftContext';
 import { getImportedItemKey, mergeImportedItems } from '../../state/businessDraft';
@@ -59,12 +60,13 @@ function createItemDraft(item: ImportedMenuItem, selected = false): ItemDraft {
 
 export function LightspeedItemImport() {
   const router = useRouter();
-  const { importedItems, acceptItems } = useBusinessDraft();
+  const { importedItems, acceptItems, storageError, canSaveItems } = useBusinessDraft();
   const [items, setItems] = useState<ItemDraft[]>(() =>
     importedItems.map((item) => createItemDraft(item, true)),
   );
   const [sourceLoaded, setSourceLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectedItems = items.filter((item) => item.selected);
   const invalidSelection = selectedItems.some((item) => !validDraft(item));
@@ -109,8 +111,8 @@ export function LightspeedItemImport() {
     setItems((current) => current.map((item) => ({ ...item, selected })));
   }
 
-  function acceptSelection() {
-    if (selectedItems.length === 0 || invalidSelection) return;
+  async function acceptSelection() {
+    if (saving || !canSaveItems || selectedItems.length === 0 || invalidSelection) return;
     const selected: ImportedMenuItem[] = selectedItems.map((item) => ({
       source: item.source,
       sourceId: item.sourceId,
@@ -125,158 +127,171 @@ export function LightspeedItemImport() {
       selectedPriceIndex: item.selectedPriceIndex,
     }));
 
-    acceptItems(selected);
-    router.push('/business/onboarding/menu/pos/complete');
+    setSaving(true);
+    setError(null);
+    try {
+      const result = await saveMenuItems(selected);
+      if (result.status === 'error') {
+        setError(result.message);
+        return;
+      }
+      acceptItems(result.items);
+      router.push('/business/onboarding/menu/pos/complete');
+    } catch {
+      setError('Die Speicherung konnte nicht bestätigt werden. Bitte versuche es erneut.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <section className={styles.preview} aria-labelledby="lightspeed-import-title">
+    <section className={styles.preview} aria-labelledby="lightspeed-import-title" aria-busy={saving || loading}>
       <h2 className={styles.title} id="lightspeed-import-title">
         Lightspeed – lokale Beispielartikel
       </h2>
       <p className={styles.notice}>
-        Demo mit lokalen Daten, ohne Verbindung zu Lightspeed. Übernommene Artikel
-        bleiben beim Seitenwechsel im Business-Bereich verfügbar. Nur übernommene
-        Änderungen stehen den nächsten Schritten zur Verfügung. Ein Neuladen
-        löscht den Entwurf. Preise werden für diese Demo in EUR angezeigt.
+        Demo mit lokalen Daten, ohne Verbindung zu Lightspeed. Deine übernommene
+        Auswahl wird für dein Restaurant gespeichert und beim Neuladen wiederhergestellt.
+        Nicht übernommene Änderungen bleiben vorübergehend. Preise werden in EUR angezeigt.
       </p>
 
-      {!sourceLoaded && (
-        <button
-          className={styles.primaryButton}
-          type="button"
-          onClick={loadItems}
-          disabled={loading}
-        >
-          {loading ? 'Beispieldaten werden geladen…' : 'Beispielartikel laden'}
-        </button>
-      )}
-      {items.length > 0 && (
-        <>
-          <p className={styles.summary} role="status">
-            {items.length} Artikel in der Vorschau, {selectedItems.length} ausgewählt.
-          </p>
-          <div className={styles.toolbar}>
-            <button className={styles.secondaryButton} type="button" onClick={() => selectAll(true)}>
-              Alle auswählen
-            </button>
-            <button className={styles.secondaryButton} type="button" onClick={() => selectAll(false)}>
-              Auswahl aufheben
-            </button>
-          </div>
-
-          <div
-            className={styles.tableWrapper}
-            role="region"
-            aria-label="Beispielartikel bearbeiten"
-            tabIndex={0}
-          >
-            <table className={styles.table}>
-              <caption className={styles.visuallyHidden}>
-                Lokale Lightspeed-Beispielartikel: Auswahl, Name und Preis bearbeiten
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col"><span className={styles.visuallyHidden}>Auswahl</span></th>
-                  <th scope="col">Artikel</th>
-                  <th scope="col">Warengruppe</th>
-                  <th scope="col">Preis (EUR)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={`${item.source}:${item.sourceId}`}>
-                    <td>
-                      <input
-                        className={styles.checkbox}
-                        type="checkbox"
-                        checked={item.selected}
-                        aria-label={`${item.nameInput || item.sku} auswählen`}
-                        onChange={(event) => updateDraft(item.sourceId, { selected: event.target.checked })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className={styles.input}
-                        type="text"
-                        value={item.nameInput}
-                        aria-label={`Artikelname für ${item.sku}`}
-                        aria-invalid={item.nameInput.trim() === ''}
-                        onChange={(event) => updateDraft(item.sourceId, { nameInput: event.target.value })}
-                      />
-                      <small className={styles.metadata}>
-                        SKU: {item.sku} · Lightspeed-ID: {item.sourceId}
-                      </small>
-                    </td>
-                    <td>{item.accountingGroup?.name ?? 'Ohne Warengruppe'}</td>
-                    <td>
-                      {item.prices.length > 1 ? (
-                        <select
-                          className={styles.input}
-                          aria-label={`Preis auswählen für ${item.sku}`}
-                          value={item.selectedPriceIndex ?? ''}
-                          onChange={(event) => {
-                            const index = event.target.value === '' ? null : Number(event.target.value);
-                            updateDraft(item.sourceId, {
-                              selectedPriceIndex: index,
-                              amountInput: index === null ? '' : String(item.prices[index].amount),
-                            });
-                          }}
-                        >
-                          <option value="">Preis wählen</option>
-                          {item.prices.map((price, index) => (
-                            <option key={index} value={index}>
-                              {price.name}: {euro.format(price.amount)}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <small className={styles.metadata}>
-                          {item.prices[0]?.name ?? 'Kein Festpreis verfügbar'}
-                        </small>
-                      )}
-                      <input
-                        className={styles.input}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputMode="decimal"
-                        value={item.amountInput}
-                        disabled={item.selectedPriceIndex === null}
-                        aria-label={`Preis in Euro für ${item.sku}`}
-                        aria-invalid={validAmount(item.amountInput) === null}
-                        onChange={(event) => updateDraft(item.sourceId, { amountInput: event.target.value })}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {invalidSelection && (
-            <p className={styles.error} role="alert">
-              Bitte für die ausgewählten Artikel einen Namen und einen gültigen
-              Festpreis mit höchstens zwei Nachkommastellen angeben.
-            </p>
-          )}
+      <fieldset className={styles.controls} disabled={saving} aria-label="Artikel prüfen und übernehmen">
+        {!sourceLoaded && (
           <button
             className={styles.primaryButton}
             type="button"
-            disabled={selectedItems.length === 0 || invalidSelection}
-            onClick={acceptSelection}
+            onClick={loadItems}
+            disabled={loading}
           >
-            Auswahl temporär übernehmen
+            {loading ? 'Beispieldaten werden geladen…' : 'Beispielartikel laden'}
           </button>
-        </>
-      )}
+        )}
+        {items.length > 0 && (
+          <>
+            <p className={styles.summary} role="status">
+              {items.length} Artikel in der Vorschau, {selectedItems.length} ausgewählt.
+            </p>
+            <div className={styles.toolbar}>
+              <button className={styles.secondaryButton} type="button" onClick={() => selectAll(true)}>
+                Alle auswählen
+              </button>
+              <button className={styles.secondaryButton} type="button" onClick={() => selectAll(false)}>
+                Auswahl aufheben
+              </button>
+            </div>
 
-      {error && <p className={styles.error} role="alert">{error}</p>}
+            <div
+              className={styles.tableWrapper}
+              role="region"
+              aria-label="Beispielartikel bearbeiten"
+              tabIndex={0}
+            >
+              <table className={styles.table}>
+                <caption className={styles.visuallyHidden}>
+                  Lokale Lightspeed-Beispielartikel: Auswahl, Name und Preis bearbeiten
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col"><span className={styles.visuallyHidden}>Auswahl</span></th>
+                    <th scope="col">Artikel</th>
+                    <th scope="col">Warengruppe</th>
+                    <th scope="col">Preis (EUR)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={`${item.source}:${item.sourceId}`}>
+                      <td>
+                        <input
+                          className={styles.checkbox}
+                          type="checkbox"
+                          checked={item.selected}
+                          aria-label={`${item.nameInput || item.sku} auswählen`}
+                          onChange={(event) => updateDraft(item.sourceId, { selected: event.target.checked })}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className={styles.input}
+                          type="text"
+                          value={item.nameInput}
+                          aria-label={`Artikelname für ${item.sku}`}
+                          aria-invalid={item.nameInput.trim() === ''}
+                          onChange={(event) => updateDraft(item.sourceId, { nameInput: event.target.value })}
+                        />
+                        <small className={styles.metadata}>
+                          SKU: {item.sku} · Lightspeed-ID: {item.sourceId}
+                        </small>
+                      </td>
+                      <td>{item.accountingGroup?.name ?? 'Ohne Warengruppe'}</td>
+                      <td>
+                        {item.prices.length > 1 ? (
+                          <select
+                            className={styles.input}
+                            aria-label={`Preis auswählen für ${item.sku}`}
+                            value={item.selectedPriceIndex ?? ''}
+                            onChange={(event) => {
+                              const index = event.target.value === '' ? null : Number(event.target.value);
+                              updateDraft(item.sourceId, {
+                                selectedPriceIndex: index,
+                                amountInput: index === null ? '' : String(item.prices[index].amount),
+                              });
+                            }}
+                          >
+                            <option value="">Preis wählen</option>
+                            {item.prices.map((price, index) => (
+                              <option key={index} value={index}>
+                                {price.name}: {euro.format(price.amount)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <small className={styles.metadata}>
+                            {item.prices[0]?.name ?? 'Kein Festpreis verfügbar'}
+                          </small>
+                        )}
+                        <input
+                          className={styles.input}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          inputMode="decimal"
+                          value={item.amountInput}
+                          disabled={item.selectedPriceIndex === null}
+                          aria-label={`Preis in Euro für ${item.sku}`}
+                          aria-invalid={validAmount(item.amountInput) === null}
+                          onChange={(event) => updateDraft(item.sourceId, { amountInput: event.target.value })}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {invalidSelection && (
+              <p className={styles.error} role="alert">
+                Bitte für die ausgewählten Artikel einen Namen und einen gültigen
+                Festpreis mit höchstens zwei Nachkommastellen angeben.
+              </p>
+            )}
+            <button
+              className={styles.primaryButton}
+              type="button"
+              disabled={saving || loading || !canSaveItems || selectedItems.length === 0 || invalidSelection}
+              onClick={acceptSelection}
+            >
+              {saving ? 'Auswahl wird gespeichert…' : 'Auswahl speichern und übernehmen'}
+            </button>
+          </>
+        )}
+
+      </fieldset>
+      {(error || storageError) && <p className={styles.error} role="alert">{error ?? storageError}</p>}
       <div role="status" className={styles.accepted}>
         {importedItems.length > 0 && (
           <p>
-            {importedItems.length} Demo-Artikel im gemeinsamen Business-Entwurf.
-            Es wurden keine Daten dauerhaft gespeichert.
+            {importedItems.length} gespeicherte Demo-Artikel für dein Restaurant.
           </p>
         )}
       </div>

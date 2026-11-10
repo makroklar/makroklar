@@ -12,14 +12,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-6);
   padding: var(--space-7) var(--space-5);
   padding-inline: clamp(var(--space-5), 10vw, 9.5rem);
-}
-
-.brand {
-  display: flex;
-  align-self: flex-end;
 }
 
 .card {

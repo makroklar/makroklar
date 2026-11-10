@@ -10,15 +10,24 @@ import { useBusinessDraft } from './state/BusinessDraftContext';
 import styles from './PosImportCompletePage.module.css';
 
 export function PosImportCompletePage() {
-  const { importedItems } = useBusinessDraft();
+  const { importedItems, storageError } = useBusinessDraft();
   const router = useRouter();
   const hasImportedItems = importedItems.length > 0;
 
   useEffect(() => {
-    if (!hasImportedItems) {
+    if (!hasImportedItems && !storageError) {
       router.replace('/business/onboarding/menu/pos');
     }
-  }, [hasImportedItems, router]);
+  }, [hasImportedItems, storageError, router]);
+
+  if (storageError) {
+    return (
+      <section className={styles.result} data-onboarding-card="compact">
+        <p role="alert">{storageError}</p>
+        <Link href="/business/onboarding/menu/pos">Zur Artikelauswahl</Link>
+      </section>
+    );
+  }
 
   if (!hasImportedItems) {
     return (

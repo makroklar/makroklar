@@ -17,20 +17,89 @@
   font-weight: var(--font-weight-light);
 }
 
-.options {
-  --space-food-options: 2.5rem;
-
-  display: grid;
-  min-width: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-food-options);
-  margin: var(--space-6) 0 0;
-  padding: 0;
-  border: 0;
+.tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: var(--space-5);
 }
 
-.detailedCard {
-  --choice-description-line-height: 1.5;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.table caption {
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead {
+  background: var(--color-background);
+}
+
+.table th {
+  font-weight: var(--font-weight-medium);
+}
+
+.foodName {
+  min-width: 9rem;
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+}
+
+.manualLabel,
+.preparation {
+  color: var(--color-text-muted);
+  font-size: 0.8em;
+  font-weight: var(--font-weight-regular);
+}
+
+.preparation {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.empty,
+.note {
+  color: var(--color-text-muted);
+}
+
+.manualAction,
+.note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.manualLink,
+.textButton {
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.textButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.manualLink:focus-visible,
+.textButton:focus-visible,
+.tableWrapper:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
 }
 
 .actions {
@@ -40,8 +109,6 @@
 }
 
 .continueButton {
-  --color-disabled-background: #e3e3e3;
-  --color-disabled-text: #a1a1a1;
   --radius-continue-button: 10px;
   --space-continue-icon: 10px;
 
@@ -54,29 +121,20 @@
   padding: var(--space-2) var(--space-4);
   border: 0;
   border-radius: var(--radius-continue-button);
-  background: var(--color-disabled-background);
-  color: var(--color-disabled-text);
+  background: var(--color-primary);
+  color: var(--color-accent);
   font: inherit;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  cursor: not-allowed;
+  text-decoration: none;
 }
 
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  clip-path: inset(50%);
-  white-space: nowrap;
+.continueButton:hover {
+  background: var(--color-accent-light);
+  color: var(--color-primary);
 }
 
-@media (max-width: 44rem) {
-  .options {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
+.continueButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
 }

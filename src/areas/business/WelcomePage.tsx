@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowIcon } from './components/ui/ArrowIcon';
 import styles from './WelcomePage.module.css';
@@ -6,14 +5,6 @@ import styles from './WelcomePage.module.css';
 export function WelcomePage() {
   return (
     <main className={styles.page}>
-      <div className={styles.brand}>
-        <Image
-          src="/images/brand/makroklar-logo.svg"
-          alt="makroklar"
-          width={188}
-          height={41}
-        />
-      </div>
       <div className={styles.card}>
         <Link className={styles.backLink} href="/business/register">
           <ArrowIcon direction="left" />

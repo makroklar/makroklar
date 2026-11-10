@@ -98,6 +98,50 @@ export type Database = {
           },
         ]
       }
+      dish_import_details: {
+        Row: {
+          accounting_group_name: string | null
+          accounting_group_source_id: string | null
+          created_at: string
+          currency: string
+          dish_id: string
+          prices: Json
+          restaurant_id: string
+          selected_price_index: number
+          sku: string
+        }
+        Insert: {
+          accounting_group_name?: string | null
+          accounting_group_source_id?: string | null
+          created_at?: string
+          currency?: string
+          dish_id: string
+          prices: Json
+          restaurant_id: string
+          selected_price_index: number
+          sku: string
+        }
+        Update: {
+          accounting_group_name?: string | null
+          accounting_group_source_id?: string | null
+          created_at?: string
+          currency?: string
+          dish_id?: string
+          prices?: Json
+          restaurant_id?: string
+          selected_price_index?: number
+          sku?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_import_details_own_dish"
+            columns: ["restaurant_id", "dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["restaurant_id", "id"]
+          },
+        ]
+      }
       dish_ingredients: {
         Row: {
           dish_id: string
@@ -393,6 +437,10 @@ export type Database = {
           status: string
           unit: string
         }[]
+      }
+      import_lightspeed_items: {
+        Args: { imported_items: Json; target_restaurant_id: string }
+        Returns: number
       }
     }
     Enums: {

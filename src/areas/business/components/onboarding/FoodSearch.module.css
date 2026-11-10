@@ -1,0 +1,24 @@
+.search { margin-top: var(--space-5); font-size: var(--font-size-sm); }
+.label { display: block; margin-bottom: var(--space-2); font-weight: var(--font-weight-medium); }
+.searchRow, .resultHeader { display: flex; align-items: center; gap: var(--space-3); }
+.input { flex: 1; min-width: 0; min-height: 2.75rem; padding: var(--space-3); border: 1px solid var(--color-primary); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.button { flex-shrink: 0; min-height: 2.75rem; padding: var(--space-2) var(--space-4); border: 0; border-radius: var(--radius-md); background: var(--color-primary); color: var(--color-accent); font: inherit; font-weight: var(--font-weight-semibold); cursor: pointer; }
+.button:hover:not(:disabled) { background: var(--color-accent-light); color: var(--color-primary); }
+.button:disabled { opacity: 0.6; cursor: not-allowed; }
+.input:focus-visible, .button:focus-visible, .help a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }
+.help { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: 0.875em; overflow-wrap: anywhere; }
+.help a { color: var(--color-primary); }
+.status { margin: var(--space-3) 0; }
+.status:empty { display: none; }
+.error { color: var(--color-danger); }
+.results { display: grid; gap: var(--space-3); padding: 0; list-style: none; }
+.result { padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.resultHeader { justify-content: space-between; }
+.name { margin: 0; font-size: inherit; font-weight: var(--font-weight-semibold); overflow-wrap: anywhere; }
+.nutrients { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin: var(--space-3) 0; }
+.nutrients dt { color: var(--color-text-muted); font-size: 0.875em; }
+.nutrients dd { margin: var(--space-1) 0 0; }
+@media (max-width: 600px) {
+  .resultHeader { align-items: flex-start; flex-direction: column; }
+  .nutrients { grid-template-columns: repeat(2, 1fr); }
+}

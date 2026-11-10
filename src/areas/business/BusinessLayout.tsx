@@ -6,11 +6,13 @@ import '@fontsource/poppins/600.css';
 import '@fontsource/poppins/700.css';
 import { BusinessDraftProvider } from './state/BusinessDraftContext';
 import styles from './BusinessLayout.module.css';
+import { readSavedMenu } from './data/savedMenu';
 
 // Layout der Restaurantansicht (Figma-Datei 1) – Navigation usw. kommt später
-export function BusinessLayout({ children }: { children: ReactNode }) {
+export async function BusinessLayout({ children }: { children: ReactNode }) {
+  const snapshot = await readSavedMenu();
   return (
-    <BusinessDraftProvider>
+    <BusinessDraftProvider key={`${snapshot.accountKey}:${snapshot.restaurantId ?? 'none'}`} snapshot={snapshot}>
       <div className={styles.layout}>
         {children}
       </div>

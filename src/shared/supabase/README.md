@@ -36,12 +36,14 @@ weiterhin als lokaler Dry-run, ohne Datenbankverbindung.
 Importe erfolgen gezielt aus `@/shared/supabase/client` oder
 `@/shared/supabase/server`; der Server-Client verwendet Next.js `cookies()`.
 Registrierung und Login verwenden den Server-Client fuer `auth.signUp()` bzw.
-`auth.signInWithPassword()`. Routenabsicherung ist noch nicht angebunden. Der abgestimmte zentrale
+`auth.signInWithPassword()`. Welcome und Onboarding pruefen die Anmeldung serverseitig.
+Der abgestimmte zentrale
 Einstieg `src/proxy.ts` laesst den Session-Refresh ausschliesslich fuer
 `/business/:path*` laufen. Landing-, Gast- und Asset-Routen sind nicht im Matcher.
 Der Proxy verwendet `auth.getClaims()`, um eine vorhandene Session zu pruefen
 und gegebenenfalls zu erneuern. Ohne Session bleibt die oeffentliche Business-
-Registrierungsseite erreichbar; es werden noch keine Login-Redirects eingefuehrt.
+Registrierungsseite erreichbar. Login-Redirects fuer Welcome/Onboarding erfolgen
+in den jeweiligen Server Pages, nicht im Proxy.
 Dies ist Session-Pflege, keine alleinige Autorisierung fuer private Daten.
 Spaetere geschuetzte Seiten/Server Actions muessen die Identitaet ebenfalls
 pruefen; Datenbankrechte und RLS bleiben zusaetzlich wirksam.
@@ -107,7 +109,8 @@ Projekt. Link im selben Browser/Profil und mit demselben Hostnamen oeffnen, in
 dem die Registrierung erfolgte: PKCE benoetigt den Verifier-Cookie. Die Migration
 ist angewendet; die gehosteten URL-/E-Mail-Einstellungen und ein manueller Test
 mit echter Bestaetigung sind weiterhin zu pruefen.
-Geschuetzte Onboarding-Routen sind weiterhin ein eigener Schritt.
+Welcome und die vorhandenen Onboarding-Seiten verwenden inzwischen den unten
+beschriebenen serverseitigen Zugriffsschutz.
 
 `database.generated.ts` wurde anschliessend ueber die CLI aus dem tatsaechlichen
 oeffentlichen Schema neu erzeugt und enthaelt jetzt den RPC-Vertrag. Der
@@ -213,12 +216,12 @@ abgeschlossen werden. Das ist keine Verwendung von `getSession()` zur Autorisier
 
 Nach bestaetigter lokaler Abmeldung ruft `auth/logout.ts` zuerst `resetDraft()`
 auf und danach `window.location.replace('/business/login')`. Dadurch werden
-importierte Mock-Artikel und ausgewaehlte Einkaufsquellen entfernt und die
+importierte Artikel aus dem Client-State und ausgewaehlte Einkaufsquellen entfernt und die
 Client-Ansicht neu geladen. Die asynchrone Client-Aktion beendet diese Schritte
 auch dann, wenn Next.js nach dem Cookie-Update den Account-Kart bereits durch
 das Login-Formular ersetzt hat. Bei einer fehlgeschlagenen, nicht bestaetigten
 Abmeldung bleiben Draft und Seite erhalten. Der Button braucht JavaScript.
-Gespeicherte Restaurants und Mitgliedschaften werden nicht geloescht.
+Gespeicherte Restaurants, Mitgliedschaften und Gerichte werden nicht geloescht.
 
 `node --test src/areas/business/auth/accountAccess.test.mjs` prueft die verifizierte
 Account-Ansicht, Auth-Ausfaelle, lokalen Logout-Scope, Remote-/Storage-Fehler und
@@ -234,12 +237,64 @@ Konten, E-Mails oder Datenbank-Schreibvorgaenge erzeugt. Der Testserver wurde be
 
 Manueller Test: Angemeldet Register und Login oeffnen, E-Mail/Weiter pruefen und
 Abmelden druecken. Erwartet wird das anonyme Login-Formular. Beim erneuten Login
-wird derselbe bestehende Restaurant-Datensatz wiederverwendet. Die allgemeine
-Absicherung von Welcome/Onboarding und die Reihenfolge der Onboarding-Schritte
-sind nicht Bestandteil dieses Schritts.
+wird derselbe bestehende Restaurant-Datensatz wiederverwendet. Die Anmeldung fuer
+Welcome/Onboarding wird im folgenden Schritt separat geprueft; die Reihenfolge
+der Onboarding-Schritte wird weiterhin nicht durch diesen Logout-Schritt gespeichert.
 
 Referenzen: [getUser](https://supabase.com/docs/reference/javascript/auth-getuser),
 [signOut und Scope](https://supabase.com/docs/reference/javascript/auth-signout).
+
+### Anmeldung fuer Welcome und Onboarding voraussetzen
+
+`src/areas/business/auth/requireBusinessAccount.ts` verwendet den bestehenden
+`getAuthPageAccount()`-Helfer mit verifiziertem `auth.getUser()`. Nur `signed-in`
+darf die Seite rendern; fehlende/ungueltige Sessions und ein nicht pruefbarer
+Anmeldestatus fuehren fest nach `/business/login`. Dort wird bei einem
+Auth-Ausfall die vorhandene Wiederholungsansicht angezeigt statt geschuetztem Inhalt.
+
+Der Helfer wird vor dem Seiteninhalt in folgenden Server Pages aufgerufen:
+
+- `/business/welcome`
+- `/business/onboarding/menu`
+- `/business/onboarding/menu/pos`
+- `/business/onboarding/menu/pos/complete`
+- `/business/onboarding/purchases`
+
+Auch das Onboarding-Layout prueft die Anmeldung. Die zusaetzlichen Page-Pruefungen
+sind erforderlich, weil Layouts bei Client-Navigation nicht immer neu rendern.
+React `cache()` teilt die Pruefung innerhalb des aktuellen Server-Renderings;
+es gibt keinen globalen oder dauerhaften Cache zwischen Benutzer-Requests.
+UI, Mock-Datenquelle, Proxy, Register/Login/Callback und andere Bereiche behalten
+ihre bisherigen Aufgaben. Es ist kein Nachweis ueber abgeschlossene Onboarding-
+Schritte und keine Restaurant-Auswahl. `/business` und `/business/menu` sind in
+diesem abgegrenzten Schritt noch nicht geschuetzt.
+
+Die Datenbank behaelt RLS und Rollenrechte. Spaetere Server Actions fuer private
+Daten muessen die Identitaet und den Restaurantzugriff selbst pruefen; der
+Seitenzugriff ersetzt keine Datenautorisierung. Hier werden keine Migrationen,
+Bibliotheken oder Projektkonfigurationen hinzugefuegt.
+
+`node --test src/areas/business/auth/requireBusinessAccount.test.mjs` prueft
+Zulassung, festen Redirect und Ablehnung ohne nachfolgende geschuetzte Arbeit.
+Die Node-Tests laufen ausserhalb eines React Server-Renderings und pruefen nicht
+die Render-Pass-Deduplizierung von `cache()`.
+
+Am 2026-11-10 bestanden die 47 Auth-/Proxy-Tests, TypeScript und der Produktionsbuild.
+Alle fuenf geschuetzten Seiten werden dynamisch gerendert. Ein isolierter lokaler
+Produktionsserver mit simulierten Supabase-Netzwerkantworten pruefte alle fuenf
+URLs: anonym jeweils 307 nach Login, mit per echtem SDK erzeugter synthetischer
+Login-Session jeweils 200 und private/no-store, danach anonym wieder abgewiesen.
+Ein zurueckgewiesener Cookie, ein Auth-Ausfall und ein anonymer RSC-Request
+gaben keinen Zugriff. Bei Auth-Ausfall zeigte Login die bestehende Fehleransicht.
+Landing, Guest, Register und Login blieben anonym erreichbar. Der Testserver
+wurde beendet; keine echten Accounts, Sessions oder Datenbankdaten wurden veraendert.
+
+Manuell: In einem privaten Browserfenster `/business/welcome` oder
+`/business/onboarding/purchases` direkt oeffnen; erwartet wird Login. Im
+angemeldeten Fenster sind die Seiten erreichbar. Nach Abmelden aus dem Account-
+Kart von Register/Login werden direkte Links erneut nach Login weitergeleitet.
+
+Referenz: [Next.js Auth-Pruefungen in Pages und Layouts](https://nextjs.org/docs/app/guides/authentication#layouts-and-auth-checks).
 
 Im Repository-Hauptverzeichnis in der ignorierten `.env.local` konfigurieren:
 
@@ -489,8 +544,8 @@ Felder muessen gemeinsam gesetzt sein. Die Kombination Restaurant/Quelle/Quell-I
 ist eindeutig; mehrere manuelle Gerichte sind moeglich. Quellenidentitaet,
 Restaurant-ID, UUID und Zeitstempel koennen Clients nach dem Anlegen nicht aendern.
 Namen und Portionenzahl sind fuer Besitzer editierbar. Preise und deren Auswahl
-werden durch diese Migration nicht veraendert; die Importoberflaeche speichert
-weiterhin ihren bisherigen temporaeren Context.
+werden durch diese Migration nicht veraendert; die spaetere Importdetail-Tabelle
+und der Import-RPC ergaenzen die unten beschriebene Persistenz der Oberflaeche.
 
 Jede Zutat darf pro Gericht nur einmal vorkommen; ihre gesamte Rezeptmenge wird
 in einer Zeile gespeichert. Clients koennen diese Menge aendern oder die Zeile
@@ -543,6 +598,233 @@ bedeutet nicht, dass seine Nährwerte null sind. Spaetere Berechnungen muessen a
 die bereits gespeicherten BLS-Marker fuer fehlende Werte und Messgrenzen erhalten.
 
 Referenz: [PostgreSQL-Fremdschluessel und Loeschregeln](https://www.postgresql.org/docs/17/ddl-constraints.html).
+
+## Importdetails und Preiswahl
+
+Die Migration `20261110000500_create_dish_import_details.sql` wurde am 2026-11-10
+nach Freigabe ueber die CLI auf `makroklar-dev` angewendet. Im Dry-run war genau
+diese eine Migration ausstehend; danach wurden Migration History und Tabelle
+bestaetigt. Ein weiterer Dry-run meldete keine ausstehenden Migrationen.
+Sie fuegt `dish_import_details` hinzu;
+Rezeptmengen, Nährwertberechnung und die bisherigen Migrationen werden nicht geaendert.
+
+| Feld | Inhalt |
+| --- | --- |
+| `dish_id` | Primary Key und Verweis auf das Gericht; hoechstens eine Detailzeile je Gericht. |
+| `restaurant_id` | Zusammengesetzter FK mit `dish_id` auf `dishes(restaurant_id, id)`; verhindert gemischte Restaurantreferenzen. |
+| `sku` | Getrimmte, nicht leere Quell-SKU. Absichtlich kein globaler Unique-Constraint. |
+| `accounting_group_source_id`, `accounting_group_name` | Optionale Quellgruppe; bekannte Werte duerfen nicht leer sein. Die externe ID wird wie `dishes.source_id` als Text gespeichert. Es gibt keinen BLS-Bezug. |
+| `prices` | Geordnetes JSONB-Array aller Optionen, ausschliesslich `{ "name": "Standard", "amount": 12.50 }`. |
+| `selected_price_index` | Verbindliche, nullbasierte Position im gespeicherten Array; keine automatische Wahl oder Default-Position. |
+| `currency` | Aktuell nur `EUR`, passend zur ausdruecklichen Annahme der Demo-Oberflaeche. |
+| `created_at` | Server-Zeitstempel, fuer angemeldete Clients nicht direkt schreibbar. |
+
+Ein Preisname muss ein getrimmter, nicht leerer String sein. Alle Betraege muessen
+JSON-Zahlen, nicht negativ und mit hoechstens zwei Dezimalstellen sein; null,
+Strings, negative Werte und zusaetzliche Felder werden abgelehnt. Auch nicht
+ausgewaehlte Optionen werden geprueft. Preise mit Betrag 0 sind gueltig, fehlende Preise
+nicht: Die Tabelle speichert bereits akzeptierte Artikel und nicht unvollstaendige
+Vorschau-Entwuerfe. Reihenfolge und bearbeiteter Betrag bleiben im Array erhalten;
+der gewaehlte Betrag ergibt sich aus `prices[selected_price_index].amount` und wird
+nicht redundant kopiert. Wenn eine Liste kuerzer wird, muss ihre Auswahl weiterhin
+gueltig sein, gegebenenfalls in derselben UPDATE-Anweisung geaendert werden.
+
+Die kleine immutable Funktion `makroklar_private.valid_import_prices(jsonb)`
+prueft die Array-Eintraege fuer den CHECK-Constraint. Sie liest keine Tabellen,
+verwendet Invoker-Rechte und einen leeren `search_path` und ist nicht im Data-API-
+Schema. `authenticated` und `service_role` haben EXECUTE fuer diese Pruefung;
+`anon`/PUBLIC nicht. `service_role` erhaelt dafuer USAGE auf dem privaten Schema;
+die bestehenden privaten Restaurant-RPCs bleiben fuer diese Rolle ohne EXECUTE.
+
+Vier Owner-RLS-Policies und explizite Spaltenrechte erlauben eigene CRUD-Vorgaenge.
+`dish_id`, `restaurant_id` und `created_at` sind fuer Clients nach dem Insert
+geschuetzt. Ein Besitzer darf Details fuer mehrere eigene Restaurants verwalten,
+aber kein Gericht mit dem falschen eigenen Restaurant kombinieren. Details werden
+beim Loeschen des Gerichtes bzw. Restaurants entfernt; umgekehrt laesst das Loeschen
+der Details das Rezept bestehen. Die Tabelle erzwingt keinen bestimmten Import-
+Provider fuer das Gericht; Quelle/Original-ID und deren Import-Eindeutigkeit liegen
+weiterhin in `dishes`. Der spaetere Importpfad ordnet Details und Quellgericht zu.
+
+`checks/dish_import_details.sql` prueft diese Regeln mit Testkonten ohne Login-
+Zugangsdaten, drei Restaurants (zwei mit demselben Besitzer), mehreren Preisoptionen,
+expliziter Auswahl, 20 ungueltigen JSON-Preisformen, Tenant-FKs, RLS, Rollenrechten,
+geschuetzten Spalten, Administration und Loeschregeln. Alle Fixtures enden in ROLLBACK.
+
+Am 2026-11-10 wurden die vorbereitete Migration und der neue Check zusammen in
+einer einzigen Transaktion auf `makroklar-dev` ausgefuehrt und bestanden. Auch
+`checks/dishes.sql` bestand mit der neuen Tabelle innerhalb derselben Transaktion.
+Danach wurde alles zurueckgerollt: Tabelle und Validator waren wieder abwesend;
+Auth-/Restaurant-/Rezept-/BLS-Anzahlen, Schema-Rechte und Migration History
+entsprachen dem Zustand vor der Pruefung. Es wurden keine echten Anmeldungen
+oder E-Mails ausgeloest. Die SQL-Checks pruefen die Datenbankregeln, noch keinen
+HTTP-Import oder die spaetere UI-Anbindung. Vor der dauerhaften Anwendung betraf
+dieser Vorbereitungsschritt nur SQL und Dokumentation.
+
+Nach der Anwendung bestanden beide Checks erneut gegen das installierte Schema.
+Jeder Check rollte seine Testdaten zurueck; die Auth-/Restaurant-/Rezept-/BLS-
+Anzahlen blieben unveraendert. `database.generated.ts` wurde ueber die CLI aus
+dem tatsaechlichen oeffentlichen Schema neu erzeugt. TypeScript und der
+Produktionsbuild bestanden. Die echte Data API verweigerte einen anonymen
+Lesezugriff auf `dish_import_details` mit HTTP 401 / SQL 42501 und ohne Daten.
+
+Die generierten Typen beschreiben `prices` weiterhin allgemein als `Json` und
+`currency` als `string`; die CHECK-Constraints bilden deren genaueren Vertrag.
+Beim zusammengesetzten FK meldet der CLI-Generator `isOneToOne: false`, waehrend
+der Primary Key `dish_id` weiterhin hoechstens eine Detailzeile pro Gericht
+erzwingt. Der spaetere Reader muss die tatsaechliche API-Form beachten und darf
+eine eingebettete Objektform nicht allein aus der fachlichen Kardinalitaet ableiten.
+
+Den eigenstaendigen Check erneut ausfuehren (die Testdaten werden zurueckgerollt):
+
+```powershell
+$checkFile = (Resolve-Path src/shared/supabase/checks/dish_import_details.sql).Path
+npm.cmd run supabase -- db query --file $checkFile --remote
+```
+
+Die Anwendung liest/schreibt diese Tabelle ueber die unten beschriebene
+Business-Anbindung. Die Migration selbst importiert keine der 70 Demo-Artikel.
+
+Referenzen: [PostgreSQL CHECK und Foreign Keys](https://www.postgresql.org/docs/17/ddl-constraints.html),
+[JSONB-Funktionen](https://www.postgresql.org/docs/17/functions-json.html),
+[Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+## Akzeptierte Lightspeed-Artikel atomar speichern
+
+`20261110000600_import_lightspeed_items.sql` wurde am 2026-11-10 nach Freigabe
+ueber die CLI auf `makroklar-dev` angewendet. Im Dry-run war nur diese Migration
+ausstehend; anschliessend wurden Migration History und der RPC
+`public.import_lightspeed_items(target_restaurant_id uuid, imported_items jsonb)`
+bestaetigt. Die Migration fuegt keine Tabelle
+hinzu und aendert keine bestehenden Tabellenrechte. Der RPC verwendet ausdruecklich
+SECURITY INVOKER und einen leeren `search_path`: Tabellenzugriffe bleiben durch
+die Rechte des angemeldeten Aufrufers und RLS geschuetzt. Nur `authenticated`
+darf den RPC ausfuehren, `anon` und `service_role` nicht.
+
+Die Restaurant-ID wird ausdruecklich uebergeben und gegen `auth.uid()` plus
+Owner-Mitgliedschaft geprueft. Ein unbekanntes und ein fremdes Restaurant werden
+gleich abgewiesen. Der RPC waehlt bei mehreren Restaurants niemals still einen
+Betrieb aus; die Server Action bestimmt den vorgesehenen Betrieb aus dem Account.
+
+`imported_items` ist eine nicht leere Liste bereits gepruefter Auswahlzeilen:
+
+```json
+[
+  {
+    "source_id": "70001",
+    "name": "Bearbeiteter Artikelname",
+    "sku": "SKU-70001",
+    "accounting_group_source_id": "901",
+    "accounting_group_name": "Hauptgerichte",
+    "prices": [
+      { "name": "Standard", "amount": 24.90 },
+      { "name": "Mittag", "amount": 19.50 }
+    ],
+    "selected_price_index": 1,
+    "currency": "EUR"
+  }
+]
+```
+
+IDs sind Strings wie in den Tabellen; die aktuelle interne UI-Nummer wird an der
+Server-Grenze ausdruecklich umgewandelt. Gruppendaten duerfen fehlen
+oder null sein; bekannte Werte sind getrimmte, nicht leere Strings. Quelle ist
+fest `lightspeed-k-series`. Die bestehenden Preisregeln gelten fuer alle Optionen.
+Eine ganzzahlige, gueltige Preisposition und `EUR` sind erforderlich. Unbekannte
+Felder (zum Beispiel Rollen, andere Restaurant-IDs, Portionszahlen oder Kalorien)
+werden abgelehnt, ebenso doppelte Quell-IDs innerhalb einer Auswahl.
+
+Nach der Validierung serialisiert ein Transaction Advisory Lock die Import-
+Aufrufe fuer denselben Betrieb. `ON CONFLICT` auf der vorhandenen Kombination
+Restaurant/Quelle/Original-ID erstellt neue Gerichte oder aktualisiert deren
+Namen. Die UUID, Erstellungszeit, bisherigen Portionszahlen und Zutatenmengen
+bleiben bei erneutem Import bestehen. Neue Gerichte verwenden den bestehenden
+Tabellen-Default `servings = 1` und haben noch keine Rezeptzutaten. Anschliessend
+werden Importdetails ueber `dish_id` eingefuegt/aktualisiert; auch ihr Zeitstempel
+bleibt bei Updates bestehen. Nicht ausgewaehlte Artikel werden nicht geloescht.
+
+Ein RPC-Aufruf ist eine Transaktion: Schlaegt eine spaetere Detailzeile fehl,
+werden auch davor ausgefuehrte Inserts/Updates derselben Auswahl zurueckgerollt.
+Der Rueckgabewert ist die Anzahl akzeptierter Auswahlzeilen, einschliesslich
+aktualisierter Artikel; er ist keine Anzahl neu angelegter Gerichte.
+
+`checks/import_lightspeed_items.sql` prueft Wiederholungen ohne Duplikate,
+gleichlautende Quell-IDs in mehreren Restaurants, Preiswahl/Metadaten, Erhalt
+bestehender Rezepte und UUIDs, Payload-Validierung, Rechte und Tenant-Grenzen.
+Ein nur fuer den Test angelegter Trigger erzwingt einen Fehler bei der zweiten
+Detailzeile, nachdem der erste Artikel bereits geaendert wurde. Der Check
+bestaetigt, dass dann der erste Artikel unveraendert bleibt und kein zweites
+Gericht ohne Details zurueckbleibt. Der Trigger endet ebenfalls im ROLLBACK.
+
+Vor der dauerhaften Anwendung bestanden am 2026-11-10 Migration und Check gemeinsam innerhalb einer einzelnen
+Transaktion auf `makroklar-dev`. Nach ROLLBACK waren RPC, Testfunktion und Trigger
+wieder abwesend; Auth-/Restaurant-/Rezept-/BLS-Anzahlen und Migration History
+blieben unveraendert. Ein echter paralleler Zwei-Verbindungs-Test steht noch aus;
+geprueft sind wiederholte Aufrufe und der gehaltene Advisory Lock.
+
+Nach der Anwendung bestanden `checks/import_lightspeed_items.sql`,
+`checks/dish_import_details.sql` und `checks/dishes.sql` gegen das installierte
+Schema. Jeder Check rollte seine Fixtures zurueck; Datenanzahlen und Migration
+History blieben bei den Tests unveraendert, Testtrigger und Testfunktion waren
+wieder abwesend. Die oeffentliche Data API blockierte einen anonymen RPC-Aufruf
+mit HTTP 401 / SQL 42501. Ein weiterer CLI-Dry-run bestaetigte, dass keine Migration
+mehr aussteht. `database.generated.ts` wurde aus dem echten oeffentlichen Schema
+neu generiert; TypeScript und der Produktionsbuild bestanden.
+
+### Business-Oberflaeche anschliessen
+
+Der Button in `areas/business/components/onboarding/LightspeedItemImport.tsx`
+ruft `data/saveMenuAction.ts` auf. `data/menuStorageModel.ts` validiert die
+Auswahl mit dem bereits vorhandenen Zod: eindeutige sichere Quell-IDs, nicht
+leere Namen/SKUs, alle Preisoptionen mit maximal zwei Nachkommastellen und eine
+explizite gueltige Preiswahl. Unbekannte Eingabefelder werden abgelehnt. Die
+Server Action verifiziert den Benutzer erneut mit `auth.getUser()` und liest
+seine Owner-Mitgliedschaften unter RLS. Genau ein Restaurant ist erforderlich;
+keines verlangt die Kontoeinrichtung, mehrere eine noch ausstehende bewusste
+Restaurantauswahl. Die Restaurant-ID kommt nie aus der Client-Payload. Der RPC
+prueft die Mitgliedschaft unabhaengig davon noch einmal.
+
+Erst nach bestaetigtem RPC-Ergebnis uebernimmt der Context die Auswahl und die
+UI wechselt zur Bestaetigung. Waehrend des Requests sind die Eingaben gesperrt.
+Fehler lassen Vorschau und Auswahl bestehen und liefern eine neutrale Meldung.
+Ein Verbindungsabbruch kann ein bereits erfolgtes Commit unbestaetigt lassen;
+erneutes Speichern ist durch die Quell-ID wiederholbar ohne Duplikate. Eine
+fehlgeschlagene Cache-Invalidierung nach bestaetigtem Commit meldet den Import
+nicht faelschlich als ungespeichert.
+
+`data/savedMenu.ts` liest gespeicherte Lightspeed-Gerichte samt Importdetails
+in Seiten von 500 Zeilen, sortiert nach Erstellungszeit und UUID. Der Adapter
+prueft auch die zusammengesetzten Restaurant-/Gericht-Referenzen, EUR und die
+Preisposition. Fehlende, mehrdeutige oder ungueltige Metadaten liefern einen
+sichtbaren Lesefehler statt einer geratenen oder unvollstaendigen Liste.
+Objekt- und einelementige Array-Einbettungen werden unterstuetzt. Quell-IDs,
+die nicht verlustfrei als interne sichere Zahl darstellbar sind, werden abgewiesen.
+
+`BusinessLayout` uebergibt diesen Snapshot an `BusinessDraftProvider`, bevor
+die untergeordneten Seiten rendern. Ein Schluessel aus Benutzer und Restaurant
+trennt die Client-Drafts. Aktualisierte Server-Snapshots werden vor dem Rendern
+der Kinder uebernommen; temporaere Einkaufsquellen bleiben bei gleicher
+Identitaet erhalten. `revalidatePath('/business', 'layout')` aktualisiert nach
+dem Speichern die Serverdaten. Ein vollstaendiges Neuladen liest sie ebenfalls
+wieder aus Supabase. Abmelden leert nur Client-State, keine gespeicherten Gerichte.
+
+Die 70 JSON-Beispiele bleiben ein lokaler Quellkatalog ohne echte Lightspeed-
+Anbindung. Nur die vom Benutzer gespeicherte Auswahl landet in der Datenbank;
+eine abgewahlte, bereits gespeicherte Zeile wird beim Import nicht geloescht.
+Nicht uebernommene Bearbeitungen und Einkaufsquellen bleiben temporaer.
+Rezeptzutaten, berechnete Naehrwerte oder POS-Zugangsdaten werden nicht erfunden.
+Der spaetere echte Katalog wird weiterhin an `data/lightspeedItems.ts` angebunden.
+
+Pruefungen ohne echte Konten oder Datenbank-Schreibzugriffe:
+
+```powershell
+node --test src/areas/business/data/menuStorage.test.mjs
+```
+
+Der Test deckt Validierung, IDs/Preise, Mandantenzuordnung, RPC-Erfolg/Fehler,
+mehrseitiges Ruecklesen und fehlerhafte gespeicherte Daten mit einem SDK-Mock ab.
+
+Referenzen: [PostgreSQL ON CONFLICT](https://www.postgresql.org/docs/17/sql-insert.html),
+[Invoker-Funktionen](https://www.postgresql.org/docs/17/sql-createfunction.html).
 
 ## Nährwerte berechnen
 
@@ -621,9 +903,9 @@ npm.cmd run supabase -- db query --file $checkFile --remote
 
 Die Berechnung folgt den eingegebenen Mengen und der ausgewaehlten BLS-Zubereitungsform.
 Garverluste, Ausbeuten und Umrechnungen von ml/Stueck sind nicht implementiert.
-Ebenso fehlen noch Auth-/HTTP-Anbindung, Frontend-Anzeige und gespeicherte
-Veroeffentlichungs-Snapshots. Die bisherigen Importdaten liegen weiterhin nur
-im temporaeren Context der Oberflaeche.
+Die Naehrwertfunktion hat noch keine Frontend-Anzeige oder gespeicherte
+Veroeffentlichungs-Snapshots. Die Speisekarten-Auswahl wird dagegen bereits
+ueber die oben beschriebene Business-Anbindung dauerhaft gespeichert.
 
 Referenzen: [Supabase-Funktionen und Zugriffsrechte](https://supabase.com/docs/guides/database/functions),
 [PostgreSQL-Aggregate](https://www.postgresql.org/docs/17/functions-aggregate.html).
