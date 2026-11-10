@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { ArrowIcon } from './components/ui/ArrowIcon';
+import { RegistrationForm } from './components/auth/RegistrationForm';
 import styles from './RegistrationPage.module.css';
 
-export function RegistrationPage() {
+export function RegistrationPage({ notice }: { notice?: 'confirmation-error' | 'setup-error' } = {}) {
   return (
     <main className={styles.page}>
       <div className={styles.card}>
@@ -17,67 +18,24 @@ export function RegistrationPage() {
               Hier kannst du kostenlos ein Benutzerkonto erstellen.
             </p>
           </header>
-          <div className={styles.field}>
-            <label htmlFor="restaurant-name">Name des Restaurants</label>
-            <input
-              className={styles.input}
-              id="restaurant-name"
-              name="restaurantName"
-              type="text"
-              autoComplete="organization"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="username">Nutzername</label>
-            <input
-              className={styles.input}
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-            />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="password">Passwort</label>
-            <input
-              className={styles.input}
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-            />
-          </div>
-          <label className={styles.terms}>
-            <input
-              className={styles.checkbox}
-              name="termsAccepted"
-              type="checkbox"
-            />
-            <span>
-              Ich habe die Allgemeinen Geschäftsbedingungen sowie die
-              Datenschutzbestimmung gelesen und akzeptiere diese.
-            </span>
-          </label>
-          <Link
-            className={styles.registerButton}
-            href="/business/welcome"
-            aria-describedby="registration-note"
-          >
-            Registrieren
-          </Link>
-          <p className={styles.prototypeNote} id="registration-note">
-            Prototyp: Weiter ohne Konto. Die Eingaben werden nicht gespeichert.
-          </p>
+          {notice && (
+            <div className={styles.registrationNotice}>
+              <p className={styles.formError} role="alert">
+                {notice === 'setup-error'
+                  ? 'Deine E-Mail-Adresse ist bestätigt. Die Einrichtung deines Restaurants konnte noch nicht abgeschlossen werden.'
+                  : 'Die Anmeldung über diesen Bestätigungslink konnte nicht abgeschlossen werden. Falls deine E-Mail-Adresse bereits bestätigt ist, melde dich an.'}
+              </p>
+              <Link className={styles.loginLink} href="/business/auth/callback">
+                Einrichtung erneut versuchen
+              </Link>
+            </div>
+          )}
+          {notice !== 'setup-error' && <RegistrationForm />}
           <p className={styles.loginPrompt}>
             Du hast schon ein Benutzerkonto?
-            <span
-              className={styles.loginLink}
-              role="link"
-              aria-disabled="true"
-              title="Login ist noch nicht verfügbar."
-            >
+            <Link className={styles.loginLink} href="/business/login">
               Hier gehts zum Login.
-            </span>
+            </Link>
           </p>
         </div>
       </div>

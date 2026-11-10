@@ -28,17 +28,218 @@ weiterhin als lokaler Dry-run, ohne Datenbankverbindung.
 | --- | --- |
 | `client.ts` | `createClient()` fuer Client Components; die SSR-Bibliothek verwaltet die Auth-Cookies. |
 | `server.ts` | Asynchrones `createClient()` fuer Server Components und Server Actions, mit neuem Client je Aufruf/Request. Route Handlers koennen die ausgehenden `response.headers` uebergeben. |
+| `proxy.ts` | Prueft/erneuert die Session und reicht aktualisierte Cookies und Cache-Header weiter. |
 | `config.ts` | Liest und prueft die beiden oeffentlichen Einstellungen erst bei einem Client-Aufruf. Fehlende Werte blockieren nicht schon den Modulimport. |
 | `database.generated.ts` | Unveraenderte, per CLI erzeugte Typen des oeffentlichen Schemas einschliesslich Tabellen, Beziehungen und RPCs. |
 | `database.types.ts` | Exportiert den verwendeten `Database`-Typ und korrigiert die nullable Ergebnisse von `get_dish_nutrition`. |
 
 Importe erfolgen gezielt aus `@/shared/supabase/client` oder
 `@/shared/supabase/server`; der Server-Client verwendet Next.js `cookies()`.
-Die vorhandenen Seiten verwenden die Clients noch nicht. Registrierung, Login,
-Routenabsicherung und Session-Refresh sind noch nicht angebunden. Vor echtem Auth
-ist insbesondere der Session-Refresh-Proxy noetig; dessen zentraler Einstieg
-`src/proxy.ts` wird als eigene, mit dem Team abzustimmende Aenderung behandelt.
-Bis dahin werden die Helfer nicht fuer einen fertigen Auth-Ablauf ausgegeben.
+Registrierung und Login verwenden den Server-Client fuer `auth.signUp()` bzw.
+`auth.signInWithPassword()`. Routenabsicherung ist noch nicht angebunden. Der abgestimmte zentrale
+Einstieg `src/proxy.ts` laesst den Session-Refresh ausschliesslich fuer
+`/business/:path*` laufen. Landing-, Gast- und Asset-Routen sind nicht im Matcher.
+Der Proxy verwendet `auth.getClaims()`, um eine vorhandene Session zu pruefen
+und gegebenenfalls zu erneuern. Ohne Session bleibt die oeffentliche Business-
+Registrierungsseite erreichbar; es werden noch keine Login-Redirects eingefuehrt.
+Dies ist Session-Pflege, keine alleinige Autorisierung fuer private Daten.
+Spaetere geschuetzte Seiten/Server Actions muessen die Identitaet ebenfalls
+pruefen; Datenbankrechte und RLS bleiben zusaetzlich wirksam.
+
+### Registrierung und Bestaetigungs-Callback
+
+`src/areas/business/components/auth/RegistrationForm.tsx` sendet das bestehende
+Formular mit `useActionState` an `auth/registrationAction.ts`. Die Server Action
+validiert ueber `auth/registration.ts` Restaurantname, E-Mail, Passwort und
+Zustimmung und ruft erst danach `auth.signUp()` auf. Die Passwortanforderungen
+bestimmt Supabase Auth. Passwort, Session und rohe SDK-Fehler werden nicht im
+zurueckgegebenen Formularzustand gespeichert oder protokolliert.
+
+`options.data.restaurant_name` speichert den Restaurantnamen als Auth-User-Metadatum.
+Das ist noch kein `restaurants`-Datensatz und kein Berechtigungsnachweis.
+Bei erforderlicher E-Mail-Bestaetigung erscheint eine neutrale Nachricht im
+bisherigen Formular; es erfolgt noch kein Redirect zum Onboarding. Der Button ist
+waehrend der Anfrage und nach einer erfolgreichen Antwort deaktiviert.
+
+Die Server Action setzt `emailRedirectTo` auf `/business/auth/callback` am Origin
+des Formular-Requests. Next.js prueft Origin/Host von Server Actions; Supabase
+prueft zusaetzlich seine Redirect-Allowlist. Es wird keine neue Site-URL-Variable
+eingefuehrt. Der Callback tauscht `code` ueber `exchangeCodeForSession` aus
+(einschliesslich optionalem `sb_flow_id`), prueft den Nutzer mit `getUser()` und
+ruft erst fuer einen Nutzer mit bestaetigter E-Mail den folgenden RPC auf.
+Erst nach erfolgreicher Einrichtung folgt der feste Redirect `/business/welcome`.
+Ein `next`-/`redirect_to`-Parameter wird nicht als Ziel verwendet. Redirects
+behalten die Session-Cookies und SDK-Cache-Header; Responses sind `no-store`
+und senden `Referrer-Policy: no-referrer`.
+
+Die Migration `20261110000400_complete_restaurant_registration.sql` wurde am
+2026-11-10 nach Freigabe ueber die CLI auf `makroklar-dev` angewendet. Die CLI
+hatte im Dry-run genau diese eine Migration angezeigt; der Eintrag in der
+Migration History und die angelegte Funktion wurden anschliessend bestaetigt. Der RPC
+`complete_restaurant_registration()` erwartet keine Argumente. Er prueft
+`auth.uid()` und die bestaetigte E-Mail in `auth.users`, serialisiert Aufrufe
+pro Konto mit einem Transaction Advisory Lock und liefert das bereits vorhandene
+aelteste eigene Restaurant zurueck (bei gleichem Zeitpunkt nach UUID sortiert).
+Ohne bestehende Mitgliedschaft erstellt er Restaurant und Owner ueber die
+vorhandene atomare Funktion. Das Metadatum `restaurant_name` liefert nur den
+Anzeigenamen; Rolle und Besitzer werden daraus niemals uebernommen. Bestehende
+Restaurants werden weder umbenannt noch dupliziert. Das Anlegen zusaetzlicher
+Restaurants ueber `create_restaurant(text)` bleibt separat moeglich.
+
+Bei fehlgeschlagenem RPC bleibt die Session erhalten. Im bisherigen Formular
+erscheint `Einrichtung erneut versuchen`, das den Callback ohne Code erneut
+aufruft und die Identitaet erneut prueft. Ungueltige/verbrauchte Links zeigen
+eine feste Fehlermeldung; Provider-Details und Tokens werden nicht reflektiert.
+Bei sofortiger Session nach `signUp` wird derselbe Callback verwendet.
+
+Vor dem manuellen Gesamttest im gehosteten Dashboard unter Authentication / URL
+Configuration pruefen bzw. fuer die lokale Entwicklung einstellen:
+
+- Site URL: `http://localhost:3000`.
+- Redirect URLs: `http://localhost:3000/business/auth/callback`.
+- Falls tatsaechlich genutzt, zusaetzlich exakt `http://127.0.0.1:3000/business/auth/callback`.
+- Unter Emails / Confirm signup muss der Bestaetigungslink `{{ .ConfirmationURL }}`
+  verwenden, damit Auth nach der Verifikation mit dem PKCE-Code weiterleitet.
+
+Diese gehosteten Einstellungen wurden hier nicht eingesehen oder geaendert.
+`config.toml` konfiguriert die lokale CLI-Instanz, nicht automatisch das gehostete
+Projekt. Link im selben Browser/Profil und mit demselben Hostnamen oeffnen, in
+dem die Registrierung erfolgte: PKCE benoetigt den Verifier-Cookie. Die Migration
+ist angewendet; die gehosteten URL-/E-Mail-Einstellungen und ein manueller Test
+mit echter Bestaetigung sind weiterhin zu pruefen.
+Geschuetzte Onboarding-Routen sind weiterhin ein eigener Schritt.
+
+`database.generated.ts` wurde anschliessend ueber die CLI aus dem tatsaechlichen
+oeffentlichen Schema neu erzeugt und enthaelt jetzt den RPC-Vertrag. Der
+temporaere Eintrag wurde aus `database.types.ts` entfernt; dort bleibt nur die
+weiterhin erforderliche Korrektur der nullable Naehrwert-Ergebnisse.
+
+`node --test src/areas/business/auth/registration.test.mjs` prueft Validierung,
+Payload, Fehlermeldungen und vertraulichen Formularzustand mit simuliertem
+`signUp`. Diese Tests senden keine E-Mails und erstellen keine Konten.
+
+`node --test src/areas/business/auth/registrationCallback.test.mjs` prueft mit
+simulierten SDK-Antworten den Code-Austausch, verifizierte Identitaet, feste
+Redirects, Fehler, erhaltene Header und Session-Wiederaufnahme.
+`checks/restaurant_registration.sql` prueft mit zurueckgerollten Fixtures die
+wiederholte Ausfuehrung, Metadatenvalidierung, Rechte, bestaetigte Identitaet und
+Mandantentrennung. Am 2026-11-10 wurden die noch ausstehende Migration und dieser
+Check zusammen in einer Transaktion auf `makroklar-dev` ausgefuehrt und danach
+vollstaendig zurueckgerollt. Weder Funktion noch Fixtures blieben bei diesem
+Vorab-Test gespeichert. Nach der dauerhaften Anwendung bestand derselbe SQL-Check
+erneut gegen die installierte Funktion; die Testdaten wurden zurueckgerollt und
+die Anzahlen von Auth-Nutzern, Restaurants und Mitgliedschaften blieben unveraendert.
+Ein echter paralleler Zwei-Request-Test steht noch aus; der SQL-Check verifiziert
+den gehaltenen Advisory Lock und sequenzielle Wiederholungen.
+
+TypeScript und der Produktionsbuild bestanden ebenfalls. Ein separater lokaler
+Produktionsserver wurde mit ausschliesslich simulierten Supabase-Netzwerkantworten
+geprueft: Der echte SSR-SDK-Code tauschte einen synthetischen Code aus und schrieb
+Session-Cookies ueber Next.js' Cookie-Store. Die Cookies erreichten auch bei einem
+simulierten RPC-Fehler die Redirect-Response; mit ihnen gelang die Wiederaufnahme
+ohne erneuten Auth-Code bis zum festen Welcome-Ziel. Der Fehlerbildschirm bot
+keine zweite Registrierung an. Ein ungueltiger Link wurde lokal und ohne
+Provider-Details weitergeleitet. Kein echter Signup, E-Mail-Versand oder
+dauerhafter Datenbankeintrag war Teil dieses HTTP-Tests; der Testserver wurde beendet.
+
+Referenzen: [PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow),
+[E-Mail-Vorlagen](https://supabase.com/docs/guides/auth/auth-email-templates).
+
+### Login fuer bestaetigte Restaurantkonten
+
+`/business/login` bindet `src/areas/business/LoginPage.tsx` ein. Die Seite und
+`components/auth/LoginForm.tsx` verwenden bewusst die CSS-Module-Klassen des
+bestehenden Registrierungskarts, einschliesslich Farben, Abstaenden und Radius.
+Der bisher deaktivierte Login-Link in der Registrierung fuehrt jetzt hierher.
+Es gibt keine neuen Design-Token, Abhaengigkeiten oder Datenbankaenderungen.
+
+`auth/login.ts` validiert E-Mail und Passwort. `auth/loginAction.ts` ruft erst
+bei gueltigen Feldern `signInWithPassword()` auf; Passwoerter werden nicht
+getrimmt, gespeichert oder protokolliert. Der zurueckgegebene Formularzustand
+enthaelt nur E-Mail, Status und sichere Fehlermeldungen, keine Session/Token.
+Falsche Zugangsdaten erhalten dieselbe Meldung, unabhaengig davon, ob das Konto
+existiert. Unbestaetigte E-Mail und Rate-Limits werden verstaendlich angezeigt.
+
+Nach erfolgreichem Login schreibt der bestehende SSR-Client die Session-Cookies
+und die Server Action leitet fest auf `/business/auth/callback` weiter. Dort
+wird die Identitaet erneut ueber `getUser()` geprueft und die bestehende RPC-Funktion
+verwendet, bevor `/business/welcome` folgt. Dadurch koennen bestaetigte Konten
+auch nach einem verbrauchten Bestaetigungslink ihre Restaurant-Einrichtung
+fortsetzen. Ein schon vorhandenes Restaurant wird wiederverwendet; bei einem
+RPC-Fehler bleibt die bekannte Wiederaufnahme ueber den Registrierungskart erhalten.
+
+Manueller Test: Entwicklungsserver starten, `/business/login` oeffnen und mit
+einem selbst bestaetigten Restaurantkonto anmelden. Die echte Anmeldung und
+Restaurant-Erstellung werden vom Nutzer ausgefuehrt. Automatisierte Tests
+verwenden ausschliesslich synthetische Zugangsdaten und simulierte Auth-Antworten.
+
+`node --test src/areas/business/auth/login.test.mjs` prueft Validierung,
+unveraenderte Passwort-Whitespace, neutrale Credential-Fehler, unbestaetigte
+E-Mail, Rate-Limits, fehlende Session, vertraulichen Formularzustand und den
+festen Server-Action-Redirect. Zusammen mit Registrierung, Callback und Proxy
+bestanden am 2026-11-10 alle 32 Tests, TypeScript und der Produktionsbuild.
+Ein isolierter Produktionsserver auf `localhost` pruefte zusaetzlich ueber HTTP
+die Formular-Links, ungueltige Eingaben und falsche Passwoerter. Mit simulierten
+Supabase-Netzwerkantworten schrieb der echte SDK nach einem erfolgreichen
+Password-Login Session-Cookies; diese erreichten den Callback und die gepruefte
+Weiterleitung nach `/business/welcome`. Passwort und rohe Provider-Fehler standen
+nicht im Fehler-HTML. Der Testserver wurde beendet. Es gab keinen echten Login,
+E-Mail-Versand oder Datenbank-Schreibvorgang durch diese Tests.
+
+Referenz: [signInWithPassword](https://supabase.com/docs/reference/javascript/auth-signinwithpassword).
+
+### Bereits angemeldet und Abmelden
+
+Register und Login pruefen jetzt serverseitig ueber
+`src/areas/business/auth/authPageAccount.ts` und `auth.getUser()` den Anmeldestatus.
+Ein angemeldetes Konto sieht `AccountStatusPage.tsx`: die verifizierte eigene
+E-Mail-Adresse, Weiter und Abmelden, statt eines weiteren Auth-Formulars.
+Nur die E-Mail wird an diese Ansicht gegeben, keine Token, User-ID oder kompletten
+User-Metadaten. Die dynamischen Responses sind privat und werden nicht gecacht.
+Bei Auth-Verbindungsfehlern erscheint eine Wiederholungsmoeglichkeit statt eines
+scheinbar ausgeloggten Formulars. Fehlende/ungueltige Sessions erhalten die
+bisherigen anonymen Formulare. Der Weiter-Link nutzt den bestehenden Callback;
+bei einem Setup-Fehler bleibt die idempotente Wiederaufnahme verfuegbar.
+
+`components/auth/LogoutButton.tsx` steht im Account-Kart von Register und Login.
+Auf Welcome bleibt das Logo ohne Abmeldebutton. `auth/logoutAction.ts` verwendet
+ausdruecklich `signOut({ scope: 'local' })`.
+Der SSR-Client entfernt die Cookies der aktuellen Browser-Session; andere
+Geraete bleiben angemeldet. Die aktuelle SDK-Version entfernt bei diesem Scope
+zuerst den lokalen Zustand und versucht danach die Remote-Revocation. Falls nur
+dieser Remote-Versuch scheitert, prueft die Action mit `getSession()` ausschliesslich
+den lokalen Speicherzustand. Ist dieser leer, kann die lokale Abmeldung trotzdem
+abgeschlossen werden. Das ist keine Verwendung von `getSession()` zur Autorisierung.
+
+Nach bestaetigter lokaler Abmeldung ruft `auth/logout.ts` zuerst `resetDraft()`
+auf und danach `window.location.replace('/business/login')`. Dadurch werden
+importierte Mock-Artikel und ausgewaehlte Einkaufsquellen entfernt und die
+Client-Ansicht neu geladen. Die asynchrone Client-Aktion beendet diese Schritte
+auch dann, wenn Next.js nach dem Cookie-Update den Account-Kart bereits durch
+das Login-Formular ersetzt hat. Bei einer fehlgeschlagenen, nicht bestaetigten
+Abmeldung bleiben Draft und Seite erhalten. Der Button braucht JavaScript.
+Gespeicherte Restaurants und Mitgliedschaften werden nicht geloescht.
+
+`node --test src/areas/business/auth/accountAccess.test.mjs` prueft die verifizierte
+Account-Ansicht, Auth-Ausfaelle, lokalen Logout-Scope, Remote-/Storage-Fehler und
+die Reihenfolge Server-Bestaetigung, Draft-Reset, Navigation. Zusammen mit den
+bestehenden Auth-/Proxy-Tests bestanden alle 43 Tests, TypeScript und der Build.
+Ein isolierter Produktionsserver mit simulierten Supabase-Netzwerkantworten
+pruefte per HTTP die anonymen Formulare, Account-Karten mit eigener E-Mail ohne
+Auth-Felder, privaten Cache-Header und Setup-Wiederaufnahme.
+Der echte Logout-Server-Action-Aufruf loeschte die echten SDK-Session-Cookies;
+anschliessend zeigten Register und Login wieder anonyme Formulare ohne E-Mail.
+Keine echte Benutzer-Session wurde bei diesen Tests beendet; es wurden keine
+Konten, E-Mails oder Datenbank-Schreibvorgaenge erzeugt. Der Testserver wurde beendet.
+
+Manueller Test: Angemeldet Register und Login oeffnen, E-Mail/Weiter pruefen und
+Abmelden druecken. Erwartet wird das anonyme Login-Formular. Beim erneuten Login
+wird derselbe bestehende Restaurant-Datensatz wiederverwendet. Die allgemeine
+Absicherung von Welcome/Onboarding und die Reihenfolge der Onboarding-Schritte
+sind nicht Bestandteil dieses Schritts.
+
+Referenzen: [getUser](https://supabase.com/docs/reference/javascript/auth-getuser),
+[signOut und Scope](https://supabase.com/docs/reference/javascript/auth-signout).
 
 Im Repository-Hauptverzeichnis in der ignorierten `.env.local` konfigurieren:
 
@@ -56,14 +257,40 @@ Nach Aenderungen an `.env.local` den Entwicklungsserver neu starten. Pro Team-
 Rechner wird die lokale Datei separat eingerichtet; sie wird nicht eingecheckt.
 
 Der Server-Client schreibt Cookies in erlaubten Server Actions/Route Handlers;
-bei schreibgeschuetzten Server Components bleibt der Refresh Aufgabe des spaeteren
+bei schreibgeschuetzten Server Components bleibt der Refresh Aufgabe des
 Proxy. Andere Cookie-Fehler werden weitergegeben. In Route Handlers die eigenen
 ausgehenden `response.headers` an `createClient(response.headers)` uebergeben und
 dieselbe Response zurueckgeben, damit die vom SDK gelieferten privaten Cache-Header
-mit den Auth-Cookies ausgegeben werden. Beim spaeteren Proxy muessen ebenfalls
-Cookies und Cache-Header auf der richtigen Response erhalten bleiben. Identitaet
-wird spaeter ueber `auth.getClaims()`/`getUser()` geprueft; rohe Session-Cookies
+mit den Auth-Cookies ausgegeben werden. Der Proxy sammelt alle Cookie-Aenderungen
+und Cache-Header eines Requests und erzeugt erst nach `getClaims()` die Response.
+So erreichen die aktuellen Cookies sowohl das nachfolgende Server-Rendering als
+auch den Browser. Mehrere SDK-`setAll`-Aufrufe behalten bereits gelieferte Cache-
+Header; Cookie-Loeschungen und Attribute werden weitergegeben. Die SDK-Cache-
+Header verhindern das Caching einer Response mit erneuerten Session-Cookies.
+Identitaet wird ueber `auth.getClaims()`/`getUser()` geprueft; rohe Session-Cookies
 sind kein Berechtigungsnachweis.
+
+Die beiden oeffentlichen Umgebungsvariablen sind fuer Business-Requests mit
+Proxy auf jedem Entwicklungsrechner und im Deployment erforderlich. Ein neuer
+Server-Client wird je Request erstellt. Der Proxy verwendet keine administrative
+Datenbankverbindung und legt keine Konten an.
+
+`node --test src/shared/supabase/proxy.test.mjs` prueft den Matcher mit Next.js'
+installierter Matcher-Testfunktion und die echten NextRequest/NextResponse-
+Klassen mit simulierten SDK-Ereignissen. Abgedeckt sind anonyme Requests,
+mehrere Refresh-Batches, Cookie-Attribute/-Loeschung, weitergegebene Request-
+Cookies und Cache-Header sowie unerwartete SDK-Fehler. Das Testskript verwendet
+synthetische Einstellungen und erzeugt keine Netzwerkrequests oder Konten.
+
+Am 2026-11-10 bestanden alle vier Proxy-Tests, TypeScript und der Produktionsbuild.
+Next.js erkannte den zentralen Proxy. Ein anschliessender HTTP-Smoke-Test mit
+einem separat gestarteten lokalen Produktionsserver pruefte ohne Anmeldung
+`/business/register`, `/business/onboarding/menu`, `/business/onboarding/purchases`,
+`/` und `/guest`: jeweils 200, keine Redirects oder Session-Cookie-Schreibvorgaenge
+und keine nach aussen gelangten internen Request-Override-Header. Der Testserver
+wurde anschliessend beendet. Es wurden keine Konten angelegt. Ein tatsaechlicher
+Token-Refresh mit einer angemeldeten Sitzung steht noch aus und wird nach
+Anbindung von Registrierung/Login geprueft.
 
 Der CLI-Generator erkennt nicht, dass die SQL-Funktion `get_dish_nutrition`
 bei unvollstaendigen Daten `NULL` liefert. Deshalb bleibt das generierte Original
@@ -405,7 +632,9 @@ Referenzen: [Supabase-Funktionen und Zugriffsrechte](https://supabase.com/docs/g
 
 Die lokale CLI-Konfiguration ist vorbereitet. Die Migration setzt eine Supabase-Datenbank mit
 Auth-Schema und den Standardrollen voraus; sie ist kein Setup fuer einen leeren,
-beliebigen Postgres-Server. Die Registrierungsoberflaeche ist noch nicht angebunden.
+beliebigen Postgres-Server. Das Registrierungsformular sendet Auth-Anfragen;
+die wiederholbar sichere Restaurant-Erstellung nach Bestaetigung ist mit der
+angewendeten Migration `20261110000400` verfuegbar.
 
 Vor weiteren Anwendungen das Zielprojekt pruefen und die ausstehenden
 Migrationen mit `npm.cmd run supabase -- db push --dry-run --skip-vault --remote`

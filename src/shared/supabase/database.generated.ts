@@ -379,6 +379,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_restaurant_registration: { Args: never; Returns: string }
       create_restaurant: { Args: { restaurant_name: string }; Returns: string }
       get_dish_nutrition: {
         Args: { target_dish_id: string }

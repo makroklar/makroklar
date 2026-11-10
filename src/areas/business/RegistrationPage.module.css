@@ -61,6 +61,12 @@
   font-size: var(--font-size-sm);
 }
 
+.accountEmail {
+  margin-block: var(--space-3);
+  overflow-wrap: anywhere;
+  font-weight: var(--font-weight-semibold);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -162,11 +168,35 @@
   cursor: pointer;
 }
 
-.prototypeNote {
+.registerButton:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.formNote,
+.formError {
   margin: 0 0 var(--space-5);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   text-align: center;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.registrationNotice {
+  margin-block: var(--space-5);
+}
+
+.fieldError,
+.formError {
+  color: var(--color-danger);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-danger);
 }
 
 .loginPrompt {
