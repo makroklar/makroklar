@@ -2,7 +2,9 @@ node_modules
 dist
 .next
 next-env.d.ts
+*.tsbuildinfo
 .vercel
 *.local
 .env
 .DS_Store
+/BLS/
