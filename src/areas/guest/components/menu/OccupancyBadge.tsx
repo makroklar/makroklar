@@ -1,4 +1,4 @@
-import { IconClock } from '@/shared/components/icons/IconClock';
+import { IconUsers } from '@/shared/components/icons/IconUsers';
 import styles from './OccupancyBadge.module.css';
 
 type OccupancyBadgeProps = {
@@ -12,7 +12,7 @@ export function OccupancyBadge({ status, onClick }: OccupancyBadgeProps) {
   const content = (
     <>
       <span className={styles.icon}>
-        <IconClock />
+        <IconUsers />
       </span>
       <span className={styles.label}>
         Aktuelle Auslastung: <strong className={styles.status}>{status}</strong>
