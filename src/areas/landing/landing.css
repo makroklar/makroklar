@@ -47,7 +47,59 @@
   }
 }
 
+/* Pfeil der Hero-Demo: sanftes Pulsieren */
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes pulse-soft {
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Nur Firefox: Skalieren wirkt dort stufig. Stattdessen bleibt der Kreis still und ein Ring
+   läuft nach außen und blendet aus – das rendert Firefox flüssig. */
+@supports (-moz-appearance: none) {
+  .pulse-soft {
+    animation: none;
+    will-change: auto;
+  }
+
+  .pulse-soft::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: inherit;
+    animation: pulse-ring 2.2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+    will-change: transform, opacity;
+  }
+}
+
+@keyframes pulse-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pulse-soft,
+  .pulse-soft::before {
+    animation: none;
+  }
+
+  .pulse-soft::before {
+    opacity: 0;
+  }
+
   [data-area='landing'] {
     scroll-behavior: auto;
   }

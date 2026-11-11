@@ -8,6 +8,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Logo } from './Logo';
 import { MobileMenu } from './MobileMenu';
+import { SectionLink } from './SectionLink';
 
 export function Header() {
   const pathname = usePathname();
@@ -66,7 +67,7 @@ export function Header() {
           {primaryNavigation.map((item) => {
             const active = item.section ? activeSection === item.section : pathname === item.href;
             return (
-              <Link
+              <SectionLink
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'true' : undefined}
@@ -77,7 +78,7 @@ export function Header() {
                 )}
               >
                 {item.label}
-              </Link>
+              </SectionLink>
             );
           })}
         </nav>

@@ -108,13 +108,11 @@ export function HeroDemo() {
         </AnimatePresence>
       </div>
 
-      <m.div
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative z-10 -my-6 flex size-13 rotate-90 items-center justify-center rounded-full bg-brand text-lime shadow-soft xl:absolute xl:top-[246px] xl:left-[202px] xl:my-0 xl:rotate-0"
-      >
-        <ArrowRight aria-hidden className="size-6" strokeWidth={2.5} />
-      </m.div>
+      {/* Animation per CSS (.pulse-soft in landing.css); die Drehung sitzt am Icon,
+          damit transform am Kreis frei für die Animation ist */}
+      <div className="pulse-soft relative z-10 -my-6 flex size-13 items-center justify-center rounded-full bg-brand text-lime shadow-soft xl:absolute xl:top-[246px] xl:left-[202px] xl:my-0">
+        <ArrowRight aria-hidden className="size-6 rotate-90 xl:rotate-0" strokeWidth={2.5} />
+      </div>
 
       <div className="relative w-full rounded-3xl border border-brand bg-card px-6 py-6.5 shadow-panel-lg xl:absolute xl:top-[76px] xl:left-[230px] xl:w-[310px]">
         <AnimatePresence mode="wait" initial={false}>
