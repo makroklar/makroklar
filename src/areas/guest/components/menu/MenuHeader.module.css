@@ -1,0 +1,27 @@
+/* Fläche 393 × 220 aus Figma, Inhalt 24 px vom Rand – die Kategorien laufen rechts bis zum Bildschirmrand */
+.header {
+  display: flex;
+  flex-direction: column;
+  /* Auf breiten Bildschirmen beginnt der Inhalt bündig mit der Spalte der Gerichte */
+  padding: 19px 0 21px calc(var(--content-inset) + 24px);
+  color: var(--color-text);
+  background: var(--color-primary-light);
+}
+
+.name {
+  margin: 0 24px 12px 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-extrabold);
+  line-height: normal;
+}
+
+.notice {
+  margin: 9px 24px 0 0;
+  /* 12 px statt 10 px aus Figma – besser lesbar */
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-snug);
+}
+
+.tabs {
+  margin-top: 30px;
+}

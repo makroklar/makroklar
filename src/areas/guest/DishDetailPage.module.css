@@ -1,0 +1,78 @@
+/* Abstände zwischen den Blöcken aus dem 393 px breiten Figma-Frame „Detailansicht“ */
+.page {
+  flex: 1;
+  padding-bottom: 40px;
+}
+
+.info {
+  margin-top: 37px;
+}
+
+/* Karte 23 px vom linken, 25 px vom rechten Rand */
+.carbs {
+  margin-top: 50px;
+  padding: 0 25px 0 23px;
+}
+
+/* Texte 30 px vom linken Rand */
+.ingredients,
+.allergens {
+  padding: 0 21px 0 30px;
+}
+
+.ingredients {
+  margin-top: 48px;
+}
+
+.allergens {
+  margin-top: 24px;
+}
+
+/* Tablets und aufgeklappte Foldables: Bild links (bleibt beim Scrollen stehen), Angaben rechts */
+@media (min-width: 760px) {
+  .page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    column-gap: var(--space-5);
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding-right: var(--space-5);
+  }
+
+  .hero {
+    position: sticky;
+    top: 0;
+    grid-row: 1 / span 4;
+    align-self: start;
+  }
+
+  .info,
+  .carbs,
+  .ingredients,
+  .allergens {
+    grid-column: 2;
+  }
+
+  /* Oben bündig mit dem Bild, der Infoblock wird zur Karte */
+  .info {
+    margin-top: 52px;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .carbs {
+    margin-top: var(--space-5);
+    padding: 0;
+  }
+
+  .ingredients,
+  .allergens {
+    padding: 0 0 0 30px;
+  }
+
+  .ingredients {
+    margin-top: var(--space-6);
+  }
+}

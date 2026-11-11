@@ -1,0 +1,23 @@
+.menu {
+  flex: 1;
+}
+
+/* Karten 20 px unter dem Kopfbereich, 9 px vom linken / 15 px vom rechten Rand, 14 px Abstand wie in Figma.
+   Auf breiteren Geräten (Foldables, Tablets) stehen die Karten in Spalten von mindestens 360 px (darunter passen die Nährwerte nicht mehr) */
+.dishes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 14px 24px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 20px 15px var(--space-3) 9px;
+  list-style: none;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-5);
+  font-size: var(--font-size-md);
+  text-align: center;
+  color: var(--color-text);
+}

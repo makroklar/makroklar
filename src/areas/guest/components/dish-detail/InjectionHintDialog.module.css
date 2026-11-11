@@ -1,0 +1,66 @@
+/* Karte aus Figma (275 px), für ruhigeren Textumbruch auf 320 px verbreitert – Text 23 px links / 22 px rechts eingerückt */
+.dialog {
+  width: 320px;
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: 28px 22px 22px 23px;
+  font-family: var(--font-family);
+  color: var(--color-text-strong);
+  background: var(--color-primary-light);
+  border: none;
+  border-radius: 10px;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.25);
+}
+
+/* In Figma folgt auf den Titel eine leere 12-px-Zeile */
+.title {
+  margin: 0 0 18px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: normal;
+}
+
+.text {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: normal;
+  /* Ruhigerer rechter Rand in der schmalen Spalte: Zeilen eines Absatzes gleich lang, lange Wörter getrennt (lang="de") */
+  hyphens: auto;
+  hyphenate-limit-chars: 8 4 4;
+  text-wrap: balance;
+}
+
+.value {
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+}
+
+/* Leere 14-px-Zeile vor dem letzten Absatz */
+.spaced {
+  margin-top: 21px;
+}
+
+.button {
+  display: block;
+  width: 213px;
+  max-width: 100%;
+  height: 43px;
+  /* 15 px Abstand plus 5 px Leerraum, den der Textrahmen in Figma unten hat */
+  margin: 20px auto 0;
+  font-family: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  background: var(--color-primary);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

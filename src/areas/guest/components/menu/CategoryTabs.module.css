@@ -1,0 +1,31 @@
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tab {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: normal;
+  white-space: nowrap;
+  color: var(--color-primary);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.active {
+  color: var(--color-accent);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}

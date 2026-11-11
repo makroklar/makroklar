@@ -1,0 +1,77 @@
+/* Maße aus dem 393 px breiten Figma-Frame. Oben ohne die Statusleiste des iPhone-Rahmens (Figma: Pfeil bei 44 px) */
+.hero {
+  position: relative;
+  padding-top: 52px;
+  color: var(--color-text);
+}
+
+/* Pfeil 31 × 31 in einem 36 × 31 Feld, 30 px vom Rand, ragt 3 px ins Bild */
+.back {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-5);
+  left: 30px;
+  display: flex;
+  align-items: center;
+  width: 36px;
+  height: 31px;
+}
+
+/* Figma nutzt „Arrow right“ um 180° gedreht */
+.backIcon {
+  display: block;
+  transform: rotate(180deg);
+}
+
+/* Bild 307 × 301, bei 393 px Breite 37 px vom linken Rand */
+.imageArea {
+  position: relative;
+  width: 307px;
+  max-width: calc(100% - 2 * var(--space-5));
+  margin-left: calc(50% - 159.5px);
+}
+
+/* Nicht beschneiden: der Schatten der Pizza reicht unten über den Rahmen hinaus.
+   Der überstehende Teil des PNG ist durchsichtig */
+.imageWrapper {
+  position: relative;
+  aspect-ratio: 307 / 301;
+}
+
+/* Das freigestellte PNG sitzt 15 % höher, damit die Pizza im Rahmen steht wie in Figma */
+.image {
+  position: absolute;
+  top: -15%;
+  left: 0;
+  width: 100%;
+  height: auto;
+  /* Der durchsichtige Überstand darf den Hinweis darunter nicht verdecken */
+  pointer-events: none;
+  /* Schatten folgt der Form der Pizza statt dem Rechteck */
+  filter: drop-shadow(var(--shadow-card-lg));
+}
+
+/* Kamera-Button 33 × 33 unten rechts, 5 px vom rechten Bildrand */
+.camera {
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.camera img {
+  display: block;
+}
+
+.hint {
+  margin: 22px 0 0;
+  padding: 0 39px 0 40px;
+  font-size: var(--font-size-xs);
+  line-height: normal;
+  text-align: center;
+}

@@ -1,0 +1,39 @@
+.badge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  margin: 0;
+  padding: 4px 6px;
+  font-family: inherit;
+  color: var(--color-text-strong);
+  background: var(--color-primary-transparent);
+  border: none;
+  border-radius: 8px;
+}
+
+button.badge {
+  cursor: pointer;
+}
+
+button.badge:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-icon);
+}
+
+.label {
+  padding: 0 6px 0 5px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.status {
+  font-weight: var(--font-weight-medium);
+}

@@ -1,0 +1,15 @@
+.allergens {
+  font-size: var(--font-size-sm);
+  line-height: normal;
+  color: var(--color-text);
+}
+
+.title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-medium);
+}
+
+.list {
+  margin: 0;
+}

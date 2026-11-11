@@ -1,0 +1,92 @@
+.dishCard {
+  position: relative;
+  /* Füllt die Höhe seiner Rasterzelle, damit Karten in einer Zeile gleich hoch sind */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: 7px;
+  padding-bottom: 3px;
+  color: var(--color-text);
+}
+
+/* Bildausschnitt 117 × 115 – das Bild füllt ihn, egal welches Seitenverhältnis es hat.
+   Nicht beschneiden, sonst fehlt unten der Schatten */
+.imageWrapper {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 117px;
+  aspect-ratio: 112 / 110;
+}
+
+.image {
+  object-fit: cover;
+  /* Schatten folgt der Form der Pizza statt dem Rechteck */
+  filter: drop-shadow(0 1px 5px rgb(0 0 0 / 0.25));
+}
+
+.card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  margin-left: 60px;
+  padding: 10px 10px 10px 60px;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-primary);
+  border-radius: 10px;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  /* Preis sitzt im Design etwas weiter innen als Text und Nährwerte */
+  padding-right: 7px;
+}
+
+.name {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-extrabold);
+  line-height: normal;
+}
+
+.price {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+/* Mindestens zwei Zeilen hoch, damit Karten mit kurzer Beschreibung nicht kleiner werden */
+.description {
+  min-height: calc(2 * var(--line-height-snug) * 1em);
+  margin: 3px 0 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
+/* Bei gestreckten Karten unten an der Karte */
+.nutrients {
+  display: flex;
+  gap: 5px;
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 4px 5px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  background: var(--color-accent);
+  border-radius: 8px;
+}
+
+.chipCarbs {
+  background: var(--color-secondary);
+}

@@ -1,5 +1,11 @@
-import { Placeholder } from '../../shared/components/placeholder/Placeholder';
+import { LogoHeader } from './components/layout/LogoHeader';
+import { MenuView } from './MenuView';
 
 export function MenuPage() {
-  return <Placeholder />;
+  return (
+    <>
+      <LogoHeader />
+      <MenuView />
+    </>
+  );
 }
