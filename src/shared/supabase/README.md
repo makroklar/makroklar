@@ -912,6 +912,57 @@ Referenzen: [Supabase-Funktionen und Zugriffsrechte](https://supabase.com/docs/g
 
 ## Verifikation und weitere Migrationen
 
+### Vorbereitet: Abschluss der Restaurant-Einrichtung (2026-11-11)
+
+`migrations/20261111000100_complete_business_onboarding.sql` ist lokal vorbereitet,
+**noch nicht dauerhaft angewendet**. BLS-Zutaten behalten ihre Dataset-/Code-Referenz;
+OFF-Produkte und manuelle Zutaten erhalten einen quellenspezifischen JSON-Snapshot
+und eine stabile Identitaet. Manuelle Bestaetigungen speichern Version, Benutzer
+und Zeit. Neue Gerichte erhalten eine Client-UUID und optional einen Preis.
+Rezeptzeilen enthalten genau eine Menge in g oder ml, ohne automatische Umrechnung.
+
+`save_restaurant_onboarding` prueft den angemeldeten Eigentuemer und speichert
+Zutaten, neue Gerichte, Rezeptzuordnungen und die berechnete Zusammenfassung
+atomar. Versionspruefung und Request-ID schuetzen vor veralteten Schreibzugriffen
+und doppelten Wiederholungen. Die Funktion ist SECURITY DEFINER mit leerem
+search_path; jede Zuordnung wird restaurantbezogen aufgeloest. Neue Spalten und
+die Abschlusstabelle sind nicht direkt durch angemeldete Clients beschreibbar.
+Nicht mehr ausgewaehlte, unbenutzte Zutaten werden entfernt; referenzierte Zutaten
+und nicht mitgesendete Rezepte bleiben erhalten. Vorhandene manuelle Gerichte
+erhalten beim Schemawechsel ihre bestehende ID als Client-ID.
+
+`get_dish_nutrition` behaelt seinen Vertrag und erweitert ihn um OFF/manuelle
+Werte und ml. BLS-Werte kommen weiterhin aus dem Originalkatalog. Fehlende Werte,
+Bezugsbasis oder Zubereitungsangaben ergeben keine vollstaendigen Summen. Solche
+Gerichte werden als Entwuerfe gezaehlt. Die Zusammenfassung ist ein gespeicherter
+Berechnungsstand, kein veroeffentlichter Gaeste-Snapshot. Allergene, Garverluste,
+Dichten und Gastfreigabe sind nicht Teil dieser Migration.
+
+`read_restaurant_onboarding` stellt die gespeicherten Eingaben wieder her.
+`read_saved_off_product` liest nur unter RLS sichtbare, bestaetigte OFF-Snapshots.
+Das Business-Backend verwendet eine Frischefrist von 30 Tagen; Suchen schreiben
+nichts. Neue OFF-Daten werden vor finalem Speichern im Server Action gegen
+serverseitige Daten geprueft. Die SQL-Funktion selbst kontaktiert OFF nicht;
+eigene manuelle Angaben sind keine extern verifizierten Naehrwerte. Es gibt
+keinen globalen OFF-Katalog und keine Veroeffentlichung.
+
+`checks/business_onboarding.sql` prueft Mischrezepte mit g/ml, Portionen, echte
+Nullwerte, fehlende Werte, Wiederherstellung, stabile IDs, Bestaetigungsnachweis,
+RLS, fehlende Rechte, konkurrierende Versionen, idempotente Wiederholung und
+vollstaendigen Rollback bei einem spaeten Fehler. Migration und Check bestanden
+am 2026-11-11 auf `makroklar-dev` gemeinsam in einer zurueckgerollten Transaction.
+Auch die bisherigen Checks fuer Zutaten, Gerichte, Naehrwerte, Importdetails und
+Lightspeed-Import bestanden mit dem erweiterten Schema. Anschliessend wurden
+das fehlende neue Schema und die Abwesenheit der Testkonten bestaetigt.
+
+Nach ausdruecklicher Freigabe ueber die CLI anwenden und den Check erneut als
+postgres ausfuehren. Danach `database.generated.ts` regenerieren und die drei
+vorlaeufigen RPC-Ergaenzungen in `database.types.ts` entfernen; die Korrektur der
+nullable Naehrwert-Rueckgabe bleibt notwendig. Ein Browser-End-to-End-Test des
+finalen Speicherns steht bis dahin aus.
+
+### Allgemeines Vorgehen
+
 Die lokale CLI-Konfiguration ist vorbereitet. Die Migration setzt eine Supabase-Datenbank mit
 Auth-Schema und den Standardrollen voraus; sie ist kein Setup fuer einen leeren,
 beliebigen Postgres-Server. Das Registrierungsformular sendet Auth-Anfragen;

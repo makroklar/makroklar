@@ -6,7 +6,7 @@ import { appendCatalogFood, hasCompleteCatalogNutrition, fromBls, fromOpenFoodFa
 const serverMock = 'data:text/javascript,' + encodeURIComponent('export const createClient = async () => globalThis.__foodClient;');
 registerHooks({ resolve(specifier, context, next) {
   if (specifier === '@/shared/supabase/server') return { url: serverMock, shortCircuit: true };
-  if (specifier === './foodSearchModel') return next(specifier + '.ts', context);
+  if (['./foodSearchModel', './offProducts', './onboardingModel', './recipeDraft'].includes(specifier)) return next(specifier + '.ts', context);
   return next(specifier, context);
 } });
 const { searchFoods } = await import('./searchFoodsAction.ts');
@@ -21,8 +21,12 @@ function off() {
 }
 let state;
 const originalFetch = globalThis.fetch;
-after(() => { globalThis.fetch = originalFetch; delete globalThis.__foodClient; });
+const originalNow = Date.now;
+let clock = originalNow();
+after(() => { globalThis.fetch = originalFetch; Date.now = originalNow; delete globalThis.__foodClient; });
 beforeEach(() => {
+  clock += 31 * 60_000;
+  Date.now = () => clock;
   state = { user: { id: 'owner' }, authError: null, tables: [], requests: [], status: 200, body: off(), dbError: false,
     datasets: dataset, foods: [{ bls_code: 'A100', name_de: 'Apfel' }], values, definitions };
   globalThis.fetch = async (url, options) => {
@@ -31,6 +35,7 @@ beforeEach(() => {
   };
   globalThis.__foodClient = {
     auth: { getUser: async () => ({ data: { user: state.user }, error: state.authError }) },
+    rpc: async name => { assert.equal(name, 'read_saved_off_product'); return { data: state.cached ?? null, error: null }; },
     from(table) {
       const call = { table, filters: [] }; state.tables.push(call);
       const data = { nutrition_datasets: state.datasets, bls_foods: state.foods, bls_food_nutrients: state.values, nutrients: state.definitions }[table];
@@ -45,7 +50,7 @@ beforeEach(() => {
         maybeSingle() { return query; },
         then(resolve) { return Promise.resolve({ data, error: state.dbError ? { message: 'private details' } : null }).then(resolve); },
       };
-      // Deliberately no insert, update, upsert, delete or RPC methods: searches must only read.
+      // No mutations; the only RPC above is a read under RLS.
       return query;
     },
   };
@@ -174,4 +179,25 @@ test('network failures become retry feedback and the per-process quota prevents 
   for (let i = 0; i < 15; i++) await searchFoods(barcode);
   assert.ok(state.requests.length <= 12);
   assert.match((await searchFoods(barcode)).message, /eine Minute/);
+});
+
+test('confirmed OFF snapshot is reused for 30 days; stale records are refreshed without writing on search', async () => {
+  state.cached = fromOpenFoodFacts(off(), barcode, new Date(clock - 29 * 86400000).toISOString());
+  assert.equal((await searchFoods(barcode)).status, 'success');
+  assert.equal(state.requests.length, 0);
+  state.cached.source.fetchedAt = new Date(clock - 31 * 86400000).toISOString();
+  assert.equal((await searchFoods(barcode)).status, 'success');
+  assert.equal(state.requests.length, 1);
+});
+
+test('unconfirmed OFF results stay in process memory for five minutes; concurrent requests share one fetch', async () => {
+  const results = await Promise.all([searchFoods(barcode), searchFoods(barcode)]);
+  assert.ok(results.every(result => result.status === 'success'));
+  assert.equal(state.requests.length, 1);
+  clock += 4 * 60_000;
+  await searchFoods(barcode);
+  assert.equal(state.requests.length, 1);
+  clock += 2 * 60_000;
+  await searchFoods(barcode);
+  assert.equal(state.requests.length, 2);
 });

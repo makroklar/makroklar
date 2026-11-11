@@ -60,7 +60,7 @@ export function PurchasesPage() {
       <p className={styles.manualAction}>
         <Link className={styles.manualLink} href="/business/onboarding/purchases/manual">Regional / Manuell hinzufügen</Link>
       </p>
-      <p className={styles.note}>Die Liste ist vorläufig. Beim Neuladen oder Abmelden gehen die Einträge verloren.</p>
+      <p className={styles.note}>Neue Änderungen bleiben bis „Einrichtung abschließen“ vorläufig. Bereits gespeicherte Lebensmittel werden beim nächsten Besuch wieder geladen.</p>
       <div className={styles.actions}>
         <Link
           className={styles.continueButton}

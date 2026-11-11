@@ -18,6 +18,10 @@ export type DishNutritionRow = NutritionFields & (
 export type Database = Omit<GeneratedDatabase, 'public'> & {
   public: Omit<GeneratedDatabase['public'], 'Functions'> & {
     Functions: Omit<GeneratedDatabase['public']['Functions'], 'get_dish_nutrition'> & {
+      // Prepared migration 20261111000100; regenerate database.generated.ts after application.
+      read_restaurant_onboarding: { Args: { target_restaurant_id: string }; Returns: import('./database.generated').Json };
+      read_saved_off_product: { Args: { barcode: string }; Returns: import('./database.generated').Json };
+      save_restaurant_onboarding: { Args: { target_restaurant_id: string; payload: import('./database.generated').Json; base_version: number; request_id: string }; Returns: import('./database.generated').Json };
       get_dish_nutrition: Omit<GeneratedNutrition, 'Returns'> & {
         Returns: DishNutritionRow[];
       };

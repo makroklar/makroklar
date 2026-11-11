@@ -1,11 +1,9 @@
 'use server';
 
 import { createClient } from '@/shared/supabase/server';
-import { blsNutrients, fromBls, fromOpenFoodFacts, literalNamePattern, parseFoodQuery } from './foodSearchModel';
+import { blsNutrients, fromBls, literalNamePattern, parseFoodQuery } from './foodSearchModel';
+import { getOffProduct } from './offProducts';
 import type { FoodSearchResult } from '../types/catalogFood';
-
-// Conservative per-process protection for OFF's shared read quota. Not a distributed limiter.
-const offRequests: number[] = [];
 
 export async function searchFoods(input: unknown): Promise<FoodSearchResult> {
   let query;
@@ -18,23 +16,7 @@ export async function searchFoods(input: unknown): Promise<FoodSearchResult> {
     if (authError || !user) return { status: 'error', message: 'Bitte melde dich erneut an, um Lebensmittel zu suchen.' };
 
     if (query.kind === 'barcode') {
-      const now = Date.now();
-      while (offRequests.length && offRequests[0] <= now - 60_000) offRequests.shift();
-      if (offRequests.length >= 12) return { status: 'error', message: 'Zu viele Barcode-Abfragen. Bitte warte eine Minute.' };
-      offRequests.push(now);
-      // No durable OFF cache exists yet. Search never writes to the database.
-      const url = new URL(`https://world.openfoodfacts.org/api/v3.6/product/${query.value}`);
-      url.searchParams.set('fields', 'code,product_name,product_name_de,brands,quantity,nutrition,last_modified_t');
-      url.searchParams.set('lc', 'de');
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'makroklar/0.1.0 (https://github.com/chiaradjml/makroklar)' },
-        cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(8_000),
-      });
-      if (response.status === 404) return { status: 'success', foods: [], hasMore: false };
-      if (response.status === 429) return { status: 'error', message: 'Open Food Facts erhält gerade zu viele Anfragen. Bitte versuche es später erneut.' };
-      if (!response.ok) throw new Error('OFF unavailable');
-      const food = fromOpenFoodFacts(await response.json(), query.value, new Date().toISOString());
-      return { status: 'success', foods: [food], hasMore: false };
+      return await getOffProduct(query.value, client);
     }
 
     const { data: dataset, error: datasetError } = await client.from('nutrition_datasets')

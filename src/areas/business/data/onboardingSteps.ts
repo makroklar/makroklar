@@ -19,7 +19,7 @@ export const onboardingSteps: readonly OnboardingStep[] = [
   },
   {
     id: 'dishes',
-    label: 'Gerichte hinzufügen',
+    label: 'Gerichte vervollständigen',
     href: '/business/onboarding/dishes',
   },
 ];
