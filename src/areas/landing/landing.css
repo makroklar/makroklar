@@ -47,7 +47,30 @@
   }
 }
 
+/* Pfeil der Hero-Demo: sanftes Pulsieren um 10 %.
+   Bewusst als 3D-Transform statt scale(): Bei scale() rastet Firefox den Kreis auf ganze
+   Pixel ein, was auf Bildschirmen ohne Retina stufig aussieht. Mit perspective + translateZ
+   wird er gleich groß skaliert (100 / (100 - 9.09) ≈ 1.1), aber ohne Einrasten. */
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: perspective(100px) translateZ(0);
+  }
+  50% {
+    transform: perspective(100px) translateZ(9.09px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pulse-soft {
+    animation: none;
+  }
+
   [data-area='landing'] {
     scroll-behavior: auto;
   }
