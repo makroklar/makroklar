@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { getMenuSession } from './savedMenu';
 import { onboardingPayloadSchema, completionSummarySchema, type CompletionSummary } from './onboardingModel';
 import { getOffProduct } from './offProducts';
+import { publishOffCache } from './offCache';
+import type { CatalogFood } from '../types/catalogFood';
 
 export type FinishResult = { status: 'saved'; summary: CompletionSummary }
   | { status: 'error'; message: string };
@@ -16,6 +18,7 @@ export async function finishOnboarding(input: unknown): Promise<FinishResult> {
     const session = await getMenuSession();
     if (!session.restaurantId || session.error) return { status: 'error', message: session.error ?? 'Bitte melde dich erneut an.' };
     const payload = parsed.data.payload;
+    const cacheCandidates: CatalogFood[] = [];
     // Never promote client-edited OFF values into the persistent cache.
     for (let index = 0; index < payload.catalogFoods.length; index++) {
       const food = payload.catalogFoods[index];
@@ -24,6 +27,7 @@ export async function finishOnboarding(input: unknown): Promise<FinishResult> {
       if (verified.status === 'error') return verified;
       if (verified.foods.length !== 1) return { status: 'error', message: `${food.name} konnte nicht mehr gefunden werden. Bitte prüfe dieses Lebensmittel.` };
       payload.catalogFoods[index] = verified.foods[0];
+      if (verified.cacheCandidate) cacheCandidates.push(verified.cacheCandidate);
     }
     // Recheck units after authoritative OFF data is restored, then normalize decimals for SQL.
     const checked = onboardingPayloadSchema.safeParse(payload);
@@ -41,6 +45,9 @@ export async function finishOnboarding(input: unknown): Promise<FinishResult> {
       : result.error.code === 'PGRST202' ? 'Die Rezept-Speicherung ist noch nicht eingerichtet. Deine Eingaben bleiben vorläufig.'
       : 'Das Speichern konnte nicht bestätigt werden. Deine Eingaben bleiben erhalten; bitte versuche es erneut.' };
     const summary = completionSummarySchema.parse(result.data);
+    // Publication follows a confirmed save; failure must not report that save as failed.
+    try { await publishOffCache(session.restaurantId, parsed.data.requestId, cacheCandidates); }
+    catch { console.warn('[OFF cache] Publication unavailable; restaurant data remains saved.'); }
     try { revalidatePath('/business', 'layout'); } catch { /* A confirmed commit remains saved. */ }
     return { status: 'saved', summary };
   } catch { return { status: 'error', message: 'Das Speichern konnte nicht bestätigt werden. Bitte versuche es erneut.' }; }

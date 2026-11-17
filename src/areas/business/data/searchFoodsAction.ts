@@ -16,7 +16,8 @@ export async function searchFoods(input: unknown): Promise<FoodSearchResult> {
     if (authError || !user) return { status: 'error', message: 'Bitte melde dich erneut an, um Lebensmittel zu suchen.' };
 
     if (query.kind === 'barcode') {
-      return await getOffProduct(query.value, client);
+      const result = await getOffProduct(query.value, client);
+      return result.status === 'error' ? result : { status: 'success', foods: result.foods, hasMore: result.hasMore };
     }
 
     const { data: dataset, error: datasetError } = await client.from('nutrition_datasets')

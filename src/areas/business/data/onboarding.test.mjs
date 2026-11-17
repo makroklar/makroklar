@@ -6,6 +6,7 @@ const moduleFor = code => ({ url: 'data:text/javascript,' + encodeURIComponent(c
 registerHooks({ resolve(specifier, context, next) {
   if (specifier === './savedMenu') return moduleFor('export const getMenuSession = async () => globalThis.__onboardingSession;');
   if (specifier === './offProducts') return moduleFor('export const getOffProduct = async () => globalThis.__offVerification;');
+  if (specifier === './offCache') return moduleFor('export const publishOffCache = (...args) => globalThis.__publishOffCache(...args);');
   if (specifier === 'next/cache') return moduleFor('export const revalidatePath = () => {};');
   if (['./onboardingModel','./foodSearchModel','./recipeDraft'].includes(specifier)) return next(specifier + '.ts', context);
   return next(specifier, context);
@@ -23,9 +24,11 @@ const payload = () => ({ importedIds: [], customDishes: [{ id: dishId, name: 'Su
   recipes: { [key]: { servings: '2', ingredients: [{ foodId: id, quantity: '12,50', unit: 'g' }] } } });
 const emptySummary = { version: 1, restaurantName: 'Restaurant', dishCount: 0, foodCount: 0, completeCount: 0, draftCount: 0, dishes: [] };
 const input = () => ({ payload: payload(), version: 0, requestId: 'f7110000-0000-4000-8000-000000000090' });
-let calls, rpcResult;
+let calls, rpcResult, publications;
 beforeEach(() => {
   calls = []; rpcResult = { data: emptySummary, error: null };
+  publications = [];
+  globalThis.__publishOffCache = async (...args) => { assert.ok(calls.length > 0); publications.push(args); };
   globalThis.__onboardingSession = { restaurantId: 'owned-restaurant', error: null, supabase: { rpc: async (...args) => { calls.push(args); return rpcResult; } } };
 });
 
@@ -82,6 +85,34 @@ test('OFF values are replaced by server-verified data before persistent storage'
   assert.equal(calls[0][1].payload.catalogFoods[0].proteinG, null);
   globalThis.__offVerification = { status: 'error', message: 'Unavailable' }; calls = [];
   assert.equal((await finishOnboarding(value)).status, 'error'); assert.equal(calls.length, 0);
+});
+
+test('only trusted fetched products are published after successful save, never on failed saves', async () => {
+  const value = input(); value.payload.recipes = {};
+  const off = { id: 'off:3017620422003', name: 'OFF', detail: '', basis: '100g', preparation: 'as_sold',
+    energyKcal: 99, proteinG: null, fatG: 0, carbohydrateG: null,
+    source: { kind: 'off', barcode: '3017620422003', fetchedAt: '2026-11-17T10:00:00Z', modifiedAt: null } };
+  value.payload.catalogFoods = [off];
+  const trusted = { ...off, energyKcal: 12 };
+  globalThis.__offVerification = { status: 'success', foods: [trusted], hasMore: false, cacheCandidate: trusted };
+  rpcResult = { data: null, error: { code: '40001' } };
+  assert.equal((await finishOnboarding(value)).status, 'error');
+  assert.equal(publications.length, 0);
+  rpcResult = { data: emptySummary, error: null };
+  assert.equal((await finishOnboarding(value)).status, 'saved');
+  assert.deepEqual(publications[0], ['owned-restaurant', value.requestId, [trusted]]);
+  delete globalThis.__offVerification.cacheCandidate;
+  await finishOnboarding(value);
+  assert.deepEqual(publications[1][2], []);
+});
+
+test('cache publication failure cannot turn a committed save into a failure', async () => {
+  globalThis.__publishOffCache = async () => { throw new Error('private key'); };
+  const originalWarn = console.warn;
+  const messages = []; console.warn = message => messages.push(message);
+  try { assert.equal((await finishOnboarding(input())).status, 'saved'); }
+  finally { console.warn = originalWarn; }
+  assert.equal(messages.length, 1); assert.ok(!messages[0].includes('private key'));
 });
 test('conflicts and RPC failures are visible without leaking provider details or clearing drafts', async () => {
   for (const code of ['40001','PGRST202','XX000']) {

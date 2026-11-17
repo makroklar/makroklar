@@ -10,6 +10,7 @@ registerHooks({ resolve(specifier, context, next) {
   return next(specifier, context);
 } });
 const { searchFoods } = await import('./searchFoodsAction.ts');
+const { getOffProduct } = await import('./offProducts.ts');
 const barcode = '3017620422003';
 const dataset = { id: 'dataset-1', source_version: '4.0', basis_quantity: 100, basis_unit: 'g' };
 const definitions = [{ code: 'ENERCC', unit: 'kcal' }, { code: 'PROT625', unit: 'g' }, { code: 'FAT', unit: 'g' }, { code: 'CHO', unit: 'g' }];
@@ -35,7 +36,12 @@ beforeEach(() => {
   };
   globalThis.__foodClient = {
     auth: { getUser: async () => ({ data: { user: state.user }, error: state.authError }) },
-    rpc: async name => { assert.equal(name, 'read_saved_off_product'); return { data: state.cached ?? null, error: null }; },
+    rpc: async name => {
+      assert.ok(['read_saved_off_product', 'read_shared_off_product'].includes(name));
+      return name === 'read_saved_off_product'
+        ? { data: state.own ?? null, error: state.ownError ?? null }
+        : { data: state.cached ?? null, error: state.cacheError ?? null };
+    },
     from(table) {
       const call = { table, filters: [] }; state.tables.push(call);
       const data = { nutrition_datasets: state.datasets, bls_foods: state.foods, bls_food_nutrients: state.values, nutrients: state.definitions }[table];
@@ -181,12 +187,54 @@ test('network failures become retry feedback and the per-process quota prevents 
   assert.match((await searchFoods(barcode)).message, /eine Minute/);
 });
 
-test('confirmed OFF snapshot is reused for 30 days; stale records are refreshed without writing on search', async () => {
+test('shared OFF cache is reused for 30 days; stale records are refreshed without writing on search', async () => {
   state.cached = fromOpenFoodFacts(off(), barcode, new Date(clock - 29 * 86400000).toISOString());
   assert.equal((await searchFoods(barcode)).status, 'success');
   assert.equal(state.requests.length, 0);
   state.cached.source.fetchedAt = new Date(clock - 31 * 86400000).toISOString();
   assert.equal((await searchFoods(barcode)).status, 'success');
+  assert.equal(state.requests.length, 1);
+});
+
+test('accepted restaurant values survive shared-cache changes and are never republished', async () => {
+  state.own = fromOpenFoodFacts(off(), barcode, new Date(clock - 60 * 86400000).toISOString());
+  state.own.energyKcal = 50;
+  state.cached = { ...state.own, energyKcal: 999, source: { ...state.own.source, fetchedAt: new Date(clock - 1000).toISOString() } };
+  const result = await getOffProduct(barcode, globalThis.__foodClient, { forSave: true });
+  assert.equal(result.foods[0].energyKcal, 50);
+  assert.equal(result.cacheCandidate, undefined);
+  assert.equal(state.requests.length, 0);
+  assert.equal((await searchFoods(barcode)).foods[0].energyKcal, 999);
+});
+
+test('snapshot read failures stop saving instead of silently replacing accepted values', async () => {
+  state.ownError = { message: 'private' };
+  assert.equal((await getOffProduct(barcode, globalThis.__foodClient, { forSave: true })).status, 'error');
+  state.ownError = null; state.own = { invalid: true };
+  assert.equal((await getOffProduct(barcode, globalThis.__foodClient, { forSave: true })).status, 'error');
+  assert.equal(state.requests.length, 0);
+});
+
+test('a private fresh snapshot still avoids OFF calls when shared caching is unavailable', async () => {
+  state.cacheError = { code: 'PGRST202' };
+  state.own = fromOpenFoodFacts(off(), barcode, new Date(clock - 86400000).toISOString());
+  assert.equal((await searchFoods(barcode)).status, 'success');
+  assert.equal(state.requests.length, 0);
+  const result = await getOffProduct(barcode, globalThis.__foodClient, { forSave: true });
+  assert.equal(result.cacheCandidate, undefined);
+  state.own.source.fetchedAt = new Date(clock - 31 * 86400000).toISOString();
+  await searchFoods(barcode);
+  assert.equal(state.requests.length, 1);
+});
+
+test('missing shared cache falls back to OFF; internal publication metadata is not sent to browser', async () => {
+  state.cacheError = { code: 'PGRST202' };
+  const result = await searchFoods(barcode);
+  assert.equal(result.status, 'success');
+  assert.equal(result.cacheCandidate, undefined);
+  assert.equal(state.requests.length, 1);
+  const verified = await getOffProduct(barcode, globalThis.__foodClient, { forSave: true });
+  assert.deepEqual(verified.cacheCandidate, verified.foods[0]);
   assert.equal(state.requests.length, 1);
 });
 

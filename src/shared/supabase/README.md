@@ -31,7 +31,7 @@ weiterhin als lokaler Dry-run, ohne Datenbankverbindung.
 | `proxy.ts` | Prueft/erneuert die Session und reicht aktualisierte Cookies und Cache-Header weiter. |
 | `config.ts` | Liest und prueft die beiden oeffentlichen Einstellungen erst bei einem Client-Aufruf. Fehlende Werte blockieren nicht schon den Modulimport. |
 | `database.generated.ts` | Unveraenderte, per CLI erzeugte Typen des oeffentlichen Schemas einschliesslich Tabellen, Beziehungen und RPCs. |
-| `database.types.ts` | Exportiert den verwendeten `Database`-Typ und korrigiert die nullable Ergebnisse von `get_dish_nutrition`. |
+| `database.types.ts` | Exportiert `Database` und korrigiert nullable Ergebnisse von `get_dish_nutrition`. Die angewendeten RPCs stammen aus den generierten Typen. |
 
 Importe erfolgen gezielt aus `@/shared/supabase/client` oder
 `@/shared/supabase/server`; der Server-Client verwendet Next.js `cookies()`.
@@ -912,10 +912,10 @@ Referenzen: [Supabase-Funktionen und Zugriffsrechte](https://supabase.com/docs/g
 
 ## Verifikation und weitere Migrationen
 
-### Vorbereitet: Abschluss der Restaurant-Einrichtung (2026-11-11)
+### Angewendet: Abschluss der Restaurant-Einrichtung (2026-11-17)
 
-`migrations/20261111000100_complete_business_onboarding.sql` ist lokal vorbereitet,
-**noch nicht dauerhaft angewendet**. BLS-Zutaten behalten ihre Dataset-/Code-Referenz;
+`migrations/20261111000100_complete_business_onboarding.sql` wurde am 2026-11-17
+nach Freigabe per CLI auf `makroklar-dev` angewendet. BLS-Zutaten behalten ihre Dataset-/Code-Referenz;
 OFF-Produkte und manuelle Zutaten erhalten einen quellenspezifischen JSON-Snapshot
 und eine stabile Identitaet. Manuelle Bestaetigungen speichern Version, Benutzer
 und Zeit. Neue Gerichte erhalten eine Client-UUID und optional einen Preis.
@@ -944,7 +944,8 @@ Das Business-Backend verwendet eine Frischefrist von 30 Tagen; Suchen schreiben
 nichts. Neue OFF-Daten werden vor finalem Speichern im Server Action gegen
 serverseitige Daten geprueft. Die SQL-Funktion selbst kontaktiert OFF nicht;
 eigene manuelle Angaben sind keine extern verifizierten Naehrwerte. Es gibt
-keinen globalen OFF-Katalog und keine Veroeffentlichung.
+in dieser angewendeten Migration keinen globalen OFF-Katalog und keine
+Veroeffentlichung. Die separate, inzwischen angewendete Cache-Erweiterung steht unten.
 
 `checks/business_onboarding.sql` prueft Mischrezepte mit g/ml, Portionen, echte
 Nullwerte, fehlende Werte, Wiederherstellung, stabile IDs, Bestaetigungsnachweis,
@@ -955,11 +956,105 @@ Auch die bisherigen Checks fuer Zutaten, Gerichte, Naehrwerte, Importdetails und
 Lightspeed-Import bestanden mit dem erweiterten Schema. Anschliessend wurden
 das fehlende neue Schema und die Abwesenheit der Testkonten bestaetigt.
 
-Nach ausdruecklicher Freigabe ueber die CLI anwenden und den Check erneut als
-postgres ausfuehren. Danach `database.generated.ts` regenerieren und die drei
-vorlaeufigen RPC-Ergaenzungen in `database.types.ts` entfernen; die Korrektur der
-nullable Naehrwert-Rueckgabe bleibt notwendig. Ein Browser-End-to-End-Test des
-finalen Speicherns steht bis dahin aus.
+Nach der dauerhaften Anwendung bestanden `business_onboarding.sql`,
+`dish_nutrition.sql` und `restaurant_foundation.sql` erneut, jeweils mit Rollback
+der Testdaten. Der Migrationseintrag ist vorhanden. Die Bestandspruefung ergab
+unveraendert 70 Gerichte, 7.140 BLS-Lebensmittel und ein Benutzerkonto; keine
+Restaurant-Zutaten, Rezeptzeilen, Abschlussdatensaetze oder Testkonten blieben
+zurueck. `database.generated.ts` wurde aus dem echten Schema regeneriert und die
+drei vorlaeufigen RPC-Ergaenzungen in `database.types.ts` wurden entfernt. Die
+Korrektur der nullable Naehrwert-Rueckgabe bleibt erhalten.
+
+Alle 121 lokalen Tests bestanden. Der Produktions-Build kompilierte einschliesslich
+TypeScript und Seitengenerierung, endete aber mit `SecurityFatalError` wegen der
+Next.js-Version 16.4.3. `npm audit` bestaetigte einen moderaten Hinweis
+`GHSA-mfr8-8qww-v76h`; Abhaengigkeiten wurden in diesem Schritt nicht geaendert.
+Der Browser-End-to-End-Test des finalen Speicherns und Neuladens steht noch aus:
+Die UI-Automation wurde gestoppt, weil sie die aktuelle Browser-URL nicht sicher
+bestimmen konnte. Die SQL-Checks ersetzen diesen Browser-Test nicht.
+
+### Angewendet: gemeinsamer OFF-Produktcache (2026-11-17)
+
+`20261117000100_shared_off_cache.sql` wurde am 2026-11-17 ueber die CLI auf
+`makroklar-dev` angewendet. Der Migration-History-Eintrag wurde bestaetigt.
+Die neue Tabelle `makroklar_private.off_products` speichert pro Barcode nur
+Providerdaten, Abrufzeit und Cache-Zeit. Keine Restaurant-ID, Auswahlhistorie,
+privaten Notizen oder Rezepte. Sie liegt ausserhalb des exponierten Schemas,
+hat RLS ohne Client-Policies und keine direkten Grants an API-Rollen.
+
+- `read_shared_off_product(barcode)` ist ein `SECURITY DEFINER` mit leerem
+  `search_path`. Nur angemeldete Restaurant-Eigentuemer erhalten ein frisches
+  Produkt (weniger als 30 Tage alt); es gibt keinen Listen-Endpunkt.
+- `publish_confirmed_off_products(...)` darf ausschliesslich `service_role`
+  aufrufen. Die Server Action liefert nur Kandidaten aus einem serverseitigen
+  OFF-Abruf, nachdem `save_restaurant_onboarding` erfolgreich war. Die RPC prueft
+  die bestaetigte Request-ID, die gespeicherte Produktauswahl und Frische, verwendet
+  eine Feld-Allowlist und ersetzt niemals neuere Daten durch aeltere.
+- `save_restaurant_onboarding` bleibt ein authentifizierter Tenant-Schreibpfad;
+  er befuellt den globalen Cache nicht. Ein direkter RPC-Aufruf eines Nutzers
+  darf dessen eigene Daten beeinflussen, aber keine Providerdaten fuer andere
+  Restaurants veroeffentlichen. Deshalb kein Trigger und kein Backfill aus
+  bisherigen `restaurant_ingredients.source_data`.
+- Gespeicherte Restaurant-Snapshots bleiben unveraendert. Beim erneuten Speichern
+  liest der Server zuerst den eigenen Snapshot unter RLS, unabhaengig von dessen
+  Alter. Eine spaetere explizite Produktaktualisierung braucht einen eigenen
+  Review-/Neuberechnungsablauf. Der gemeinsame Cache dient neuen Auswahlen.
+
+Optionale Serverkonfiguration, nur in `.env.local`
+bzw. in den Server-Secrets der Deployment-Umgebung:
+
+```dotenv
+# Secret key desselben Supabase-Projekts. Nie NEXT_PUBLIC_ davor setzen.
+SUPABASE_SECRET_KEY=<sb_secret_...>
+```
+
+Der echte Wert wird lokal eingetragen, nicht in Git oder Chat. Der Client in
+`src/areas/business/data/offCache.ts` ist durch `server-only` abgeschirmt, nutzt
+keine Browser-Cookies, speichert keine Session und ruft nur die Cache-Publish-RPC
+auf. Der vorhandene Publishable-Key bleibt fuer normale Auth-/RLS-Anfragen.
+Der Secret-Key hat administrative Rechte und gehoert ausschliesslich auf den
+Server. Der Entwickler hat ihn lokal in der ignorierten `.env.local` eingetragen;
+sein Wert wurde nicht ausgegeben, in Versionsdateien geschrieben oder vom Agenten
+aus Supabase abgerufen. Ein neuer Dev-Server-Prozess laedt die Einstellung.
+
+Ohne Schluessel funktioniert das Speichern des Restaurants weiter. Die Suche
+nutzt bei einem Shared-Cache-Miss weiterhin einen eigenen frischen Snapshot
+(30 Tage), ohne diesen fuer andere Restaurants zu publizieren. Ein fehlender
+Cache, ein Fehler oder Timeout beim anschliessenden Publish setzt den bestaetigten
+Speichervorgang nicht zurueck. Es gibt keine Queue und keine garantierte spaetere
+Nachlieferung; ein anderes Restaurant kann dann erneut OFF abfragen. Ein Prozess-
+abbruch zwischen Save und Publish hat dieselbe Wirkung. Die Cache-Batch selbst
+ist atomar; ein ungueltiges Produkt rollt alle Aenderungen dieser Batch zurueck.
+
+Validierung am 2026-11-17: 130 Node-Tests und `npx.cmd tsc --noEmit --incremental false`
+bestanden. Migration und `checks/shared_off_cache.sql` wurden auf `makroklar-dev`
+in einer Transaction geprueft und komplett zurueckgerollt. Auch
+`business_onboarding.sql` und `dish_nutrition.sql` bestanden gegen das temporaer
+erweiterte Schema. Anschliessend wurden die Abwesenheit der neuen Cache-Tabelle
+und der Testkonten bestaetigt. Der Cache-Check prueft zwei Restaurants, verbotene
+Schreibzugriffe, keine fremden Auswahlen/Rezepte, Null vs. Nullwert, unveraenderte
+Rezeptwerte, Frische, keine Duplikate, kein Zuruecksetzen durch alte Daten und
+Batch-Rollback. Keine echten OFF-Anfragen oder Browser-End-to-End-Tests in dieser
+Vorbereitungsrunde. Den bereits bekannten Next.js-Build-Sicherheitsfehler behebt
+diese Aenderung nicht; Dependencies wurden nicht geaendert.
+
+Nach Anwendung am 2026-11-17 bestanden `shared_off_cache.sql`,
+`business_onboarding.sql`, `dish_nutrition.sql` und `restaurant_foundation.sql`
+erneut. Alle Testdaten wurden zurueckgerollt. Unveraendert: 70 Gerichte, ein
+Auth-Konto, keine gespeicherten Zutaten/Rezeptzeilen/Abschluesse; der neue Cache
+ist leer. Die Public-Typen wurden per CLI regeneriert und beide temporaeren
+RPC-Ergaenzungen aus `database.types.ts` entfernt.
+
+Ein HTTP-Test mit dem lokal konfigurierten Secret-Key erreichte die Publish-RPC.
+Ein absichtlich nicht vorhandener bestaetigter Speichervorgang wurde mit `22023`
+abgewiesen; dabei gab es keine Datenwrites. Beide Cache-RPCs lehnten anonyme
+HTTP-Aufrufe mit `42501` ab. Diese Tests bestaetigen Schluessel und API-Grants,
+ersetzen aber keinen Browser-Test oder erfolgreichen Publish ueber HTTP.
+
+Manuell offen: Dev-Server neu starten, dann mit zwei Testrestaurants pruefen:
+Suche allein fuellt den Cache nicht, finaler Save schon, das zweite Restaurant
+verwendet die frische Kopie. Vorhandene Produkte in einem Restaurant werden
+absichtlich nicht nachtraeglich in den gemeinsamen Cache uebernommen.
 
 ### Allgemeines Vorgehen
 

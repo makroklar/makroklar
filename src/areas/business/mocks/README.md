@@ -138,18 +138,43 @@ actual validation/save results, without timed fake intermediate successes.
 placeholder dashboard. Calculation results are stored in the completion summary
 and available through `get_dish_nutrition`; a dish-level results UI is not added yet.
 
-The prepared migration is `20261111000100_complete_business_onboarding.sql`.
-It is **not applied yet**: until application, final save reports that storage
-is not configured. After application, `readOnboarding.ts` restores saved foods,
-custom dishes and recipes in `BusinessLayout`. A failed read blocks final save;
+Migration `20261111000100_complete_business_onboarding.sql` was applied to
+`makroklar-dev` on 2026-11-17 and the public TypeScript types were regenerated.
+`readOnboarding.ts` restores saved foods, custom dishes and recipes in
+`BusinessLayout`. Post-application SQL checks passed with their test data rolled
+back; the actual browser save/reload flow still needs manual verification.
+A failed read blocks final save;
 refreshing server data never replaces dirty drafts. Version checks reject stale
 saves; retrying the same request is idempotent. No localStorage is used.
 
 OFF query results also have a bounded, per-process five-minute memory cache;
 server-verified results can be reused for final save for 30 minutes. Only final
-initialization writes confirmed products durably. Persistent snapshots belong
-to each restaurant, not a public cross-tenant cache; search never updates them.
-Changing the 30-day freshness policy is localized to `offProducts.ts`.
+initialization writes confirmed products durably. Persistent accepted snapshots
+belong to each restaurant; search never updates them. Saving an existing food
+preserves that accepted snapshot even when newer provider data is available.
+An explicit review/update workflow is not implemented yet.
+
+Applied to `makroklar-dev` on 2026-11-17: `20261117000100_shared_off_cache.sql`
+adds a separate, provider-only cache shared by restaurants. Post-application SQL
+checks passed and their fixtures were rolled back. Barcode search uses `read_shared_off_product`, then
+the restaurant's own fresh snapshot as a private fallback, process memory, then
+OFF; a missing cache RPC does not remove the existing tenant cache.
+The shared 30-day freshness rule is enforced in both SQL and `offProducts.ts`.
+Search and Hinzufuegen do not write to it. After a successful final save,
+`offCache.ts` publishes only newly fetched/server-verified candidates through a
+server-only client using optional `SUPABASE_SECRET_KEY`. No key is in this repo.
+The local key was configured by the developer and its RPC access verified without
+printing the value. Restart the dev server to load the updated environment.
+Owner snapshots are never republished as trusted provider data. The migration
+does not backfill them either. Shared updates do not change accepted restaurant
+values, recipe quantities or calculations, and tenant deletion does not clear
+the shared product. See the shared Supabase README for activation and permissions.
+
+Publication is best-effort, after the atomic restaurant save, with a five-second
+request timeout. Missing configuration, publication failure or process interruption
+does not undo that save. There is no durable retry queue/backfill: such a product
+may require another OFF call for a different restaurant. An existing accepted
+snapshot stays private and is not refreshed just to populate the shared cache.
 
 Run the fixture/adapter tests from the repository root:
 `node --test src/areas/business/data/lightspeedItems.test.mjs`
@@ -171,3 +196,6 @@ Automatic search timing, stale responses, request deduplication and cache expiry
 
 Recipe validation, final-save boundary and restoration (mocked SDK):
 `node --test src/areas/business/data/onboarding.test.mjs`
+
+Optional cache publisher configuration, field allowlist and failure handling:
+`node --test src/areas/business/data/offCache.test.mjs`
