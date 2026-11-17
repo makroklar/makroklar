@@ -29,12 +29,12 @@ export function MobileMenu() {
         <div className="mt-auto flex flex-col gap-3">
           <SheetClose asChild>
             <Button asChild variant="ghost">
-              <Link href="/business">Login</Link>
+              <Link href="/business/login">Login</Link>
             </Button>
           </SheetClose>
           <SheetClose asChild>
             <Button asChild>
-              <Link href="/kontakt">Kostenlos ausprobieren</Link>
+              <Link href="/business/register">Kostenlos ausprobieren</Link>
             </Button>
           </SheetClose>
         </div>
