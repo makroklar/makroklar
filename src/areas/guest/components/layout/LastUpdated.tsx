@@ -15,10 +15,10 @@ const timeFormat = new Intl.DateTimeFormat('de-DE', {
 // „zuletzt geändert am …“ unten rechts auf jedem Screen (Figma „Gastansicht“, Text 21:263)
 export function LastUpdated({ date }: { date: Date }) {
   return (
-    <footer className={styles.footer}>
+    <p className={styles.footer}>
       <time dateTime={date.toISOString()}>
         zuletzt geändert am {dateFormat.format(date)} - {timeFormat.format(date)} Uhr
       </time>
-    </footer>
+    </p>
   );
 }

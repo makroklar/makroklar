@@ -1,5 +1,5 @@
 .footer {
-  margin-top: auto;
+  margin: auto 0 0;
   padding: var(--space-3) calc(var(--content-inset) + 18px) var(--space-3);
   font-size: var(--font-size-2xs);
   line-height: normal;

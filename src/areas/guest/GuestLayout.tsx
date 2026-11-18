@@ -7,6 +7,7 @@ import '@fontsource/poppins/600.css';
 import '@fontsource/poppins/700.css';
 import '@fontsource/poppins/800.css';
 import '@fontsource/poppins/900.css';
+import { GuestFooter } from './components/layout/GuestFooter';
 import { LastUpdated } from './components/layout/LastUpdated';
 import styles from './GuestLayout.module.css';
 
@@ -19,6 +20,7 @@ export function GuestLayout({ children }: { children: ReactNode }) {
     <div className={styles.layout} data-area="guest">
       {children}
       <LastUpdated date={lastUpdated} />
+      <GuestFooter />
     </div>
   );
 }
