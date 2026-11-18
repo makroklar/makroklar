@@ -11,7 +11,7 @@ import styles from './DishDetailPage.module.css';
 export function DishDetailPage() {
   return (
     <>
-      <LogoHeader backHref="/guest" />
+      <LogoHeader closeHref="/guest" />
       <main className={styles.page}>
         <div className={styles.hero}>
           <DishHero name={dish.name} image={dish.heroImage} />

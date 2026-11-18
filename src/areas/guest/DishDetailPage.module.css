@@ -43,7 +43,8 @@
 
   .hero {
     position: sticky;
-    top: 0;
+    /* unter dem LogoHeader, der beim Scrollen 64 px hoch ist (+ 1 px Linie) */
+    top: 65px;
     grid-row: 1 / span 4;
     align-self: start;
   }

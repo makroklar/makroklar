@@ -10,6 +10,7 @@ import '@fontsource/poppins/900.css';
 import { GuestFooter } from './components/layout/GuestFooter';
 import { LastUpdated } from './components/layout/LastUpdated';
 import styles from './GuestLayout.module.css';
+import { GuestHistoryTracker } from './navigation/guestHistory';
 
 // Bis die Datenbank angebunden ist: Zeitpunkt des Builds, da die Seiten beim Deployment statisch erzeugt werden
 const lastUpdated = new Date();
@@ -18,6 +19,7 @@ const lastUpdated = new Date();
 export function GuestLayout({ children }: { children: ReactNode }) {
   return (
     <div className={styles.layout} data-area="guest">
+      <GuestHistoryTracker />
       {children}
       <LastUpdated date={lastUpdated} />
       <GuestFooter />

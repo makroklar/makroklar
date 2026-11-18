@@ -28,11 +28,11 @@ export function ComponentsPage() {
 
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>LogoHeader</h3>
-            <div className={styles.fullBleed}>
+            <div className={`${styles.fullBleed} ${styles.headerDemo}`}>
               <LogoHeader />
             </div>
-            <div className={styles.fullBleed}>
-              <LogoHeader backHref="/guest" />
+            <div className={`${styles.fullBleed} ${styles.headerDemo}`}>
+              <LogoHeader closeHref="/guest" />
             </div>
           </section>
 

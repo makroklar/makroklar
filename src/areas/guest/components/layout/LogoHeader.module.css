@@ -1,39 +1,99 @@
-/* Logo 188 × 41, 18 px Abstand zum folgenden Kopfbereich wie in Figma.
-   Oben ohne die Statusleiste des iPhone-Rahmens (Figma: 65 px) */
+/* Maße und Verhalten wie der Header der Landingpage (areas/landing/components/layout/Header.tsx):
+   72 px hoch, ab 1024 px 92 px, beim Scrollen 64 px. Logo 144 px breit, ab 1024 px 188 px */
+.spacer {
+  height: 72px;
+}
+
 .header {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  padding: var(--space-5) 0 18px;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  background: var(--color-background);
+  border-bottom: 1px solid transparent;
+  transition: all 300ms;
 }
 
-.header img {
+/* Gescrollt: halbtransparent mit Weichzeichner, Linie und Schatten */
+.header[data-scrolled] {
+  background: rgb(255 255 255 / 0.85);
+  border-color: var(--color-border);
+  box-shadow: 0 6px 14px rgb(5 41 31 / 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: 1440px;
+  height: 72px;
+  margin: 0 auto;
+  padding: 0 16px;
+  transition: all 300ms;
+}
+
+.header[data-scrolled] .inner {
+  height: 64px;
+}
+
+.logo {
+  display: inline-flex;
+  width: 144px;
+}
+
+.logo img {
   display: block;
+  width: 100%;
+  height: auto;
 }
 
-/* Zurück-Pfeil 31 × 31, mittig in einer 44 × 44 Tippfläche. Der Pfeil steht 30 px vom Rand und
-   optisch mittig zu den Kleinbuchstaben des Logos: im PNG liegt die x-Höhe bei 9–26 px von 41 px,
-   unten ist das Bild leer – die Mitte des Bildes wäre daher zu tief.
-   Auf schmalen Handys (320 px) rückt er bis 16 px an den Rand, damit er nicht am Logo klebt.
-   Auf breiten Bildschirmen bündig mit dem Inhalt */
-.back {
-  position: absolute;
-  top: calc(var(--space-5) + 17.5px - 22px);
-  left: calc(var(--content-inset) + clamp(16px, 25vw - 64px, 30px) - 6.5px);
+/* Schließen-Kreuz 31 × 31 in einer 44 × 44 Tippfläche, rechts bündig mit dem Seitenrand.
+   Das Logo bleibt so auf beiden Seiten an derselben Stelle */
+.close {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
+  margin-right: -6.5px;
   border-radius: 50%;
+  transition: background-color 200ms;
 }
 
-.back:focus-visible {
+.close:hover {
+  background: var(--color-primary-light);
+}
+
+.close:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 
-/* Figma nutzt „Arrow right“ um 180° gedreht */
-.backIcon {
-  transform: rotate(180deg);
+.close img {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .inner {
+    padding: 0 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacer,
+  .inner {
+    height: 92px;
+  }
+
+  .logo {
+    width: 188px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .inner {
+    padding: 0 80px;
+  }
 }
