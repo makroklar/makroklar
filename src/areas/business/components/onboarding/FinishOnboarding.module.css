@@ -1,0 +1,29 @@
+.finishAction { margin-top: var(--space-5); text-align: center; font-size: var(--font-size-sm); }
+.finishAction p { color: var(--color-text-muted); }
+.primaryButton { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3); padding: 14px var(--space-5); border: 0; border-radius: 14px; background: var(--color-primary); color: var(--color-accent); font: inherit; font-weight: var(--font-weight-bold); cursor: pointer; }
+.primaryButton:hover { background: var(--color-accent-light); color: var(--color-primary); }
+.dialog { box-sizing: border-box; width: min(49rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 0; border-radius: var(--radius-onboarding-card); background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-onboarding-card); font-family: inherit; }
+.dialog::backdrop { background: var(--color-background); }
+.processing { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; min-height: 35.4375rem; padding: 80px var(--space-5) var(--space-6); }
+.processing header { text-align: center; max-width: 603px; }
+.processing h2, .failure h2 { margin: 0; font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.processing header p { margin: var(--space-1) 0 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-light); }
+.progress { appearance: none; display: block; width: min(360px, 100%); height: 10px; margin-top: 112px; border: 0; border-radius: var(--radius-full); overflow: hidden; background: var(--color-progress-track); color: var(--color-primary); }
+.progress::-webkit-progress-bar { background: var(--color-progress-track); border-radius: var(--radius-full); }
+.progress::-webkit-progress-value { background: var(--color-primary); border-radius: var(--radius-full); }
+.progress::-moz-progress-bar { background: var(--color-primary); border-radius: var(--radius-full); }
+.stages { display: grid; align-self: center; gap: var(--space-3); margin: 76px 0 var(--space-4); padding: 0; list-style: none; font-size: var(--font-size-sm); }
+.stages li { display: flex; align-items: center; gap: var(--space-3); }
+.stages svg { flex-shrink: 0; color: var(--color-primary); }
+.spinner { flex-shrink: 0; animation: processing-spin 1.5s linear infinite; }
+.welcome { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 35.4375rem; padding: var(--space-7) clamp(var(--space-5), 8vw, 129px); }
+.welcome h2 { margin: 0; color: var(--color-primary); font-size: clamp(2rem, 4vw, 3rem); font-weight: var(--font-weight-bold); line-height: 1.21; overflow-wrap: anywhere; }
+.welcome p { margin: var(--space-4) 0 var(--space-6); font-size: 18px; line-height: 29px; }
+.welcomeActions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--space-4); }
+.dashboardLink { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-1); color: var(--color-primary); text-decoration: none; font-size: 15px; font-weight: var(--font-weight-bold); }
+.failure { padding: var(--space-7) var(--space-5); }
+.textButton { border: 0; background: transparent; padding: 0; color: var(--color-primary); font: inherit; text-decoration: underline; cursor: pointer; }
+.dialog :focus-visible, .primaryButton:focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }
+@keyframes processing-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+@media (max-width: 600px) { .processing { padding-top: var(--space-7); } .progress { margin-top: var(--space-7); } .stages { margin-top: var(--space-7); } .welcome { padding: var(--space-5); } }

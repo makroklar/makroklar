@@ -27,7 +27,7 @@ export function Hero() {
           </Reveal>
           <Reveal delay={0.24} className="flex flex-wrap items-center gap-4">
             <Button asChild size="lg">
-              <Link href="/kontakt">
+              <Link href="/business/register">
                 Kostenlos ausprobieren
                 <ArrowRight aria-hidden className="size-5 transition-transform group-hover:translate-x-1" />
               </Link>

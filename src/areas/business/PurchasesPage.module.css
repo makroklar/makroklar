@@ -1,0 +1,140 @@
+.intro {
+  display: grid;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-light);
+}
+
+.tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-top: var(--space-5);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.table caption {
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead {
+  background: var(--color-background);
+}
+
+.table th {
+  font-weight: var(--font-weight-medium);
+}
+
+.foodName {
+  min-width: 9rem;
+  max-width: 18rem;
+  overflow-wrap: anywhere;
+}
+
+.manualLabel,
+.preparation {
+  color: var(--color-text-muted);
+  font-size: 0.8em;
+  font-weight: var(--font-weight-regular);
+}
+
+.preparation {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+.empty,
+.note {
+  color: var(--color-text-muted);
+}
+
+.manualAction,
+.note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+.manualLink,
+.textButton {
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.textButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.manualLink:focus-visible,
+.textButton:focus-visible,
+.tableWrapper:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-6);
+}
+
+.continueButton {
+  --radius-continue-button: 10px;
+  --space-continue-icon: 10px;
+
+  display: inline-flex;
+  width: 8.5rem;
+  min-height: 2.875rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-continue-icon);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-continue-button);
+  background: var(--color-primary);
+  color: var(--color-accent);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.continueButton:hover {
+  background: var(--color-accent-light);
+  color: var(--color-primary);
+}
+
+.continueButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
+}

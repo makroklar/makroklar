@@ -84,11 +84,11 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-4.5">
-          <Link href="/business" className="hidden text-sm font-bold text-brand no-underline hover:underline lg:block">
+          <Link href="/business/login" className="hidden text-sm font-bold text-brand no-underline hover:underline lg:block">
             Login
           </Link>
           <Button asChild className="hidden sm:inline-flex">
-            <Link href="/kontakt">Kostenlos ausprobieren</Link>
+            <Link href="/business/register">Kostenlos ausprobieren</Link>
           </Button>
           <MobileMenu />
         </div>
