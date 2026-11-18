@@ -31,6 +31,9 @@ export function ComponentsPage() {
             <div className={styles.fullBleed}>
               <LogoHeader />
             </div>
+            <div className={styles.fullBleed}>
+              <LogoHeader backHref="/guest" />
+            </div>
           </section>
 
           <section className={styles.section}>
@@ -79,7 +82,7 @@ export function ComponentsPage() {
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>DishHero</h3>
             <div className={styles.fullBleed}>
-              <DishHero name="Pizza Margherita" image={pizzaMargherita} backHref="/guest" />
+              <DishHero name="Pizza Margherita" image={pizzaMargherita} />
             </div>
           </section>
 

@@ -1,26 +1,7 @@
-/* Maße aus dem 393 px breiten Figma-Frame. Oben ohne die Statusleiste des iPhone-Rahmens (Figma: Pfeil bei 44 px) */
+/* Maße aus dem 393 px breiten Figma-Frame. Steht direkt unter dem LogoHeader */
 .hero {
   position: relative;
-  padding-top: 52px;
   color: var(--color-text);
-}
-
-/* Pfeil 31 × 31 in einem 36 × 31 Feld, 30 px vom Rand, ragt 3 px ins Bild */
-.back {
-  position: absolute;
-  z-index: 2;
-  top: var(--space-5);
-  left: 30px;
-  display: flex;
-  align-items: center;
-  width: 36px;
-  height: 31px;
-}
-
-/* Figma nutzt „Arrow right“ um 180° gedreht */
-.backIcon {
-  display: block;
-  transform: rotate(180deg);
 }
 
 /* Bild 307 × 301, bei 393 px Breite 37 px vom linken Rand */

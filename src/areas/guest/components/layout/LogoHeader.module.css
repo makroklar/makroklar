@@ -1,6 +1,7 @@
 /* Logo 188 × 41, 18 px Abstand zum folgenden Kopfbereich wie in Figma.
    Oben ohne die Statusleiste des iPhone-Rahmens (Figma: 65 px) */
 .header {
+  position: relative;
   display: flex;
   justify-content: center;
   padding: var(--space-5) 0 18px;
@@ -8,4 +9,31 @@
 
 .header img {
   display: block;
+}
+
+/* Zurück-Pfeil 31 × 31, mittig in einer 44 × 44 Tippfläche. Der Pfeil steht 30 px vom Rand und
+   optisch mittig zu den Kleinbuchstaben des Logos: im PNG liegt die x-Höhe bei 9–26 px von 41 px,
+   unten ist das Bild leer – die Mitte des Bildes wäre daher zu tief.
+   Auf schmalen Handys (320 px) rückt er bis 16 px an den Rand, damit er nicht am Logo klebt.
+   Auf breiten Bildschirmen bündig mit dem Inhalt */
+.back {
+  position: absolute;
+  top: calc(var(--space-5) + 17.5px - 22px);
+  left: calc(var(--content-inset) + clamp(16px, 25vw - 64px, 30px) - 6.5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.back:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Figma nutzt „Arrow right“ um 180° gedreht */
+.backIcon {
+  transform: rotate(180deg);
 }
