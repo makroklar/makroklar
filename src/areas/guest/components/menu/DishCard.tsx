@@ -1,4 +1,5 @@
 import Image, { type StaticImageData } from 'next/image';
+import Link from 'next/link';
 import { FadeScroll } from '@/shared/components/fade-scroll/FadeScroll';
 import styles from './DishCard.module.css';
 
@@ -13,14 +14,16 @@ export type DishCardProps = {
   fat: number;
   protein: number;
   carbs: number;
+  /** Ziel beim Antippen, z. B. die Detailseite des Gerichts */
+  href?: string;
 };
 
 // Wie im Design ohne Leerzeichen vor dem Euro-Zeichen: „13,90€“
 const formatPrice = (price: number) => `${price.toFixed(2).replace('.', ',')}€`;
 
 // Gericht in der Speisekarte (Figma „Gastansicht“, Component 2) – Bild ragt links über die Karte
-export function DishCard({ name, description, price, image, kcal, fat, protein, carbs }: DishCardProps) {
-  return (
+export function DishCard({ name, description, price, image, kcal, fat, protein, carbs, href }: DishCardProps) {
+  const card = (
     <article className={styles.dishCard}>
       <div className={styles.imageWrapper}>
         <Image className={styles.image} src={image} alt={name} fill sizes="117px" />
@@ -41,5 +44,13 @@ export function DishCard({ name, description, price, image, kcal, fat, protein, 
         </FadeScroll>
       </div>
     </article>
+  );
+
+  // Die ganze Karte ist der Link – so bleiben die Nährwerte auf dem Handy seitlich scrollbar
+  if (!href) return card;
+  return (
+    <Link href={href} className={styles.link}>
+      {card}
+    </Link>
   );
 }

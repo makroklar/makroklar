@@ -38,12 +38,14 @@
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
+    padding-top: var(--space-5);
     padding-right: var(--space-5);
   }
 
   .hero {
     position: sticky;
-    top: 0;
+    /* unter dem LogoHeader, der beim Scrollen 64 px hoch ist (+ 1 px Linie), mit demselben Abstand wie oben */
+    top: calc(65px + var(--space-5));
     grid-row: 1 / span 4;
     align-self: start;
   }
@@ -55,9 +57,10 @@
     grid-column: 2;
   }
 
-  /* Oben bündig mit dem Bild, der Infoblock wird zur Karte */
+  /* Der Infoblock wird zur Karte und beginnt auf Höhe der Pizza: Im freigestellten PNG liegt
+     über der Pizza durchsichtiger Rand, sie beginnt 16 px unter dem Bildbereich (Bild 307 px breit) */
   .info {
-    margin-top: 52px;
+    margin-top: 16px;
     overflow: hidden;
     border-radius: 10px;
   }

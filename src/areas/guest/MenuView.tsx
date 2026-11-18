@@ -27,7 +27,8 @@ export function MenuView() {
         <ul className={styles.dishes}>
           {dishes.map(({ id, category, popular, ...dish }) => (
             <li key={id}>
-              <DishCard {...dish} />
+              {/* Bis die Datenbank angebunden ist, führen alle Gerichte zur Beispiel-Detailseite */}
+              <DishCard {...dish} href="/guest/dish" />
             </li>
           ))}
         </ul>

@@ -1,0 +1,80 @@
+/* Wie der Footer der Landingpage: Logo, Claim, Links in Markengrün, Copyright klein darunter.
+   Hintergrund wie der Kopfbereich der Speisekarte, damit sich die Fußzeile vom Inhalt abhebt */
+.footer {
+  background: var(--color-primary-light);
+  color: var(--color-text);
+}
+
+/* Inhalt 24 px vom Rand wie im Kopfbereich der Speisekarte, auf breiten Bildschirmen mittig */
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6) calc(var(--content-inset) + 24px) var(--space-5);
+}
+
+.logo {
+  display: inline-flex;
+}
+
+.logo img {
+  display: block;
+  width: 132px;
+  height: auto;
+}
+
+.tagline {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+/* Links in zwei Spalten, damit die Fußzeile auf dem Handy kurz bleibt */
+.links {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: var(--space-1) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mindestens 32 px hohe Tippfläche */
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: var(--font-size-md);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.copyright {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* Breite Bildschirme: Logo links, Links rechts in einer Zeile */
+@media (min-width: 760px) {
+  .inner {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    column-gap: var(--space-7);
+  }
+
+  .links {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    justify-content: end;
+  }
+
+  .copyright {
+    grid-column: 1 / -1;
+  }
+}

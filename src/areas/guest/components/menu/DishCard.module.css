@@ -90,3 +90,35 @@
 .chipCarbs {
   background: var(--color-secondary);
 }
+
+/* Als Link: ganze Karte antippbar, Höhe der Rasterzelle bleibt erhalten */
+.link {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.link .card {
+  transition: box-shadow 200ms, transform 150ms;
+}
+
+.link:hover .card {
+  box-shadow: var(--shadow-card);
+}
+
+/* Kurzes Eindrücken als Rückmeldung beim Antippen */
+.link:active .card {
+  transform: scale(0.98);
+}
+
+.link:focus-visible {
+  outline: none;
+}
+
+.link:focus-visible .card {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
