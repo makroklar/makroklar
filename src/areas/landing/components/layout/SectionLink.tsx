@@ -3,14 +3,32 @@
 import type { ComponentProps, MouseEvent } from 'react';
 import Link from 'next/link';
 
-/** Wartet, bis ein offenes Menü (Radix-Scroll-Sperre am body) geschlossen ist */
+/** Bricht das Warten des vorherigen Klicks ab, damit sich keine Observer stapeln */
+let cancelPending: (() => void) | null = null;
+
+/**
+ * Wartet, bis ein offenes Menü (Radix-Scroll-Sperre am body) geschlossen ist.
+ * Wird die Sperre nicht innerhalb von 1 s aufgehoben, läuft der Callback trotzdem.
+ */
 function whenScrollUnlocked(callback: () => void) {
+  cancelPending?.();
   if (!document.body.hasAttribute('data-scroll-locked')) return callback();
-  const observer = new MutationObserver(() => {
-    if (document.body.hasAttribute('data-scroll-locked')) return;
-    observer.disconnect();
+
+  const finish = () => {
+    cleanup();
     callback();
+  };
+  const observer = new MutationObserver(() => {
+    if (!document.body.hasAttribute('data-scroll-locked')) finish();
   });
+  const timeout = window.setTimeout(finish, 1000);
+  function cleanup() {
+    observer.disconnect();
+    window.clearTimeout(timeout);
+    cancelPending = null;
+  }
+
+  cancelPending = cleanup;
   observer.observe(document.body, { attributes: true, attributeFilter: ['data-scroll-locked'] });
 }
 
