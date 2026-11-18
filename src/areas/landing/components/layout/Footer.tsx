@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { footerNavigation } from '../../content/navigation';
 import { Logo } from './Logo';
+import { SectionLink } from './SectionLink';
 
 export function Footer() {
   return (
@@ -20,9 +20,9 @@ export function Footer() {
               <ul className="m-0 flex list-none flex-col gap-3 p-0">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-[13px] text-brand no-underline hover:underline">
+                    <SectionLink href={link.href} className="text-[13px] text-brand no-underline hover:underline">
                       {link.label}
-                    </Link>
+                    </SectionLink>
                   </li>
                 ))}
               </ul>
