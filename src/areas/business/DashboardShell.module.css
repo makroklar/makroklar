@@ -1,0 +1,24 @@
+.shell {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .shell {
+    display: block;
+  }
+
+  /* Platz für die Tab-Leiste am unteren Rand */
+  .main {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}

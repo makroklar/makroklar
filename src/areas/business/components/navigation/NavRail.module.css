@@ -1,0 +1,160 @@
+.rail {
+  --rail-width: 88px;
+  --rail-expanded-width: 232px;
+  --color-icon-muted: #8b938f;
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 22px;
+  box-sizing: border-box;
+  width: var(--rail-width);
+  height: 100vh;
+  height: 100dvh;
+  padding: 28px 22px;
+  background: #ffffff;
+  box-shadow: 1px 0 4px rgb(0 0 0 / 0.04);
+}
+
+.rail[data-expanded='true'] {
+  width: var(--rail-expanded-width);
+}
+
+.item,
+.add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-icon-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.item:hover {
+  color: var(--color-primary);
+}
+
+.item[aria-current='page'] {
+  background: var(--color-accent-light);
+  color: var(--color-primary);
+}
+
+.toggle {
+  width: 44px;
+}
+
+.add {
+  margin-inline: -4px;
+  padding: 0;
+  color: var(--color-primary);
+}
+
+.addCircle {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-accent);
+}
+
+.add[aria-current='page'] .addCircle {
+  background: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.label {
+  display: none;
+  white-space: nowrap;
+}
+
+.rail[data-expanded='true'] .label {
+  display: inline;
+}
+
+.profile {
+  margin-top: auto;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+  border: 1px solid var(--color-accent-light);
+  border-radius: 50%;
+  color: var(--color-primary);
+}
+
+.profile[aria-current='page'] {
+  border-color: var(--color-accent-light);
+}
+
+.rail[data-expanded='true'] .profile {
+  justify-content: flex-start;
+  width: auto;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+
+.rail a:focus-visible,
+.rail button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Handy: Tab-Leiste am unteren Rand */
+@media (max-width: 767px) {
+  .rail,
+  .rail[data-expanded='true'] {
+    position: fixed;
+    inset: auto 0 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    gap: var(--space-1);
+    width: auto;
+    height: auto;
+    padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom));
+    box-shadow: 0 -1px 4px rgb(0 0 0 / 0.06);
+  }
+
+  .toggle {
+    display: none;
+  }
+
+  .rail .label,
+  .rail[data-expanded='true'] .label {
+    display: none;
+  }
+
+  /* Plus-Button in die Mitte, wie bei App-Tab-Leisten üblich */
+  .rail [data-mobile-order='1'] { order: 1; }
+  .rail [data-mobile-order='2'] { order: 2; }
+  .rail [data-mobile-order='3'] { order: 3; }
+  .rail [data-mobile-order='4'] { order: 4; }
+  .rail [data-mobile-order='5'] { order: 5; }
+
+  .add {
+    margin: 0;
+  }
+
+  .profile,
+  .rail[data-expanded='true'] .profile {
+    margin: 0;
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+}

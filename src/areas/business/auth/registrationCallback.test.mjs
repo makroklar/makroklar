@@ -29,7 +29,7 @@ const { handleRegistrationCallback } = await import('./registrationCallback.ts')
 const { registerAccount } = await import('./registrationAction.ts');
 const { initialRegistrationState } = await import('./registration.ts');
 
-function mockClient({ exchangeError = null, userError = null, confirmed = true, rpcError = null, throws = false, signUpSession = null } = {}) {
+function mockClient({ exchangeError = null, userError = null, confirmed = true, rpcError = null, throws = false, signUpSession = null, onboarded = false } = {}) {
   const calls = [];
   globalThis.__registrationTestClient = async headers => {
     if (throws) throw new Error('private provider detail');
@@ -55,6 +55,22 @@ function mockClient({ exchangeError = null, userError = null, confirmed = true, 
         calls.push(['rpc', ...args]);
         return { data: rpcError ? null : 'synthetic-restaurant', error: rpcError };
       },
+      from(table) {
+        return {
+          select(columns) {
+            return {
+              eq(column, value) {
+                return {
+                  async maybeSingle() {
+                    calls.push(['from', table, columns, column, value]);
+                    return { data: onboarded ? { restaurant_id: value } : null, error: null };
+                  },
+                };
+              },
+            };
+          },
+        };
+      },
     };
   };
   return calls;
@@ -75,11 +91,18 @@ test('a code is exchanged, identity verified, and completion called before a fix
   const calls = mockClient();
   const response = await handleRegistrationCallback(request('?code=synthetic-code&sb_flow_id=synthetic-flow&next=https://foreign.invalid'));
   assert.equal(response.status, 303);
-  assert.deepEqual(calls, [['exchange', 'synthetic-code', { flowId: 'synthetic-flow' }], ['getUser'], ['rpc', 'complete_restaurant_registration']]);
+  assert.deepEqual(calls, [['exchange', 'synthetic-code', { flowId: 'synthetic-flow' }], ['getUser'], ['rpc', 'complete_restaurant_registration'], ['from', 'restaurant_onboarding', 'restaurant_id', 'restaurant_id', 'synthetic-restaurant']]);
   assert.equal(location(response).href, 'http://localhost:3000/business/welcome');
   assert.match(response.headers.get('Set-Cookie'), /synthetic-session/);
   assert.match(response.headers.get('Cache-Control'), /no-store/);
   assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+});
+
+test('accounts with a finished onboarding are sent to the dashboard instead of the welcome page', async () => {
+  const calls = mockClient({ onboarded: true });
+  const response = await handleRegistrationCallback(request());
+  assert.deepEqual(calls, [['getUser'], ['rpc', 'complete_restaurant_registration'], ['from', 'restaurant_onboarding', 'restaurant_id', 'restaurant_id', 'synthetic-restaurant']]);
+  assert.equal(location(response).href, 'http://localhost:3000/business');
 });
 
 test('provider-declared failures are sanitized without calling Auth or reflecting the query', async () => {
@@ -113,7 +136,7 @@ test('failed completion preserves the session and offers a retry without reusing
   assert.match(response.headers.get('Set-Cookie'), /synthetic-session/);
   const calls = mockClient();
   const retry = await handleRegistrationCallback(request());
-  assert.deepEqual(calls, [['getUser'], ['rpc', 'complete_restaurant_registration']]);
+  assert.deepEqual(calls, [['getUser'], ['rpc', 'complete_restaurant_registration'], ['from', 'restaurant_onboarding', 'restaurant_id', 'restaurant_id', 'synthetic-restaurant']]);
   assert.equal(location(retry).pathname, '/business/welcome');
 });
 
