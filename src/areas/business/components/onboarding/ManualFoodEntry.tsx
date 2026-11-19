@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { manualFoodNoticeVersion, validateManualFood, type ManualFoodErrors } from '../../data/manualFood';
 import { useBusinessDraft } from '../../state/BusinessDraftContext';
+import type { ManualFood } from '../../types/manualFood';
 import styles from './ManualFoodEntry.module.css';
 
 const nutrients = [
@@ -14,14 +15,35 @@ const nutrients = [
   { key: 'carbohydrateG', label: 'Kohlenhydrate', unit: 'g' },
 ] as const;
 
+// Onboarding: Lebensmittel landet im Entwurf und wird mit „Einrichtung abschließen“ gespeichert
 export function ManualFoodEntry() {
   const { addManualFood } = useBusinessDraft();
   const router = useRouter();
+  return (
+    <ManualFoodForm
+      cancelHref="/business/onboarding/purchases"
+      onSave={async food => {
+        addManualFood({ ...food, id: crypto.randomUUID(), noticeVersion: manualFoodNoticeVersion });
+        router.push('/business/onboarding/purchases');
+        return null;
+      }}
+    />
+  );
+}
+
+interface ManualFoodFormProps {
+  cancelHref: string;
+  /** Gibt eine Fehlermeldung zurück oder null, wenn gespeichert */
+  onSave: (food: ManualFood) => Promise<string | null>;
+}
+
+export function ManualFoodForm({ cancelHref, onSave }: ManualFoodFormProps) {
   const errorSummary = useRef<HTMLParagraphElement>(null);
   const submitted = useRef(false);
   const [agreed, setAgreed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [errors, setErrors] = useState<ManualFoodErrors>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (Object.keys(errors).length) errorSummary.current?.focus();
@@ -34,8 +56,14 @@ export function ManualFoodEntry() {
     if (!result.success) { setErrors(result.errors); return; }
     submitted.current = true;
     setAdding(true);
-    addManualFood({ ...result.food, id: crypto.randomUUID(), noticeVersion: manualFoodNoticeVersion });
-    router.push('/business/onboarding/purchases');
+    setSaveError(null);
+    void onSave(result.food).then(message => {
+      if (message) { setSaveError(message); submitted.current = false; setAdding(false); }
+    }, () => {
+      setSaveError('Das Speichern konnte nicht bestätigt werden. Bitte versuche es erneut.');
+      submitted.current = false;
+      setAdding(false);
+    });
   }
 
   return (
@@ -49,6 +77,7 @@ export function ManualFoodEntry() {
       </header>
       <form onSubmit={addFood} noValidate aria-busy={adding}>
         <p className={styles.note}>Alle Felder sind erforderlich. Fehlende Werte nicht als 0 eintragen.</p>
+        {saveError && <p className={styles.error} role="alert">{saveError}</p>}
         {Object.keys(errors).length > 0 && <p ref={errorSummary} tabIndex={-1} className={styles.error} role="alert">Bitte prüfe die markierten Felder.</p>}
         <fieldset className={styles.fields} disabled={adding}>
           <legend className={styles.visuallyHidden}>Lebensmittel und Nährwerte</legend>
@@ -113,7 +142,7 @@ export function ManualFoodEntry() {
           </label>
           {errors.consent && <p id="manual-consent-error" className={styles.error}>{errors.consent}</p>}
           <div className={styles.actions}>
-            <Link className={styles.cancelLink} href="/business/onboarding/purchases">Abbrechen</Link>
+            <Link className={styles.cancelLink} href={cancelHref}>Abbrechen</Link>
             <button type="submit" className={styles.primaryButton} disabled={!agreed || adding}>{adding ? 'Wird hinzugefügt…' : 'Hinzufügen'}</button>
           </div>
         </fieldset>

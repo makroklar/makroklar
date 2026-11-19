@@ -1,0 +1,253 @@
+/* Bearbeitungsseiten: Import prüfen, Basis abwiegen, Gericht einrichten, LMIV-Freigabe */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.mainColumn,
+.sideColumn {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ingredientsCard {
+  min-height: 340px;
+}
+
+/* Zutatenzeilen */
+.ingredient {
+  flex-wrap: wrap;
+  padding: var(--space-3);
+}
+
+.supplier {
+  font-size: 9px;
+}
+
+.ingredientActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.quantity {
+  width: 136px;
+}
+
+.unit {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  padding-top: 0 !important;
+  color: var(--color-primary) !important;
+  font-weight: var(--font-weight-bold) !important;
+  cursor: pointer;
+}
+
+.scale {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.scale:disabled {
+  opacity: 0.85;
+}
+
+.add {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.addEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 260px;
+}
+
+/* Gerichtsfelder */
+.dishFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.fieldsNote {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+}
+
+.categoryValue {
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.labeled {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.labeled > span:first-child {
+  color: var(--color-text-strong);
+}
+
+/* Foto */
+.photoWrap {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.photo {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-2);
+  width: min(100%, 230px);
+  aspect-ratio: 1.1;
+  overflow: hidden;
+  border: 2px solid var(--color-primary);
+  border-radius: 20px;
+  background: var(--color-card);
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.photo[data-filled='true'] {
+  border: 1px solid var(--color-line);
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoWrap:has(.fileInput:focus-visible) .photo {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.photoCaption {
+  margin: 0;
+  font-size: 10px;
+}
+
+/* Kategorie */
+.category {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.categoryLabel {
+  color: var(--color-text-strong);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.select {
+  width: min(100%, 200px);
+}
+
+.select select {
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Gewicht nach dem Kochen */
+.smallLabel {
+  margin: var(--space-4) 0 0;
+  font-size: 12px;
+}
+
+.rawTotal {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.cookedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.cookedRow .quantity {
+  width: 160px;
+}
+
+.loss {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 10px;
+  background: var(--color-row);
+}
+
+.loss span {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+}
+
+.loss strong {
+  color: var(--color-primary);
+  font-size: 1.125rem;
+}
+
+/* Fußzeile mit Aktionen */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dishFields {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredientActions {
+    width: 100%;
+  }
+
+  .quantity {
+    flex: 1;
+  }
+
+  .footer > * {
+    flex: 1;
+  }
+}
