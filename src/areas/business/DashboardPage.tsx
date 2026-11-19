@@ -3,17 +3,16 @@ import { ArrowRight, Bell, Plus, ScanLine } from 'lucide-react';
 import { PageHeader } from './components/dashboard/PageHeader';
 import { TaskIcon } from './components/dashboard/TaskIcon';
 import { OccupancyCard } from './components/dashboard/OccupancyCard';
-import { getRestaurantData, getTasks } from './data/restaurantData';
+import { getProgress, getRestaurantData, getTasks } from './data/restaurantData';
 import ui from './components/dashboard/Dashboard.module.css';
 import styles from './DashboardPage.module.css';
 
 export async function DashboardPage() {
-  const [{ restaurantName, dishes, importedCount, error }, tasks] = await Promise.all([getRestaurantData(), getTasks()]);
-  const complete = dishes.filter(dish => dish.nutrition !== undefined).length;
-  const progressPercent = dishes.length === 0 ? 0 : Math.round((complete / dishes.length) * 100);
-  const progressText = dishes.length === 0
-    ? 'Importiere deine Speisekarte, um zu starten.'
-    : `${complete} von ${dishes.length} Gerichten haben vollständige Nährwerte.`;
+  const [{ restaurantName, importedCount, error }, tasks, progress] = await Promise.all([
+    getRestaurantData(), getTasks(), getProgress(),
+  ]);
+  const progressPercent = progress.percent;
+  const progressText = progress.text;
 
   return (
     <div className={ui.page}>

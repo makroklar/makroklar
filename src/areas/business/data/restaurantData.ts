@@ -5,7 +5,7 @@ import type { CompletionSummary, OnboardingSnapshot } from './onboardingModel';
 import type { ImportedMenuItem } from '../types/importedMenuItem';
 import {
   FALLBACK_RESTAURANT_NAME, TASK_TEMPLATES,
-  type Ingredient, type Nutrition, type Recipe, type Task, type TaskId,
+  type Ingredient, type Nutrition, type Progress, type Recipe, type Task, type TaskId,
 } from './dashboardModel';
 
 // Echte Restaurantdaten für das Dashboard. Quelle sind die importierten Kassenartikel (dishes +
@@ -152,24 +152,50 @@ export async function getRecipe(slug: string): Promise<Recipe | undefined> {
 
 /**
  * Die vier Aufgaben der To-do-Liste. Jede Aufgabe ist eine Filterregel über die Rezepte;
- * neue Datenquellen (z. B. Basen, „geprüft“- oder „veröffentlicht“-Merker) ändern nur diese Regeln.
+ * neue Datenquellen (z. B. Basen, „geprüft“- oder „veröffentlicht“-Merker) ändern nur diese Regeln
+ * und setzen `available` auf true.
  */
 export async function getTasks(): Promise<Task[]> {
   const { dishes } = await getRestaurantData();
-  const task = (id: TaskId, items: Recipe[], total: number): Task =>
-    ({ ...TASK_TEMPLATES[id], items: items.map(recipe => recipe.slug), open: items.length, total });
+  const task = (id: TaskId, items: Recipe[], total: number, done: number, available = true): Task =>
+    ({ ...TASK_TEMPLATES[id], items: items.map(recipe => recipe.slug), open: items.length, total, done, available });
 
   const incomplete = dishes.filter(dish => dish.missing !== null);
   const ready = dishes.filter(dish => dish.nutrition !== undefined);
   return [
     // Braucht einen „Rezept geprüft“-Merker pro Gericht; bis dahin keine Einträge.
-    task('import-pruefen', [], 0),
+    task('import-pruefen', [], 0, 0, false),
     // Braucht Basen (Teilrezepte) in der Datenbank; bis dahin keine Einträge.
-    task('basis-abwiegen', [], 0),
-    task('gerichte-einrichten', incomplete, dishes.length),
-    // Allergene sind noch nicht in der Datenbank: jedes Gericht mit fertigen Nährwerten bleibt offen.
-    task('lmiv-freigabe', ready, ready.length),
+    task('basis-abwiegen', [], 0, 0, false),
+    task('gerichte-einrichten', incomplete, dishes.length, dishes.length - incomplete.length),
+    // Freigegeben ist ein Gericht erst mit bestätigten Allergenen. Die gibt es noch nicht in der
+    // Datenbank, daher sind alle Gerichte mit fertigen Nährwerten offen und keines erledigt.
+    task('lmiv-freigabe', ready, dishes.length, 0),
   ];
+}
+
+/**
+ * Fortschritt der Einrichtung: Speisekarte importieren und die vier Aufgaben abarbeiten.
+ * Jeder Schritt zählt gleich viel; Aufgaben zählen anteilig (erledigte / alle Einträge).
+ * Aufgaben, für die es noch keine Daten in der Datenbank gibt, zählen nicht mit.
+ */
+export async function getProgress(): Promise<Progress> {
+  const [{ dishes }, tasks] = await Promise.all([getRestaurantData(), getTasks()]);
+  if (dishes.length === 0) return { percent: 0, text: 'Importiere zuerst deine Speisekarte.' };
+
+  const steps = tasks.filter(entry => entry.available);
+  const done = (entry: Task) => entry.total === 0 ? 1 : entry.done / entry.total;
+  // Speisekarte importiert = erster Schritt erledigt
+  const percent = Math.floor(((1 + steps.reduce((sum, entry) => sum + done(entry), 0)) / (steps.length + 1)) * 100);
+
+  const next = steps.find(entry => entry.open > 0 && entry.items.length > 0)
+    ?? steps.find(entry => done(entry) < 1);
+  const text = !next
+    ? 'Alles erledigt – deine Speisekarte ist bereit für deine Gäste!'
+    : next.items.length > 0
+      ? `Speisekarte importiert. Als Nächstes: ${next.title} (${next.open} offen).`
+      : `Speisekarte importiert. Als Nächstes: ${next.title}.`;
+  return { percent, text };
 }
 
 export async function getTask(id: string): Promise<Task | undefined> {

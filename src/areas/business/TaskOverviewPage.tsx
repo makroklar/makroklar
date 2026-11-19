@@ -14,7 +14,7 @@ export async function TaskOverviewPage({ taskId }: { taskId: string }) {
 
   const entries = (await Promise.all(task.items.map(slug => getRecipe(slug))))
     .flatMap(recipe => recipe ? [recipe] : []);
-  const done = task.total - task.open;
+  const done = task.done;
   const next = entries[0];
 
   return (
@@ -63,7 +63,7 @@ export async function TaskOverviewPage({ taskId }: { taskId: string }) {
             aria-valuemax={task.total}
             aria-valuenow={done}
           >
-            <span style={{ width: `${task.total === 0 ? 100 : (done / task.total) * 100}%` }} />
+            <span style={{ width: `${task.total === 0 ? 0 : (done / task.total) * 100}%` }} />
           </div>
           <p className={styles.count}>{done} von {task.total}</p>
 

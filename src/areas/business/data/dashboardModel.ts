@@ -72,9 +72,19 @@ export interface Task {
   items: string[];
   /** Text, solange es für die Aufgabe noch keine Einträge gibt */
   emptyText: string;
+  /** Erledigte Einträge (nicht immer total − open, z. B. bei der LMIV-Freigabe) */
+  done: number;
+  /** false, solange die Datenbank für diese Aufgabe noch keine Daten liefern kann */
+  available: boolean;
 }
 
-export type TaskTemplate = Omit<Task, 'total' | 'open' | 'items'>;
+export type TaskTemplate = Omit<Task, 'total' | 'open' | 'items' | 'done' | 'available'>;
+
+export interface Progress {
+  /** 0–100 */
+  percent: number;
+  text: string;
+}
 
 export const TASK_TEMPLATES: Record<TaskId, TaskTemplate> = {
   'import-pruefen': {

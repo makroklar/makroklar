@@ -39,7 +39,11 @@ Editor ──► data/saveDashboardAction.ts ──► finishOnboarding ──�
 - **Rezept-Schlüssel (`slug`):** `lightspeed-k-series-<sourceId>` für Kassenartikel,
   `manual-<uuid>` für eigene Gerichte. Das sind dieselben Schlüssel wie in `recipes` des Onboardings.
 - **Aufgaben** sind Filterregeln über die Rezepte (`getTasks` in `restaurantData.ts`). Texte stehen
-  in `TASK_TEMPLATES` (`dashboardModel.ts`). Es gibt keine Beispieldaten.
+  in `TASK_TEMPLATES` (`dashboardModel.ts`). Es gibt keine Beispieldaten. Aufgaben ohne Datenquelle
+  haben `available: false`.
+- **Fortschritt** (`getProgress`): Speisekarte importieren plus die vier Aufgaben, jeder Schritt zählt
+  gleich, Aufgaben anteilig (`done / total`). Aufgaben mit `available: false` zählen nicht mit – sobald
+  ihre Daten in der Datenbank sind, `available` auf true setzen.
 
 ## Was die Datenbank noch nicht kann
 
