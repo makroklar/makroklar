@@ -47,6 +47,8 @@
   font-size: var(--font-size-md);
   color: var(--color-primary);
   text-decoration: none;
+  /* „Hilfe & FAQ“ und „Über uns“ nie mitten im Link umbrechen */
+  white-space: nowrap;
 }
 
 .link:hover {
@@ -59,8 +61,9 @@
   color: var(--color-text-muted);
 }
 
-/* Breite Bildschirme: Logo links, Links rechts in einer Zeile */
-@media (min-width: 760px) {
+/* Breite Bildschirme: Logo links, Links rechts in einer Zeile.
+   Claim (~300 px) und alle Links (~490 px) brauchen zusammen gut 900 px, darunter bleibt es bei Spalten */
+@media (min-width: 960px) {
   .inner {
     display: grid;
     grid-template-columns: auto 1fr;
