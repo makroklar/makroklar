@@ -53,18 +53,11 @@
   line-height: 17px;
 }
 
-/* Kacheln 55 × 49 mit 9 px Abstand, das „i“ 7 px daneben */
-.nutrientRow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 18px 0 0 -3px;
-}
-
+/* Kacheln 55 × 49 mit 9 px Abstand */
 .nutrients {
   display: flex;
   gap: 9px;
-  margin: 0;
+  margin: 18px 0 0 -3px;
   padding: 0;
   list-style: none;
 }
@@ -98,28 +91,37 @@
   line-height: var(--line-height-normal);
 }
 
-.infoButton {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 23px;
-  height: 23px;
-  padding: 0;
+/* FPE-Kachel als Button: sieht aus wie die KH-Kachel, die ganze Kachel öffnet den Hinweis fürs Spritzen */
+.fpeButton {
+  position: relative;
   font-family: inherit;
-  font-size: 15px;
-  font-weight: var(--font-weight-extrabold);
-  line-height: 1;
-  color: var(--color-primary);
-  background: var(--color-surface);
-  border: 1px solid var(--color-primary);
-  border-radius: 50%;
+  color: inherit;
+  border: 0;
   cursor: pointer;
 }
 
-.infoButton:focus-visible {
+.fpeButton:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* „i“ hängt über der rechten oberen Ecke, der Ring in Hintergrundfarbe trennt es von der Kachel */
+.infoBadge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+  color: var(--color-background);
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary-light);
+  border-radius: 50%;
 }
 
 /* 12 px statt 10 px aus Figma, wie der gleiche Hinweis im Kopfbereich der Speisekarte */
