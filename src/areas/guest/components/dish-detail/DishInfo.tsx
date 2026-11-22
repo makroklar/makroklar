@@ -27,7 +27,7 @@ const formatPrice = (price: number) => `${price.toFixed(2).replace('.', ',')}€
 const fpeFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
 
 // Infoblock der Detailansicht (Figma „Gastansicht“, Rectangle 98 in „Detailansicht“):
-// Name, Preis, Dauer und Nährwerte der abgebildeten Portion – das „i“ öffnet den Hinweis fürs Spritzen
+// Name, Preis, Dauer und Nährwerte der abgebildeten Portion – das „i“ öffnet den Hinweis fürs Insulinspritzen
 export function DishInfo({ name, price, duration, kcal, fat, protein, carbs, fpe, fpeHours }: DishInfoProps) {
   const [hintOpen, setHintOpen] = useState(false);
 
@@ -65,13 +65,13 @@ export function DishInfo({ name, price, duration, kcal, fat, protein, carbs, fpe
             <span className={styles.tileLabel}>{label}</span>
           </li>
         ))}
-        {/* FPE-Kachel und „i“ in einem: die ganze Kachel öffnet den Hinweis fürs Spritzen */}
+        {/* FPE-Kachel und „i“ in einem: die ganze Kachel öffnet den Hinweis fürs Insulinspritzen */}
         <li>
           <button
             type="button"
             className={`${styles.tile} ${styles.tileHighlight} ${styles.fpeButton}`}
             onClick={() => setHintOpen(true)}
-            aria-label={`${fpeFormat.format(fpe)} FPE – Hinweis fürs Spritzen anzeigen`}
+            aria-label={`${fpeFormat.format(fpe)} FPE – Hinweis fürs Insulinspritzen anzeigen`}
           >
             <span className={styles.tileValue}>{fpeFormat.format(fpe)}</span>
             <span className={styles.tileLabel}>FPE</span>

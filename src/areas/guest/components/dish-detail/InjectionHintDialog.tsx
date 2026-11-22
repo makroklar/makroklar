@@ -14,7 +14,7 @@ type InjectionHintDialogProps = {
 
 const fpeFormat = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
 
-// Hinweis fürs Spritzen bei Fett & Protein (Figma „Gastansicht“, Frame 300:803) – schließt nur über „Verstanden“
+// Hinweis fürs Insulinspritzen bei Fett & Protein (Figma „Gastansicht“, Frame 300:803) – schließt nur über „Verstanden“
 export function InjectionHintDialog({ open, fpe, hours, onConfirm }: InjectionHintDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -34,7 +34,7 @@ export function InjectionHintDialog({ open, fpe, hours, onConfirm }: InjectionHi
       onCancel={(event) => event.preventDefault()}
     >
       <h2 id="injection-hint-title" className={styles.title}>
-        Hinweis fürs Spritzen
+        Hinweis fürs Insulinspritzen
       </h2>
       <p className={styles.text}>Achtung, Fett &amp; Protein!</p>
       <p className={styles.text}>

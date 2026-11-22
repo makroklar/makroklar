@@ -91,7 +91,7 @@
   line-height: var(--line-height-normal);
 }
 
-/* FPE-Kachel als Button: sieht aus wie die KH-Kachel, die ganze Kachel öffnet den Hinweis fürs Spritzen */
+/* FPE-Kachel als Button: sieht aus wie die KH-Kachel, die ganze Kachel öffnet den Hinweis fürs Insulinspritzen */
 .fpeButton {
   position: relative;
   font-family: inherit;
