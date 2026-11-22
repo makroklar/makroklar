@@ -79,7 +79,7 @@ export function DishInfo({ name, price, duration, kcal, fat, protein, carbs, fpe
       </div>
 
       <p className={styles.notice}>
-        Alle Angaben sind Richtwerte und dienen zur Orientierung. Portionsgrößen und Zubereitungszeiten können variieren.
+        Alle Angaben stammen vom Restaurant und sind Richtwerte zur Orientierung. Portionsgrößen und Zubereitungszeiten können variieren.
       </p>
 
       <InjectionHintDialog open={hintOpen} fpe={fpe} hours={fpeHours} onConfirm={() => setHintOpen(false)} />
