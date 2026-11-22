@@ -1,0 +1,30 @@
+.page {
+  --radius-onboarding-card: 16px;
+  --shadow-onboarding-card: 0 1px 5px rgb(0 0 0 / 0.25);
+  --color-progress-track: #d4e0d9;
+
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  place-items: center;
+  padding: var(--space-7) var(--space-5);
+}
+
+.card {
+  width: 100%;
+  max-width: 49rem;
+  min-height: 35.4375rem;
+  padding: var(--space-6) clamp(var(--space-5), 4vw, var(--space-7));
+  border-radius: var(--radius-onboarding-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-onboarding-card);
+}
+
+.content {
+  margin-top: var(--space-5);
+}
+
+.card:has([data-onboarding-card='compact']) {
+  max-width: 37.5rem;
+  padding-inline: var(--space-6);
+}

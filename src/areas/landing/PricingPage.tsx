@@ -37,7 +37,7 @@ export function PricingPage() {
                 ))}
               </ul>
               <Button asChild size="lg">
-                <Link href="/kontakt">
+                <Link href="/business/register">
                   Kostenlos ausprobieren
                   <ArrowRight aria-hidden className="size-5 transition-transform group-hover:translate-x-1" />
                 </Link>

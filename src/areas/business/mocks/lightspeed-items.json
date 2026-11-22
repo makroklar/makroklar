@@ -1,0 +1,1402 @@
+[
+  {
+    "id": 3012455701,
+    "name": "Wiener Schnitzel vom Kalb",
+    "docketName": "Wiener Schnitzel vom Kalb",
+    "sku": "MK-LSK-0001",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 24.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455702,
+    "name": "Schnitzel Wiener Art",
+    "docketName": "Schnitzel Wiener Art",
+    "sku": "MK-LSK-0002",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 17.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455703,
+    "name": "Zwiebelrostbraten",
+    "docketName": "Zwiebelrostbraten",
+    "sku": "MK-LSK-0003",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 28.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455704,
+    "name": "Schweinebraten mit Knödeln",
+    "docketName": "Schweinebraten mit Knödeln",
+    "sku": "MK-LSK-0004",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 18.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455705,
+    "name": "Rinderroulade mit Rotkohl",
+    "docketName": "Rinderroulade mit Rotkohl",
+    "sku": "MK-LSK-0005",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 22.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455706,
+    "name": "Geschmorte Rinderbäckchen",
+    "docketName": "Geschmorte Rinderbäckchen",
+    "sku": "MK-LSK-0006",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 26.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455707,
+    "name": "Gegrilltes Lachsfilet",
+    "docketName": "Gegrilltes Lachsfilet",
+    "sku": "MK-LSK-0007",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 25.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455708,
+    "name": "Zanderfilet auf Gemüse",
+    "docketName": "Zanderfilet auf Gemüse",
+    "sku": "MK-LSK-0008",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 24.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455709,
+    "name": "Hähnchenbrust mit Ofenkartoffeln",
+    "docketName": "Hähnchenbrust mit Ofenkartoffeln",
+    "sku": "MK-LSK-0009",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 18.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455710,
+    "name": "Käsespätzle",
+    "docketName": "Käsespätzle",
+    "sku": "MK-LSK-0010",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 14.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455711,
+    "name": "Spinatknödel mit Bergkäse",
+    "docketName": "Spinatknödel mit Bergkäse",
+    "sku": "MK-LSK-0011",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 15.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455712,
+    "name": "Pilzrisotto",
+    "docketName": "Pilzrisotto",
+    "sku": "MK-LSK-0012",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 16.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455713,
+    "name": "Gemüse-Curry mit Basmatireis",
+    "docketName": "Gemüse-Curry mit Basmatireis",
+    "sku": "MK-LSK-0013",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 15.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455714,
+    "name": "Spaghetti Bolognese",
+    "docketName": "Spaghetti Bolognese",
+    "sku": "MK-LSK-0014",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 13.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455715,
+    "name": "Tagliatelle mit Lachs",
+    "docketName": "Tagliatelle mit Lachs",
+    "sku": "MK-LSK-0015",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 18.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455716,
+    "name": "Penne all'Arrabbiata",
+    "docketName": "Penne all'Arrabbiata",
+    "sku": "MK-LSK-0016",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 12.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455717,
+    "name": "Pizza Margherita",
+    "docketName": "Pizza Margherita",
+    "sku": "MK-LSK-0017",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 11.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455718,
+    "name": "Pizza Salami",
+    "docketName": "Pizza Salami",
+    "sku": "MK-LSK-0018",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 13.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455719,
+    "name": "Cheeseburger mit Pommes",
+    "docketName": "Cheeseburger mit Pommes",
+    "sku": "MK-LSK-0019",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 16.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455720,
+    "name": "Veganer Burger mit Süßkartoffelpommes",
+    "docketName": "Veganer Burger mit Süßkartoffelpommes",
+    "sku": "MK-LSK-0020",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078051,
+      "name": "Hauptgerichte"
+    },
+    "prices": [
+      {
+        "amount": 17.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455721,
+    "name": "Tomatencremesuppe",
+    "docketName": "Tomatencremesuppe",
+    "sku": "MK-LSK-0021",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 5.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455722,
+    "name": "Kürbiscremesuppe",
+    "docketName": "Kürbiscremesuppe",
+    "sku": "MK-LSK-0022",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 6.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455723,
+    "name": "Rinderkraftbrühe mit Flädle",
+    "docketName": "Rinderkraftbrühe mit Flädle",
+    "sku": "MK-LSK-0023",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 6.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455724,
+    "name": "Bruschetta mit Tomaten",
+    "docketName": "Bruschetta mit Tomaten",
+    "sku": "MK-LSK-0024",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 6.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455725,
+    "name": "Knoblauchbrot",
+    "docketName": "Knoblauchbrot",
+    "sku": "MK-LSK-0025",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 4.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455726,
+    "name": "Antipasti-Teller",
+    "docketName": "Antipasti-Teller",
+    "sku": "MK-LSK-0026",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 10.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455727,
+    "name": "Carpaccio vom Rind",
+    "docketName": "Carpaccio vom Rind",
+    "sku": "MK-LSK-0027",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 13.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455728,
+    "name": "Gebackener Camembert",
+    "docketName": "Gebackener Camembert",
+    "sku": "MK-LSK-0028",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 8.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455729,
+    "name": "Garnelen in Knoblauchöl",
+    "docketName": "Garnelen in Knoblauchöl",
+    "sku": "MK-LSK-0029",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 12.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455730,
+    "name": "Falafel mit Hummus",
+    "docketName": "Falafel mit Hummus",
+    "sku": "MK-LSK-0030",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 8.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455731,
+    "name": "Ofenkartoffel mit Kräuterquark",
+    "docketName": "Ofenkartoffel mit Kräuterquark",
+    "sku": "MK-LSK-0031",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 7.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455732,
+    "name": "Kleiner Vorspeisenteller",
+    "docketName": "Kleiner Vorspeisenteller",
+    "sku": "MK-LSK-0032",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078052,
+      "name": "Vorspeisen"
+    },
+    "prices": [
+      {
+        "amount": 9.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455733,
+    "name": "Gemischter Beilagensalat",
+    "docketName": "Gemischter Beilagensalat",
+    "sku": "MK-LSK-0033",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 4.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455734,
+    "name": "Großer Gartensalat",
+    "docketName": "Großer Gartensalat",
+    "sku": "MK-LSK-0034",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 9.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455735,
+    "name": "Caesar Salad",
+    "docketName": "Caesar Salad",
+    "sku": "MK-LSK-0035",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 12.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455736,
+    "name": "Caesar Salad mit Hähnchen",
+    "docketName": "Caesar Salad mit Hähnchen",
+    "sku": "MK-LSK-0036",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 15.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455737,
+    "name": "Griechischer Bauernsalat",
+    "docketName": "Griechischer Bauernsalat",
+    "sku": "MK-LSK-0037",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 12.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455738,
+    "name": "Salat mit Ziegenkäse",
+    "docketName": "Salat mit Ziegenkäse",
+    "sku": "MK-LSK-0038",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 14.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455739,
+    "name": "Thunfischsalat",
+    "docketName": "Thunfischsalat",
+    "sku": "MK-LSK-0039",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 13.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455740,
+    "name": "Rucolasalat mit Parmesan",
+    "docketName": "Rucolasalat mit Parmesan",
+    "sku": "MK-LSK-0040",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 10.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455741,
+    "name": "Bunter Linsensalat",
+    "docketName": "Bunter Linsensalat",
+    "sku": "MK-LSK-0041",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 11.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455742,
+    "name": "Salat mit Rinderstreifen",
+    "docketName": "Salat mit Rinderstreifen",
+    "sku": "MK-LSK-0042",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078053,
+      "name": "Salate"
+    },
+    "prices": [
+      {
+        "amount": 17.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455743,
+    "name": "Apfelstrudel mit Vanillesauce",
+    "docketName": "Apfelstrudel mit Vanillesauce",
+    "sku": "MK-LSK-0043",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 7.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455744,
+    "name": "Kaiserschmarrn mit Apfelmus",
+    "docketName": "Kaiserschmarrn mit Apfelmus",
+    "sku": "MK-LSK-0044",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 9.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455745,
+    "name": "Tiramisu",
+    "docketName": "Tiramisu",
+    "sku": "MK-LSK-0045",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 7.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455746,
+    "name": "Panna Cotta mit Beerensauce",
+    "docketName": "Panna Cotta mit Beerensauce",
+    "sku": "MK-LSK-0046",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 7.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455747,
+    "name": "Crème brûlée",
+    "docketName": "Crème brûlée",
+    "sku": "MK-LSK-0047",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 8.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455748,
+    "name": "Schokoladenfondant",
+    "docketName": "Schokoladenfondant",
+    "sku": "MK-LSK-0048",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 8.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455749,
+    "name": "Käsekuchen",
+    "docketName": "Käsekuchen",
+    "sku": "MK-LSK-0049",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 6.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455750,
+    "name": "Vanilleeis mit heißen Himbeeren",
+    "docketName": "Vanilleeis mit heißen Himbeeren",
+    "sku": "MK-LSK-0050",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 6.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455751,
+    "name": "Zitronensorbet",
+    "docketName": "Zitronensorbet",
+    "sku": "MK-LSK-0051",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 5.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455752,
+    "name": "Frischer Obstsalat",
+    "docketName": "Frischer Obstsalat",
+    "sku": "MK-LSK-0052",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078054,
+      "name": "Desserts"
+    },
+    "prices": [
+      {
+        "amount": 6.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455753,
+    "name": "Mineralwasser still 0,25 l",
+    "docketName": "Mineralwasser still 0,25 l",
+    "sku": "MK-LSK-0053",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 2.8,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455754,
+    "name": "Mineralwasser sprudelnd 0,75 l",
+    "docketName": "Mineralwasser sprudelnd 0,75 l",
+    "sku": "MK-LSK-0054",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 6.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455755,
+    "name": "Cola 0,33 l",
+    "docketName": "Cola 0,33 l",
+    "sku": "MK-LSK-0055",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455756,
+    "name": "Cola Zero 0,33 l",
+    "docketName": "Cola Zero 0,33 l",
+    "sku": "MK-LSK-0056",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455757,
+    "name": "Apfelschorle 0,4 l",
+    "docketName": "Apfelschorle 0,4 l",
+    "sku": "MK-LSK-0057",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 4.2,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455758,
+    "name": "Orangensaft 0,2 l",
+    "docketName": "Orangensaft 0,2 l",
+    "sku": "MK-LSK-0058",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455759,
+    "name": "Hausgemachte Zitronenlimonade 0,4 l",
+    "docketName": "Hausgemachte Zitronenlimonade 0,4 l",
+    "sku": "MK-LSK-0059",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 5.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455760,
+    "name": "Eistee Pfirsich 0,4 l",
+    "docketName": "Eistee Pfirsich 0,4 l",
+    "sku": "MK-LSK-0060",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 4.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455761,
+    "name": "Espresso",
+    "docketName": "Espresso",
+    "sku": "MK-LSK-0061",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 2.8,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455762,
+    "name": "Doppelter Espresso",
+    "docketName": "Doppelter Espresso",
+    "sku": "MK-LSK-0062",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455763,
+    "name": "Cappuccino",
+    "docketName": "Cappuccino",
+    "sku": "MK-LSK-0063",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.8,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455764,
+    "name": "Latte Macchiato",
+    "docketName": "Latte Macchiato",
+    "sku": "MK-LSK-0064",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 4.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455765,
+    "name": "Kräutertee",
+    "docketName": "Kräutertee",
+    "sku": "MK-LSK-0065",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455766,
+    "name": "Pils vom Fass 0,3 l",
+    "docketName": "Pils vom Fass 0,3 l",
+    "sku": "MK-LSK-0066",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 3.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455767,
+    "name": "Hefeweizen 0,5 l",
+    "docketName": "Hefeweizen 0,5 l",
+    "sku": "MK-LSK-0067",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 5.2,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455768,
+    "name": "Alkoholfreies Bier 0,33 l",
+    "docketName": "Alkoholfreies Bier 0,33 l",
+    "sku": "MK-LSK-0068",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 4.2,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455769,
+    "name": "Riesling trocken 0,2 l",
+    "docketName": "Riesling trocken 0,2 l",
+    "sku": "MK-LSK-0069",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 6.9,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  },
+  {
+    "id": 3012455770,
+    "name": "Spätburgunder 0,2 l",
+    "docketName": "Spätburgunder 0,2 l",
+    "sku": "MK-LSK-0070",
+    "active": true,
+    "accountingGroup": {
+      "id": 40570261078055,
+      "name": "Getränke"
+    },
+    "prices": [
+      {
+        "amount": 7.5,
+        "name": "Standard"
+      }
+    ],
+    "sharingType": "LOCAL",
+    "priceMode": "AMOUNT",
+    "itemType": "ITEM"
+  }
+]

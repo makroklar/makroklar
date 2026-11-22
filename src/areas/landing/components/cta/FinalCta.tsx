@@ -17,7 +17,7 @@ export function FinalCta() {
           Starte mit einem Gericht und sieh, wie Nährwerte und Allergene für deine Gäste sichtbar werden können.
         </p>
         <Button asChild size="lg">
-          <Link href="/kontakt">
+          <Link href="/business/register">
             Jetzt kostenlos starten
             <ArrowRight aria-hidden className="size-5 transition-transform group-hover:translate-x-1" />
           </Link>

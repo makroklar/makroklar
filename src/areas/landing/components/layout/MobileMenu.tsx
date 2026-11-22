@@ -5,6 +5,7 @@ import { Menu } from 'lucide-react';
 import { primaryNavigation } from '../../content/navigation';
 import { Button } from '../ui/button';
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { SectionLink } from './SectionLink';
 
 export function MobileMenu() {
   return (
@@ -20,21 +21,21 @@ export function MobileMenu() {
         <nav aria-label="Mobile Navigation" className="mt-8 flex flex-col gap-1">
           {primaryNavigation.map((item) => (
             <SheetClose asChild key={item.href}>
-              <Link href={item.href} className="rounded-lg py-3 text-lg text-ink no-underline">
+              <SectionLink href={item.href} className="rounded-lg py-3 text-lg text-ink no-underline">
                 {item.label}
-              </Link>
+              </SectionLink>
             </SheetClose>
           ))}
         </nav>
         <div className="mt-auto flex flex-col gap-3">
           <SheetClose asChild>
             <Button asChild variant="ghost">
-              <Link href="/business">Login</Link>
+              <Link href="/business/login">Login</Link>
             </Button>
           </SheetClose>
           <SheetClose asChild>
             <Button asChild>
-              <Link href="/kontakt">Kostenlos ausprobieren</Link>
+              <Link href="/business/register">Kostenlos ausprobieren</Link>
             </Button>
           </SheetClose>
         </div>

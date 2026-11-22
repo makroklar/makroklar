@@ -1,0 +1,9 @@
+.form { display: grid; gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--color-primary); border-radius: var(--radius-md); font-size: var(--font-size-sm); }
+.form h2 { margin: 0; font-size: var(--font-size-md); }
+.form label { display: grid; gap: var(--space-1); }
+.form input { min-width: 0; width: 100%; padding: var(--space-3); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3); }
+.submit { border: 0; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); background: var(--color-primary); color: var(--color-accent); font: inherit; cursor: pointer; }
+.cancel { border: 0; padding: 0; background: transparent; color: var(--color-primary); font: inherit; text-decoration: underline; cursor: pointer; }
+.error { color: var(--color-danger); }
+.form :focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }

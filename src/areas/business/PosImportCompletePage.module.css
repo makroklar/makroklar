@@ -1,0 +1,72 @@
+.result {
+  --radius-complete-button: 10px;
+  --space-complete-action: 10px;
+
+  display: flex;
+  min-height: 26.75rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.intro {
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+}
+
+.description {
+  width: 100%;
+  max-width: 25rem;
+  margin: var(--space-5) auto 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-light);
+}
+
+.check {
+  display: block;
+  flex-shrink: 0;
+  margin-bottom: var(--space-4);
+}
+
+.continueButton {
+  display: inline-flex;
+  width: 8.5rem;
+  min-height: 2.875rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-complete-action);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-complete-button);
+  background: var(--color-primary);
+  color: var(--color-accent);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.continueButton:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: var(--space-1);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

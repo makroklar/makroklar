@@ -1,0 +1,200 @@
+.intro {
+  display: grid;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.3;
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-light);
+}
+
+.listTitle {
+  margin: var(--space-5) 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.listRegion {
+  max-height: 32rem;
+  overflow-y: auto;
+  padding: var(--space-1);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dish {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.dish[data-open='true'] {
+  border-color: var(--color-primary);
+}
+
+.dishButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dishButton:hover {
+  background: var(--color-accent-light);
+}
+
+.dishButton[aria-expanded='true'] {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.dishSummary {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+  overflow-wrap: anywhere;
+}
+
+.dishName {
+  font-weight: var(--font-weight-semibold);
+}
+
+.group,
+.selection,
+.priceName {
+  font-size: 0.875em;
+}
+
+.selection {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.arrow {
+  display: inline-flex;
+  color: var(--color-primary);
+}
+
+.dishButton[aria-expanded='true'] .arrow {
+  transform: rotate(90deg);
+  color: var(--color-accent);
+}
+
+.details {
+  padding: var(--space-4);
+}
+
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.metadata dt,
+.note {
+  color: var(--color-text-muted);
+}
+
+.metadata dd {
+  margin: var(--space-1) 0 0;
+}
+
+.note {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-sm);
+}
+
+.message {
+  margin-top: var(--space-5);
+  font-size: var(--font-size-sm);
+}
+
+.newDishButton {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.newDishButton:hover { background: var(--color-accent-light); }
+.newDishButton:focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }
+
+.link,
+.textButton {
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: var(--space-1);
+}
+
+.textButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.textButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.listRegion:focus-visible,
+.link:focus-visible,
+.textButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-1);
+}
+
+.dishButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -4px;
+}
+
+.dishButton[aria-expanded='true']:focus-visible {
+  outline-color: var(--color-accent);
+}
+
+@media (max-width: 600px) {
+  .dishButton {
+    flex-wrap: wrap;
+  }
+
+  .metadata {
+    grid-template-columns: 1fr;
+  }
+}
