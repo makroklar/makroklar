@@ -32,23 +32,6 @@
   filter: drop-shadow(var(--shadow-card-lg));
 }
 
-/* Kamera-Button 33 × 33 unten rechts, 5 px vom rechten Bildrand */
-.camera {
-  position: absolute;
-  right: 5px;
-  bottom: 0;
-  display: block;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.camera img {
-  display: block;
-}
-
 .hint {
   margin: 22px 0 0;
   padding: 0 39px 0 40px;
