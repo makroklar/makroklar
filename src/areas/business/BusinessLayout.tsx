@@ -14,7 +14,7 @@ export async function BusinessLayout({ children }: { children: ReactNode }) {
   const [snapshot, onboarding] = await Promise.all([readSavedMenu(), readOnboarding()]);
   return (
     <BusinessDraftProvider key={`${snapshot.accountKey}:${snapshot.restaurantId ?? 'none'}`} snapshot={snapshot} onboarding={onboarding}>
-      <div className={styles.layout}>
+      <div className={styles.layout} data-area="business">
         {children}
       </div>
     </BusinessDraftProvider>

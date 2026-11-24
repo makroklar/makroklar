@@ -40,9 +40,10 @@
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08);
 }
 
-/* Gemeinsame Marken-Werte für Gastansicht und Landingpage (Figma) */
+/* Gemeinsame Marken-Werte für Gastansicht, Landingpage und Restaurantansicht (Figma) */
 [data-area='guest'],
-[data-area='landing'] {
+[data-area='landing'],
+[data-area='business'] {
   --color-primary: #00604b;
   --color-primary-transparent: rgb(0 96 75 / 0.25);
   --color-accent: #d1d739;
@@ -95,6 +96,44 @@
   /* Schatten */
   --shadow-card: 0 1px 5px rgb(0 0 0 / 0.25);
   --shadow-card-lg: 0 1px 13px rgb(0 0 0 / 0.25);
+}
+
+/* Restaurantansicht (/business) – Figma-Datei „App“ */
+[data-area='business'] {
+  /* Farben */
+  --color-primary-dark: #004a3a; /* Hover auf Primärflächen */
+  --color-primary-light: #eff3f0;
+  --color-accent-light: #f0f2ba;
+  --color-secondary: #fcc010;
+  --color-text: #1a1d20;
+  --color-text-muted: #4a524e;
+  --color-text-on-primary: #ffffff;
+  --color-icon: #1e1e1e;
+  --color-icon-muted: #8b938f;
+  --color-background: #eff3f0;
+  --color-surface: #f9f9f7;
+  --color-danger: #b42318;
+
+  /* Bausteine der Dashboard-Seiten */
+  --color-card: #ffffff;
+  --color-row: var(--color-background);
+  --color-line: var(--color-border);
+  --color-muted: var(--color-text-muted);
+  --color-warning: var(--color-secondary);
+  --color-progress-track: var(--color-border);
+
+  /* Deaktiviert: Buttons und Optionen */
+  --color-disabled: #d9dcda;
+  --color-disabled-text: #9aa19d;
+
+  /* Nur lesbare Eingabefelder, z. B. Preis aus dem Kassensystem */
+  --color-field-readonly-background: var(--color-row);
+  --color-field-readonly-border: var(--color-line);
+  --color-field-readonly-text: var(--color-muted);
+
+  /* Typografie */
+  --font-weight-light: 300;
+  --font-weight-semibold: 600;
 }
 
 /* Landingpage – Figma-Datei „Desktop-App“, Frame „Public Website / Redesign“ */

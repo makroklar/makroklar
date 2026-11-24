@@ -1,13 +1,7 @@
 /* Gemeinsame Bausteine der Dashboard-Seiten (Figma „App / …“) */
 
 .page {
-  --color-card: #ffffff;
-  --color-row: var(--color-background);
-  --color-line: #d4e0d9;
-  --color-muted: #4a524e;
-  --color-disabled: #d9dcda;
-  --color-disabled-text: #9aa19d;
-  --color-warning: #fcc010;
+  /* Farben kommen aus shared/styles/variables.css ([data-area='business']) */
   --radius-card: 20px;
   --radius-row: 14px;
   --radius-button: 10px;
@@ -213,7 +207,7 @@ a.row:hover {
 }
 
 .primaryButton:hover {
-  background: #004a3a;
+  background: var(--color-primary-dark);
 }
 
 .secondaryButton {
@@ -354,13 +348,13 @@ a.row:hover {
 
 /* Nur lesbar (z. B. Werte aus dem Kassensystem): gedämpft statt Eingabe-Optik */
 .field:has(> input:disabled) {
-  border-color: var(--color-line);
-  background: var(--color-row);
+  border-color: var(--color-field-readonly-border);
+  background: var(--color-field-readonly-background);
 }
 
 .field:has(> input:disabled) input {
-  color: var(--color-muted);
-  -webkit-text-fill-color: var(--color-muted);
+  color: var(--color-field-readonly-text);
+  -webkit-text-fill-color: var(--color-field-readonly-text);
   cursor: default;
 }
 
@@ -469,7 +463,7 @@ a.row:hover {
 
 .errorNotice {
   margin: 0;
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 13px;
   font-weight: var(--font-weight-semibold);
 }

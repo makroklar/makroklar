@@ -50,7 +50,7 @@
 
 .scale {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-on-primary);
 }
 
 .scale:disabled {

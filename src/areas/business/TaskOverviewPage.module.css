@@ -61,7 +61,7 @@
   padding: var(--space-4);
   border-radius: var(--radius-row);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   text-decoration: none;
 }
 

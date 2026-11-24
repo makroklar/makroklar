@@ -1,7 +1,6 @@
 .rail {
   --rail-width: 88px;
   --rail-expanded-width: 232px;
-  --color-icon-muted: #8b938f;
 
   position: sticky;
   top: 0;
@@ -15,7 +14,7 @@
   height: 100vh;
   height: 100dvh;
   padding: 28px 22px;
-  background: #ffffff;
+  background: var(--color-card);
   box-shadow: 1px 0 4px rgb(0 0 0 / 0.04);
 }
 

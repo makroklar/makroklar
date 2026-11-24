@@ -26,7 +26,7 @@ a.option:hover {
 }
 
 .option strong {
-  color: #000000;
+  color: var(--color-text-strong);
   font-size: 1.5rem;
   font-weight: var(--font-weight-semibold);
 }

@@ -5,7 +5,7 @@
   padding: 0;
   border: 0;
   border-radius: 24px;
-  background: #eff3f0;
+  background: var(--color-background);
   color: var(--color-text);
   font-family: inherit;
   box-shadow: 0 4px 24px rgb(0 0 0 / 0.18);
@@ -29,7 +29,7 @@
 
 .header h2 {
   margin: 0;
-  color: #000000;
+  color: var(--color-text-strong);
   font-size: 1.25rem;
   font-weight: var(--font-weight-bold);
 }
@@ -45,7 +45,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #1e1e1e;
+  color: var(--color-icon);
   cursor: pointer;
 }
 
@@ -61,9 +61,9 @@
   gap: var(--space-3);
   min-height: 52px;
   padding: 0 var(--space-4);
-  border: 1px solid #d4e0d9;
+  border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: #f9f9f7;
+  background: var(--color-surface);
   color: var(--color-primary);
 }
 
@@ -107,9 +107,9 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid #d4e0d9;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: #f9f9f7;
+  background: var(--color-surface);
 }
 
 .item span {
@@ -117,7 +117,7 @@
 }
 
 .item strong {
-  color: #000000;
+  color: var(--color-text-strong);
   font-size: 14px;
   font-weight: var(--font-weight-semibold);
 }
