@@ -100,12 +100,16 @@
 
 /* Restaurantansicht (/business) – Figma-Datei „App“ */
 [data-area='business'] {
-  /* Farben */
+  /* Farben (Figma „Desktop-App“, z. B. Karte „Zutaten & Mengen“ 590:6247) */
+  --color-primary: #00614b;
+  --color-primary-transparent: rgb(0 97 75 / 0.25);
   --color-primary-dark: #004a3a; /* Hover auf Primärflächen */
   --color-primary-light: #eff3f0;
-  --color-accent-light: #f0f2ba;
+  --color-accent-light: #eff2ba; /* hervorgehobene Eingabefelder */
   --color-secondary: #fcc010;
-  --color-text: #1a1d20;
+  --color-text: #000000;
+  --color-text-strong: #141f1a; /* Titel */
+  --color-text-subtle: #4f5e57; /* kleine Feld-Labels wie „Menge“ */
   --color-text-muted: #4a524e;
   --color-text-on-primary: #ffffff;
   --color-icon: #1e1e1e;

@@ -48,13 +48,9 @@
   cursor: pointer;
 }
 
+/* Waage wie die anderen Aktions-Buttons: weiß mit Rand, Icon in Primärgrün (Figma 590:6247) */
 .scale {
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
-}
-
-.scale:disabled {
-  opacity: 0.85;
+  color: var(--color-primary);
 }
 
 .add {

@@ -362,7 +362,7 @@ a.row:hover {
   position: absolute;
   top: 6px;
   left: 12px;
-  color: var(--color-text);
+  color: var(--color-text-subtle);
   font-size: 9px;
   font-weight: var(--font-weight-semibold);
 }
