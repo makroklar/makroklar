@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Camera, ImagePlus, SquarePen, Trash2 } from 'lucide-react';
-import { PhotoCropDialog, type CropState } from './PhotoCropDialog';
+import { PhotoCropDialog, type CropState, type Stroke } from './PhotoCropDialog';
 import { canRemoveBackground, removeBackground, type RemovalStatus } from './removeBackground';
 import ui from '../dashboard/Dashboard.module.css';
 import styles from './Editor.module.css';
@@ -14,6 +14,8 @@ interface Photo {
   /** Freigestellte Fassung (PNG), einmal berechnet und dann wiederverwendet */
   cutout: string | null;
   useCutout: boolean;
+  /** Radierer- und Pinselstriche, bleiben beim erneuten Bearbeiten erhalten */
+  strokes: Stroke[];
   /** Angezeigtes Bild: zugeschnitten oder (noch) das Original */
   preview: string;
   crop: CropState | null;
@@ -21,6 +23,7 @@ interface Photo {
   transparent: boolean;
 }
 
+const NO_STROKES: Stroke[] = [];
 const TRANSPARENT_TYPES = ['image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif'];
 
 // Foto-Auswahl mit Zuschneiden und Löschen. Das Bild bleibt im Browser und wird noch nicht hochgeladen.
@@ -58,7 +61,7 @@ export function PhotoField({ caption }: { caption: string }) {
     release(photo);
     const url = URL.createObjectURL(file);
     setPhoto({
-      source: url, file, cutout: null, useCutout: false, preview: url, crop: null,
+      source: url, file, cutout: null, useCutout: false, strokes: NO_STROKES, preview: url, crop: null,
       transparent: TRANSPARENT_TYPES.includes(file.type),
     });
     setCropping(true);
@@ -165,19 +168,20 @@ export function PhotoField({ caption }: { caption: string }) {
         </div>
       )}
       <div className={styles.photoFrame} data-dragging={dragging}>
-        <label className={styles.photo} htmlFor={id} data-filled={photo !== null}>
-          {photo ? (
-            // Bewusst <img>: lokale blob:-Vorschau, dafür passt next/image nicht
-            <img src={photo.preview} alt="Ausgewähltes Foto" />
-          ) : (
-            <>
-              <Camera aria-hidden="true" size={28} strokeWidth={1.75} />
-              <span>{dragging ? 'Hier ablegen' : 'Foto hinzufügen'}</span>
-              {!dragging && <span className={styles.photoHint}>oder ins Fenster ziehen</span>}
-            </>
-          )}
-          {photo && <span className={ui.visuallyHidden}>Anderes Foto wählen</span>}
-        </label>
+        {photo ? (
+          // Klick aufs Foto öffnet die Bearbeitung, nicht nur der kleine Stift-Knopf
+          <button className={styles.photo} type="button" data-filled="true" onClick={() => setCropping(true)}>
+            {/* Bewusst <img>: lokale blob:-Vorschau, dafür passt next/image nicht */}
+            <img src={photo.preview} alt="" />
+            <span className={ui.visuallyHidden}>Foto bearbeiten</span>
+          </button>
+        ) : (
+          <label className={styles.photo} htmlFor={id} data-filled="false">
+            <Camera aria-hidden="true" size={28} strokeWidth={1.75} />
+            <span>{dragging ? 'Hier ablegen' : 'Foto hinzufügen'}</span>
+            {!dragging && <span className={styles.photoHint}>oder ins Fenster ziehen</span>}
+          </label>
+        )}
         {photo && (
           <div className={styles.photoActions}>
             <button className={`${ui.iconButton} ${ui.iconButtonSmall}`} type="button" aria-label="Foto bearbeiten" title="Bearbeiten" onClick={() => setCropping(true)}>
@@ -210,15 +214,16 @@ export function PhotoField({ caption }: { caption: string }) {
         transparent={photo?.transparent ?? false}
         cutout={photo?.cutout ?? null}
         initialUseCutout={photo?.useCutout ?? false}
+        initialStrokes={photo?.strokes ?? NO_STROKES}
         canRemoveBackground={removalAvailable || photo?.cutout != null}
         removal={removal}
         removalError={removalError}
         onRemoveBackground={createCutout}
-        onApply={({ url, crop, useCutout }) => {
+        onApply={({ url, crop, useCutout, strokes }) => {
           setPhoto(current => {
             if (!current) { URL.revokeObjectURL(url); return current; }
             if (current.preview !== current.source) URL.revokeObjectURL(current.preview);
-            return { ...current, preview: url, crop, useCutout };
+            return { ...current, preview: url, crop, useCutout, strokes };
           });
           setCropping(false);
         }}

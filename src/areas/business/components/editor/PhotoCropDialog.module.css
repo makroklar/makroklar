@@ -1,7 +1,7 @@
 /* Overlay „Foto zuschneiden“ – gleiche Optik wie „Zutat hinzufügen“ */
 .dialog {
   box-sizing: border-box;
-  width: min(520px, calc(100vw - 2rem));
+  width: min(880px, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
   padding: 0;
   border: 0;
@@ -20,6 +20,40 @@
   display: grid;
   gap: var(--space-4);
   padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+/* Links das Bild, rechts Reiter und Einstellungen; schmal untereinander */
+.preview,
+.controls {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.controls {
+  gap: var(--space-4);
+}
+
+@media (min-width: 760px) {
+  .content {
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
+    column-gap: var(--space-5);
+  }
+
+  .header {
+    grid-column: 1 / -1;
+  }
+
+  /* Aktionen unten in der rechten Spalte */
+  .controls {
+    grid-template-rows: auto auto 1fr auto;
+    height: 100%;
+  }
+
+  .controls > .actions {
+    align-self: end;
+  }
 }
 
 .header {
@@ -72,12 +106,107 @@
   outline-offset: 2px;
 }
 
-.stage img {
+.picture {
   position: absolute;
   top: 0;
   left: 0;
   max-width: none;
   pointer-events: none;
+}
+
+/* Radierer und Pinsel: Kreis in Pinselgröße statt Mauszeiger */
+.stage[data-tool='erase'],
+.stage[data-tool='restore'] {
+  cursor: none;
+}
+
+.brushCursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 2px solid var(--color-card);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(0 0 0 / 0.45);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Werkzeugleiste: Verschieben, Radierer, Pinsel und daneben Rückgängig */
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.toolGroup {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-row);
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.tool:hover:not(:disabled) {
+  background: var(--color-row);
+}
+
+.tool[aria-pressed='true'],
+.tool[aria-pressed='true']:hover {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.tool:disabled {
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
+.tool:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.undo {
+  justify-content: center;
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.sizePreview {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+}
+
+.sizePreview span {
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* Schmal: nur Icons, die Namen stehen im title */
+@media (max-width: 479px) {
+  .tool span {
+    display: none;
+  }
 }
 
 /* Drittel-Raster und Rahmen als Orientierung */
@@ -93,8 +222,10 @@
   pointer-events: none;
 }
 
+/* Platz für zwei Zeilen, damit der Wechsel zwischen den Reitern die Höhe nicht ändert */
 .hint {
-  margin: calc(var(--space-2) * -1) 0 0;
+  min-block-size: 2lh;
+  margin: 0;
   color: var(--color-text-muted);
   font-size: 12px;
   text-align: center;
@@ -184,35 +315,14 @@
   }
 }
 
-/* Hintergrund entfernen: Knopf mit Statuszeile */
-.background {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-2);
-}
-
-.backgroundStatus,
 .backgroundError {
   margin: 0;
-  font-size: 12px;
-  text-align: center;
-}
-
-.backgroundStatus {
-  color: var(--color-text-muted);
-}
-
-.backgroundError {
   color: var(--color-danger);
+  font-size: 12px;
 }
 
 .nowrap {
   white-space: nowrap;
-}
-
-.backgroundStatus a {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-semibold);
 }
 
 /* Während das Modell lädt oder rechnet */
@@ -238,5 +348,266 @@
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation-duration: 2.5s;
+  }
+}
+
+/* Reiter „Zuschneiden“ / „Hintergrund“ */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: var(--color-card);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--color-row);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.panels {
+  display: grid;
+}
+
+.panel {
+  display: grid;
+  grid-area: 1 / 1;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.panel[data-active='false'] {
+  visibility: hidden;
+}
+
+/* Karten im Reiter „Hintergrund“ */
+.section {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  background: var(--color-card);
+}
+
+.sectionTitle {
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.sectionIcon {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.sectionNote {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.sectionNote a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.switchText {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.switchText strong {
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.switchText span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* Schalter: Kästchen als Schiebeschalter, bleibt ein echtes Kontrollkästchen */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--color-icon-muted);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-card);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: translate 0.15s ease;
+}
+
+.switch:checked {
+  background: var(--color-primary);
+}
+
+.switch:checked::before {
+  translate: 18px 0;
+}
+
+.switch:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.size {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 120px;
+}
+
+.size input {
+  --slider-track-size: 6px;
+  --slider-thumb-size: 20px;
+  --slider-fill: calc(var(--slider-thumb-size) / 2 + (100% - var(--slider-thumb-size)) * var(--progress, 0));
+
+  flex: 1;
+  min-width: 0;
+  block-size: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.size input::-webkit-slider-runnable-track {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-primary) var(--slider-fill), var(--color-icon-muted) var(--slider-fill));
+}
+
+.size input::-webkit-slider-thumb {
+  appearance: none;
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+  border: 3px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+.size input::-moz-range-track {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: var(--color-icon-muted);
+}
+
+.size input::-moz-range-progress {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.size input::-moz-range-thumb {
+  box-sizing: border-box;
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  border: 3px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+.size input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch::before {
+    transition: none;
+  }
+}
+
+/* Rechte Spalte darf schmaler werden als ihr Inhalt; Pinselgruppe füllt die Breite, Größe darunter */
+.controls > * {
+  min-width: 0;
+}
+
+.section .toolGroup {
+  flex: 1;
+}
+
+.section .toolGroup .tool {
+  flex: 1;
+  justify-content: center;
+}
+
+.section .size {
+  flex-basis: 100%;
+}
+
+.section .tools {
+  flex-wrap: wrap;
+}
+
+/* Untereinander: Bild nicht riesig werden lassen, damit Reiter und Knöpfe sichtbar bleiben */
+@media (max-width: 759px) {
+  .dialog {
+    width: min(520px, calc(100vw - 2rem));
   }
 }

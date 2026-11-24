@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
-import { Eraser, LoaderCircle, Undo2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Crop, Eraser, LoaderCircle, Paintbrush, Undo, WandSparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import type { RemovalStatus } from './removeBackground';
 import { MODEL_URL } from './backgroundModel';
 import ui from '../dashboard/Dashboard.module.css';
@@ -14,13 +14,37 @@ export interface CropState {
   cy: number;
 }
 
+/** Ein Pinselstrich in Bildpixeln: Radierer macht durchsichtig, Pinsel malt das Original zurück */
+export interface Stroke {
+  tool: 'erase' | 'restore';
+  radius: number;
+  points: { x: number; y: number }[];
+}
+
 /** Seitenverhältnis des Foto-Felds (Breite : Höhe) */
 export const PHOTO_ASPECT = 1.1;
 const MAX_ZOOM = 4;
 const OUTPUT_WIDTH = 1100;
 const START: CropState = { zoom: 1, cx: 0.5, cy: 0.5 };
+const BRUSH_MIN = 8;
+const BRUSH_MAX = 80;
 
 interface Size { w: number; h: number }
+
+/** Zwei Bereiche: Ausschnitt wählen oder Hintergrund bearbeiten (automatisch und von Hand) */
+type Mode = 'crop' | 'background';
+type Tool = 'move' | 'erase' | 'restore';
+
+const BRUSH_TOOLS = [
+  { value: 'erase', label: 'Wegradieren', Icon: Eraser },
+  { value: 'restore', label: 'Zurückmalen', Icon: Paintbrush },
+] as const;
+
+const TOOL_HINTS: Record<Tool, string> = {
+  move: 'Ziehen zum Verschieben, Regler oder Mausrad zum Zoomen.',
+  erase: 'Über Stellen malen, die verschwinden sollen. Mausrad zoomt.',
+  restore: 'Über Stellen malen, die wieder sichtbar sein sollen. Mausrad zoomt.',
+};
 
 interface PhotoCropDialogProps {
   open: boolean;
@@ -32,12 +56,14 @@ interface PhotoCropDialogProps {
   cutout: string | null;
   /** Beim Öffnen die freigestellte Fassung zeigen */
   initialUseCutout: boolean;
+  /** Radierer- und Pinselstriche aus der letzten Bearbeitung */
+  initialStrokes: Stroke[];
   /** false: kein WebGPU (z. B. über http://), dann gibt es den Knopf gar nicht */
   canRemoveBackground: boolean;
   removal: RemovalStatus | null;
   removalError: string | null;
   onRemoveBackground: () => void;
-  onApply: (result: { url: string; crop: CropState; useCutout: boolean }) => void;
+  onApply: (result: { url: string; crop: CropState; useCutout: boolean; strokes: Stroke[] }) => void;
   onClose: () => void;
 }
 
@@ -67,24 +93,58 @@ function clamp(crop: CropState, stage: Size, image: Size): CropState {
   };
 }
 
-// Overlay „Foto zuschneiden“: Bild verschieben (Ziehen, Pfeiltasten) und zoomen (Regler, Mausrad, +/−)
+function drawStroke(context: CanvasRenderingContext2D, stroke: Stroke, original: CanvasPattern | null) {
+  if (stroke.tool === 'restore' && !original) return;
+  context.save();
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.lineWidth = stroke.radius * 2;
+  if (stroke.tool === 'erase') {
+    context.globalCompositeOperation = 'destination-out';
+    context.strokeStyle = '#000';
+  } else if (original) {
+    // Original deckungsgleich als Muster: Leinwand und Original haben dieselben Pixelmaße
+    context.strokeStyle = original;
+  }
+  context.beginPath();
+  const [first, ...rest] = stroke.points;
+  context.moveTo(first.x, first.y);
+  // Ein einzelner Klick ist eine Linie der Länge 0; mit runden Enden wird daraus ein Punkt
+  for (const point of rest.length > 0 ? rest : [first]) context.lineTo(point.x, point.y);
+  context.stroke();
+  context.restore();
+}
+
+// Overlay „Foto bearbeiten“: verschieben (Ziehen, Pfeiltasten), zoomen (Regler, Mausrad, +/−),
+// radieren und mit dem Pinsel das Original zurückmalen
 export function PhotoCropDialog({
-  open, src, initial, transparent, cutout, initialUseCutout, canRemoveBackground, removal, removalError, onRemoveBackground, onApply, onClose,
+  open, src, initial, transparent, cutout, initialUseCutout, initialStrokes, canRemoveBackground, removal, removalError,
+  onRemoveBackground, onApply, onClose,
 }: PhotoCropDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cursorRef = useRef<HTMLSpanElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const originalRef = useRef<HTMLImageElement | null>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const painting = useRef<Stroke | null>(null);
   const pressedBackdrop = useRef(false);
   const [image, setImage] = useState<Size | null>(null);
+  const [originalReady, setOriginalReady] = useState(false);
   const [stageWidth, setStageWidth] = useState(0);
   const [crop, setCrop] = useState<CropState>(START);
   const [saving, setSaving] = useState(false);
   const [useCutout, setUseCutout] = useState(false);
+  const [mode, setMode] = useState<Mode>('crop');
+  const [brushTool, setBrushTool] = useState<'erase' | 'restore'>('erase');
+  const tool: Tool = mode === 'crop' ? 'move' : brushTool;
+  const [brush, setBrush] = useState(28);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
 
   // Freigestellt nur zeigen, wenn die Fassung schon da ist; bis dahin das Original
   const shownSrc = useCutout && cutout ? cutout : src;
-  const exportTransparent = transparent || shownSrc === cutout;
+  const exportTransparent = transparent || shownSrc === cutout || strokes.some(stroke => stroke.tool === 'erase');
 
   const stage: Size = { w: stageWidth, h: stageWidth / PHOTO_ASPECT };
   const ready = image !== null && stageWidth > 0;
@@ -95,10 +155,12 @@ export function PhotoCropDialog({
     if (open && !dialog.open) {
       setCrop(initial ?? START);
       setUseCutout(initialUseCutout);
+      setStrokes(initialStrokes);
+      setMode('crop');
       dialog.showModal();
     }
     if (!open && dialog.open) dialog.close();
-  }, [open, initial, initialUseCutout]);
+  }, [open, initial, initialUseCutout, initialStrokes]);
 
   // Neues Foto: alte Maße verwerfen
   useEffect(() => { setImage(null); }, [src]);
@@ -114,6 +176,39 @@ export function PhotoCropDialog({
     };
     img.src = shownSrc;
   }, [shownSrc]);
+
+  // Original für den Pinsel, der Weggeschnittenes zurückmalt
+  useEffect(() => {
+    setOriginalReady(false);
+    if (!src) return;
+    const img = new Image();
+    img.onload = () => {
+      originalRef.current = img;
+      setOriginalReady(true);
+    };
+    img.src = src;
+  }, [src]);
+
+  const originalPattern = useCallback((context: CanvasRenderingContext2D) => (
+    originalReady && originalRef.current ? context.createPattern(originalRef.current, 'no-repeat') : null
+  ), [originalReady]);
+
+  // Leinwand = Bild (Original oder freigestellt) plus alle Striche, in voller Auflösung
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img || !image) return;
+    if (canvas.width !== image.w || canvas.height !== image.h) {
+      canvas.width = image.w;
+      canvas.height = image.h;
+    }
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(img, 0, 0);
+    const pattern = originalPattern(context);
+    for (const stroke of strokes) drawStroke(context, stroke, pattern);
+  }, [image, strokes, originalPattern]);
 
   useEffect(() => {
     const element = stageRef.current;
@@ -149,15 +244,61 @@ export function PhotoCropDialog({
     });
   }
 
+  /** Bildschirmpunkt → Bildpixel, passend zu Verschiebung und Zoom der Leinwand */
+  function toImage(event: PointerEvent<HTMLDivElement>) {
+    if (!image) return null;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const { scale, width, height } = geometry(stage, image, crop.zoom);
+    const left = stage.w / 2 - crop.cx * width;
+    const top = stage.h / 2 - crop.cy * height;
+    return { x: (event.clientX - rect.left - left) / scale, y: (event.clientY - rect.top - top) / scale, scale };
+  }
+
+  // Kreis in Pinselgröße folgt der Maus; direkt am Element, damit nicht bei jeder Bewegung neu gerendert wird
+  function moveCursor(event: PointerEvent<HTMLDivElement>) {
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    cursor.style.translate = `${event.clientX - rect.left - brush / 2}px ${event.clientY - rect.top - brush / 2}px`;
+    cursor.style.opacity = '1';
+  }
+
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { x: event.clientX, y: event.clientY };
+    if (tool === 'move') {
+      drag.current = { x: event.clientX, y: event.clientY };
+      return;
+    }
+    const point = toImage(event);
+    const context = canvasRef.current?.getContext('2d');
+    if (!point || !context) return;
+    painting.current = { tool, radius: brush / 2 / point.scale, points: [{ x: point.x, y: point.y }] };
+    drawStroke(context, painting.current, originalPattern(context));
   }
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!drag.current) return;
-    pan(event.clientX - drag.current.x, event.clientY - drag.current.y);
-    drag.current = { x: event.clientX, y: event.clientY };
+    if (tool !== 'move') moveCursor(event);
+    if (drag.current) {
+      pan(event.clientX - drag.current.x, event.clientY - drag.current.y);
+      drag.current = { x: event.clientX, y: event.clientY };
+      return;
+    }
+    const stroke = painting.current;
+    const point = toImage(event);
+    const context = canvasRef.current?.getContext('2d');
+    if (!stroke || !point || !context) return;
+    // Nur das neue Stück zeichnen; der ganze Strich wird beim Loslassen übernommen
+    const last = stroke.points[stroke.points.length - 1];
+    const next = { x: point.x, y: point.y };
+    stroke.points.push(next);
+    drawStroke(context, { ...stroke, points: [last, next] }, originalPattern(context));
+  }
+
+  function endPointer() {
+    drag.current = null;
+    const stroke = painting.current;
+    painting.current = null;
+    if (stroke) setStrokes(current => [...current, stroke]);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -173,8 +314,8 @@ export function PhotoCropDialog({
   }
 
   function apply() {
-    const img = imageRef.current;
-    if (!img || !image || !ready) return;
+    const picture = canvasRef.current;
+    if (!picture || !image || !ready) return;
     const { scale } = geometry(stage, image, crop.zoom);
     const sourceWidth = stage.w / scale;
     const sourceHeight = stage.h / scale;
@@ -186,14 +327,14 @@ export function PhotoCropDialog({
     if (!context) return;
     context.imageSmoothingQuality = 'high';
     context.drawImage(
-      img,
+      picture,
       crop.cx * image.w - sourceWidth / 2, crop.cy * image.h - sourceHeight / 2, sourceWidth, sourceHeight,
       0, 0, canvas.width, canvas.height,
     );
     setSaving(true);
     canvas.toBlob(blob => {
       setSaving(false);
-      if (blob) onApply({ url: URL.createObjectURL(blob), crop, useCutout: shownSrc === cutout });
+      if (blob) onApply({ url: URL.createObjectURL(blob), crop, useCutout: shownSrc === cutout, strokes });
     }, exportTransparent ? 'image/png' : 'image/jpeg', 0.9);
   }
 
@@ -218,92 +359,180 @@ export function PhotoCropDialog({
     >
       <div className={styles.content}>
         <header className={styles.header}>
-          <h2 id="photo-crop-title">Foto zuschneiden</h2>
+          <h2 id="photo-crop-title">Foto bearbeiten</h2>
           <button className={styles.close} type="button" aria-label="Schließen" onClick={onClose}>
             <X aria-hidden="true" size={28} />
           </button>
         </header>
 
-        <div
-          ref={stageRef}
-          className={styles.stage}
-          tabIndex={0}
-          aria-label="Bildausschnitt. Mit Ziehen oder den Pfeiltasten verschieben, mit Plus und Minus zoomen."
-          aria-describedby="photo-crop-hint"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={() => { drag.current = null; }}
-          onPointerCancel={() => { drag.current = null; }}
-          onKeyDown={onKeyDown}
-        >
-          {shownSrc && shown && (
-            // Bewusst <img>: lokale blob:-Vorschau, dafür passt next/image nicht
-            <img
-              src={shownSrc}
-              alt=""
-              draggable={false}
-              style={{
+        <div className={styles.preview}>
+          <div
+            ref={stageRef}
+            className={styles.stage}
+            data-tool={tool}
+            tabIndex={0}
+            aria-label="Bildausschnitt. Mit Ziehen oder den Pfeiltasten verschieben, mit Plus und Minus zoomen."
+            aria-describedby="photo-crop-hint"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endPointer}
+            onPointerCancel={endPointer}
+            onPointerLeave={() => { if (cursorRef.current) cursorRef.current.style.opacity = '0'; }}
+            onKeyDown={onKeyDown}
+          >
+            {/* Leinwand statt <img>: Radierer und Pinsel zeichnen direkt in voller Auflösung hinein */}
+            <canvas
+              ref={canvasRef}
+              className={styles.picture}
+              hidden={!shown}
+              style={shown ? {
                 width: shown.width,
                 height: shown.height,
                 transform: `translate(${stage.w / 2 - crop.cx * shown.width}px, ${stage.h / 2 - crop.cy * shown.height}px)`,
-              }}
+              } : undefined}
             />
-          )}
-          <span className={styles.grid} aria-hidden="true" />
-          {removal && (
-            <div className={styles.busy} aria-hidden="true">
-              <LoaderCircle className={styles.spinner} size={28} />
-            </div>
-          )}
+            <span className={styles.grid} aria-hidden="true" />
+            {tool !== 'move' && (
+              <span ref={cursorRef} className={styles.brushCursor} style={{ width: brush, height: brush }} aria-hidden="true" />
+            )}
+            {removal && (
+              <div className={styles.busy} aria-hidden="true">
+                <LoaderCircle className={styles.spinner} size={28} />
+              </div>
+            )}
+          </div>
+          <p id="photo-crop-hint" className={styles.hint}>{TOOL_HINTS[tool]}</p>
         </div>
-        <p id="photo-crop-hint" className={styles.hint}>So sehen Gäste das Foto. Ziehen zum Verschieben, Regler oder Mausrad zum Zoomen.</p>
 
-        <label className={styles.zoom}>
-          <ZoomOut aria-hidden="true" size={18} />
-          <span className={ui.visuallyHidden}>Zoom</span>
-          <input
-            type="range"
-            min={1}
-            max={MAX_ZOOM}
-            step={0.01}
-            value={crop.zoom}
-            aria-valuetext={`${Math.round(crop.zoom * 100)} %`}
-            style={{ '--progress': (crop.zoom - 1) / (MAX_ZOOM - 1) } as CSSProperties}
-            onChange={event => update(current => ({ ...current, zoom: Number(event.target.value) }))}
-          />
-          <ZoomIn aria-hidden="true" size={18} />
-        </label>
+        <div className={styles.controls}>
+          <div className={styles.tabs} role="tablist" aria-label="Bearbeiten">
+            {([
+              ['crop', 'Zuschneiden', Crop],
+              ['background', 'Hintergrund', Eraser],
+            ] as const).map(([value, label, Icon]) => (
+              <button
+                key={value}
+                className={styles.tab}
+                type="button"
+                role="tab"
+                id={`photo-tab-${value}`}
+                aria-selected={mode === value}
+                aria-controls={`photo-panel-${value}`}
+                onClick={() => setMode(value)}
+              >
+                <Icon aria-hidden="true" size={18} />
+                {label}
+              </button>
+            ))}
+          </div>
 
-        {canRemoveBackground && <div className={styles.background}>
-          <button
-            className={`${ui.secondaryButton} ${ui.small}`}
-            type="button"
-            aria-pressed={useCutout}
-            disabled={removal !== null}
-            onClick={toggleBackground}
-          >
-            {useCutout && cutout
-              ? <><Undo2 aria-hidden="true" size={16} /> Hintergrund zurückholen</>
-              : <><Eraser aria-hidden="true" size={16} /> Hintergrund entfernen</>}
-          </button>
-          <p className={styles.backgroundStatus} role="status">
-            {removal
-              ? removalText(removal)
-              : 'Läuft lokal im Browser, das Foto verlässt dein Gerät nicht.'}
-          </p>
-          {!cutout && !removal && (
-            <p className={styles.backgroundStatus}>
-              Beim ersten Mal lädt dein Browser dafür das KI-Modell{' '}
-              <a href={MODEL_URL} target="_blank" rel="noopener noreferrer">BiRefNet-lite</a>{' '}
-              <span className={styles.nowrap}>(ca. 120–240 MB)</span> von Hugging Face herunter.
-            </p>
-          )}
-          {removalError && <p className={styles.backgroundError} role="alert">{removalError}</p>}
-        </div>}
+          {/* Beide Reiter liegen übereinander in derselben Zelle; der inaktive ist nur unsichtbar.
+              So ist die Fläche immer so hoch wie der höhere Reiter und beim Wechsel springt nichts. */}
+          <div className={styles.panels}>
+            <div id="photo-panel-crop" role="tabpanel" aria-labelledby="photo-tab-crop" className={styles.panel} data-active={mode === 'crop'} inert={mode !== 'crop'}>
+              <label className={styles.zoom}>
+                <ZoomOut aria-hidden="true" size={18} />
+                <span className={ui.visuallyHidden}>Zoom</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={MAX_ZOOM}
+                  step={0.01}
+                  value={crop.zoom}
+                  aria-valuetext={`${Math.round(crop.zoom * 100)} %`}
+                  style={{ '--progress': (crop.zoom - 1) / (MAX_ZOOM - 1) } as CSSProperties}
+                  onChange={event => update(current => ({ ...current, zoom: Number(event.target.value) }))}
+                />
+                <ZoomIn aria-hidden="true" size={18} />
+              </label>
+            </div>
+            <div id="photo-panel-background" role="tabpanel" aria-labelledby="photo-tab-background" className={styles.panel} data-active={mode === 'background'} inert={mode !== 'background'}>
+              {/* 1. Automatisch: KI stellt frei, als Schalter an/aus */}
+              {canRemoveBackground && (
+                <section className={styles.section}>
+                  <label className={styles.switchRow}>
+                    <WandSparkles className={styles.sectionIcon} aria-hidden="true" size={20} />
+                    <span className={styles.switchText}>
+                      <strong>Automatisch entfernen</strong>
+                      <span role="status">
+                        {removal ? removalText(removal) : 'Lokal im Browser, das Foto verlässt dein Gerät nicht.'}
+                      </span>
+                    </span>
+                    <input
+                      className={styles.switch}
+                      type="checkbox"
+                      role="switch"
+                      checked={useCutout}
+                      disabled={removal !== null}
+                      onChange={toggleBackground}
+                    />
+                  </label>
+                  {!cutout && !removal && (
+                    <p className={styles.sectionNote}>
+                      Beim ersten Mal lädt dein Browser dafür das KI-Modell{' '}
+                      <a href={MODEL_URL} target="_blank" rel="noopener noreferrer">BiRefNet-lite</a>{' '}
+                      <span className={styles.nowrap}>(ca. 120–240 MB)</span> von Hugging Face herunter.
+                    </p>
+                  )}
+                  {removalError && <p className={styles.backgroundError} role="alert">{removalError}</p>}
+                </section>
+              )}
 
-        <div className={styles.actions}>
-          <button className={ui.secondaryButton} type="button" onClick={onClose}>Abbrechen</button>
-          <button className={ui.primaryButton} type="button" disabled={!ready || saving || removal !== null} onClick={apply}>Übernehmen</button>
+              {/* 2. Von Hand: wegradieren oder das Original zurückmalen */}
+              <section className={styles.section}>
+                <div className={styles.tools}>
+                  <strong className={styles.sectionTitle}>Von Hand nachbessern</strong>
+                  <button
+                    className={`${styles.tool} ${styles.undo}`}
+                    type="button"
+                    aria-label="Rückgängig"
+                    title="Letzten Strich rückgängig machen"
+                    disabled={strokes.length === 0}
+                    onClick={() => setStrokes(current => current.slice(0, -1))}
+                  >
+                    <Undo aria-hidden="true" size={18} />
+                  </button>
+                </div>
+                <div className={styles.tools}>
+                  <div className={styles.toolGroup} role="group" aria-label="Pinsel">
+                    {BRUSH_TOOLS.map(({ value, label, Icon }) => (
+                      <button
+                        key={value}
+                        className={styles.tool}
+                        type="button"
+                        aria-pressed={brushTool === value}
+                        onClick={() => setBrushTool(value)}
+                      >
+                        <Icon aria-hidden="true" size={18} />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <label className={styles.size}>
+                    <span className={ui.visuallyHidden}>Pinselgröße</span>
+                    <input
+                      type="range"
+                      min={BRUSH_MIN}
+                      max={BRUSH_MAX}
+                      step={1}
+                      value={brush}
+                      aria-valuetext={`${brush} Pixel`}
+                      style={{ '--progress': (brush - BRUSH_MIN) / (BRUSH_MAX - BRUSH_MIN) } as CSSProperties}
+                      onChange={event => setBrush(Number(event.target.value))}
+                    />
+                    <span className={styles.sizePreview} aria-hidden="true">
+                      <span style={{ width: Math.max(4, brush / 3), height: Math.max(4, brush / 3) }} />
+                    </span>
+                  </label>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <div className={styles.actions}>
+            <button className={ui.secondaryButton} type="button" onClick={onClose}>Abbrechen</button>
+            <button className={ui.primaryButton} type="button" disabled={!ready || saving || removal !== null} onClick={apply}>Übernehmen</button>
+          </div>
         </div>
       </div>
     </dialog>
