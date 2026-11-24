@@ -24,6 +24,8 @@ interface PhotoCropDialogProps {
   open: boolean;
   src: string | null;
   initial: CropState | null;
+  /** Bild kann transparent sein: als PNG statt JPEG exportieren, damit der Alphakanal bleibt */
+  transparent: boolean;
   onApply: (result: { url: string; crop: CropState }) => void;
   onClose: () => void;
 }
@@ -48,7 +50,7 @@ function clamp(crop: CropState, stage: Size, image: Size): CropState {
 }
 
 // Overlay „Foto zuschneiden“: Bild verschieben (Ziehen, Pfeiltasten) und zoomen (Regler, Mausrad, +/−)
-export function PhotoCropDialog({ open, src, initial, onApply, onClose }: PhotoCropDialogProps) {
+export function PhotoCropDialog({ open, src, initial, transparent, onApply, onClose }: PhotoCropDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -162,7 +164,7 @@ export function PhotoCropDialog({ open, src, initial, onApply, onClose }: PhotoC
     canvas.toBlob(blob => {
       setSaving(false);
       if (blob) onApply({ url: URL.createObjectURL(blob), crop });
-    }, 'image/jpeg', 0.9);
+    }, transparent ? 'image/png' : 'image/jpeg', 0.9);
   }
 
   const shown = ready ? geometry(stage, image, crop.zoom) : null;

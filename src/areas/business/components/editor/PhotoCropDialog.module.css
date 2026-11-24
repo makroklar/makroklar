@@ -56,7 +56,8 @@
   aspect-ratio: 1.1;
   overflow: hidden;
   border-radius: 20px;
-  background: var(--color-card);
+  /* Schachbrett, damit transparente Bereiche (PNG mit Alphakanal) sichtbar sind */
+  background: repeating-conic-gradient(var(--color-background) 0% 25%, var(--color-card) 0% 50%) 0 0 / 16px 16px;
   cursor: grab;
   touch-action: none;
   user-select: none;

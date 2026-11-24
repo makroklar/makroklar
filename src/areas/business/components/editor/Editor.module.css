@@ -172,6 +172,49 @@
   display: none;
 }
 
+/* Ablagefläche über dem ganzen Fenster, solange eine Datei hereingezogen wird */
+.dropOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--color-primary-transparent);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.dropOverlay::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-4);
+  border: 3px dashed var(--color-primary);
+  border-radius: 24px;
+}
+
+.dropCard {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-7);
+  border-radius: 24px;
+  background: var(--color-card);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.18);
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.dropCard strong {
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.dropCard span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
 .photoHint {
   margin-top: calc(var(--space-1) * -1);
   color: var(--color-text-muted);
