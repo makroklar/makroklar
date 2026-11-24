@@ -150,6 +150,22 @@
   gap: var(--space-2);
 }
 
+/* Rahmen für Foto und die Aktionen oben rechts */
+.photoFrame {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 230px);
+}
+
+.photoActions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+
 .photo {
   display: grid;
   place-items: center;
