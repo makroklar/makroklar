@@ -32,6 +32,8 @@ interface PhotoCropDialogProps {
   cutout: string | null;
   /** Beim Öffnen die freigestellte Fassung zeigen */
   initialUseCutout: boolean;
+  /** false: kein WebGPU (z. B. über http://), dann gibt es den Knopf gar nicht */
+  canRemoveBackground: boolean;
   removal: RemovalStatus | null;
   removalError: string | null;
   onRemoveBackground: () => void;
@@ -40,11 +42,9 @@ interface PhotoCropDialogProps {
 }
 
 function removalText(status: RemovalStatus) {
-  if (status.device === null) return 'Modell wird vorbereitet …';
-  const where = status.device === 'webgpu' ? 'GPU' : 'CPU';
-  if (status.phase === 'running') return `Hintergrund wird lokal entfernt (${where}) …`;
+  if (status.phase === 'running') return 'Hintergrund wird lokal entfernt (GPU) …';
   return status.progress === null
-    ? `Modell wird vorbereitet (${where}) …`
+    ? 'Modell wird vorbereitet …'
     : `Modell wird geladen: ${Math.round(status.progress)} %`;
 }
 
@@ -69,7 +69,7 @@ function clamp(crop: CropState, stage: Size, image: Size): CropState {
 
 // Overlay „Foto zuschneiden“: Bild verschieben (Ziehen, Pfeiltasten) und zoomen (Regler, Mausrad, +/−)
 export function PhotoCropDialog({
-  open, src, initial, transparent, cutout, initialUseCutout, removal, removalError, onRemoveBackground, onApply, onClose,
+  open, src, initial, transparent, cutout, initialUseCutout, canRemoveBackground, removal, removalError, onRemoveBackground, onApply, onClose,
 }: PhotoCropDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -274,7 +274,7 @@ export function PhotoCropDialog({
           <ZoomIn aria-hidden="true" size={18} />
         </label>
 
-        <div className={styles.background}>
+        {canRemoveBackground && <div className={styles.background}>
           <button
             className={`${ui.secondaryButton} ${ui.small}`}
             type="button"
@@ -299,7 +299,7 @@ export function PhotoCropDialog({
             </p>
           )}
           {removalError && <p className={styles.backgroundError} role="alert">{removalError}</p>}
-        </div>
+        </div>}
 
         <div className={styles.actions}>
           <button className={ui.secondaryButton} type="button" onClick={onClose}>Abbrechen</button>

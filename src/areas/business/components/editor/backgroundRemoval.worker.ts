@@ -1,25 +1,19 @@
-// Hintergrund entfernen, komplett im Browser: BiRefNet-lite (MIT) über transformers.js.
-// Mit WebGPU (sichere Herkunft: https oder localhost) rechnet die Grafikkarte, sonst WebAssembly auf dem Prozessor.
+// Hintergrund entfernen, komplett im Browser: BiRefNet-lite (MIT) über transformers.js auf der Grafikkarte (WebGPU).
+// Ohne WebGPU wird die Funktion gar nicht angeboten: auf dem Prozessor (WebAssembly) reicht der Speicher für das Modell nicht.
 import { AutoModel, RawImage, Tensor, env, type PreTrainedModel } from '@huggingface/transformers';
 import { MODEL_ID, MODEL_REVISION } from './backgroundModel';
-
 
 // Das Modell erwartet fest 1024 × 1024 Pixel
 const INPUT_SIZE = 1024;
 const MEAN = [0.485, 0.456, 0.406];
 const STD = [0.229, 0.224, 0.225];
 
-export type Device = 'webgpu' | 'wasm';
-
-/** cpuOnly: WebGPU ist in diesem Browser schon gescheitert, direkt WebAssembly nehmen */
-export type WorkerRequest = { id: number; image: Blob; cpuOnly: boolean };
+export type WorkerRequest = { id: number; image: Blob };
 export type WorkerResponse =
-  | { type: 'loading'; device: Device; progress: number | null }
-  | { type: 'running'; device: Device }
-  | { type: 'done'; id: number; image: Blob; device: Device }
+  | { type: 'loading'; progress: number | null }
+  | { type: 'running' }
+  | { type: 'done'; id: number; image: Blob }
   | { type: 'error'; id: number; message: string; gpuFailed: boolean };
-
-interface Loaded { model: PreTrainedModel; device: Device }
 
 // Minimaler Typ für navigator.gpu, damit keine eigenen WebGPU-Typen nötig sind
 type GpuNavigator = { gpu?: { requestAdapter(): Promise<{ features: Set<string> } | null> } };
@@ -28,37 +22,27 @@ env.allowLocalModels = false;
 
 const post = (message: WorkerResponse) => self.postMessage(message);
 
-type Dtype = 'fp16' | 'fp32';
-interface Config { device: Device; dtype: Dtype }
-
-const CPU: Config = { device: 'wasm', dtype: 'fp32' };
-
-/** WebGPU nur in sicherer Herkunft (https, localhost) und mit Grafikkarte; sonst WebAssembly */
-async function pickConfig(cpuOnly: boolean): Promise<Config> {
-  if (cpuOnly || !self.isSecureContext) return CPU;
+async function load(): Promise<PreTrainedModel> {
+  post({ type: 'loading', progress: null });
   const adapter = await (navigator as GpuNavigator).gpu?.requestAdapter().catch(() => null);
-  if (!adapter) return CPU;
-  return { device: 'webgpu', dtype: adapter.features.has('shader-f16') ? 'fp16' : 'fp32' };
-}
-
-async function load({ device, dtype }: Config): Promise<Loaded> {
-  post({ type: 'loading', device, progress: null });
+  if (!adapter) throw new Error('WebGPU nicht verfügbar');
   const progress_callback = (info: { status: string; progress?: number }) => {
     if (info.status === 'progress_total' && typeof info.progress === 'number') {
-      post({ type: 'loading', device, progress: info.progress });
+      post({ type: 'loading', progress: info.progress });
     }
   };
-  // Auf dem Prozessor ohne Speicher-Arena und Speichermuster: weniger Spitzenbedarf im WebAssembly-Speicher
-  const session_options = device === 'wasm' ? { enableCpuMemArena: false, enableMemPattern: false } : {};
-  const model = await AutoModel.from_pretrained(MODEL_ID, { revision: MODEL_REVISION, device, dtype, progress_callback, session_options });
-  return { model, device };
+  return AutoModel.from_pretrained(MODEL_ID, {
+    revision: MODEL_REVISION,
+    device: 'webgpu',
+    dtype: adapter.features.has('shader-f16') ? 'fp16' : 'fp32',
+    progress_callback,
+  });
 }
 
-let loading: Promise<Loaded> | null = null;
-let config: Config | null = null;
+let loading: Promise<PreTrainedModel> | null = null;
 
-function ready(cpuOnly: boolean): Promise<Loaded> {
-  loading ??= pickConfig(cpuOnly).then(picked => { config = picked; return load(picked); });
+function ready(): Promise<PreTrainedModel> {
+  loading ??= load();
   loading.catch(() => { loading = null; });
   return loading;
 }
@@ -101,7 +85,7 @@ function fillHoles(mask: Uint8Array, width: number, height: number) {
   }
 }
 
-async function cutout({ model }: Loaded, blob: Blob): Promise<Blob> {
+async function cutout(model: PreTrainedModel, blob: Blob): Promise<Blob> {
   const image = await RawImage.fromBlob(blob);
   const pixel_values = await toInput(image, INPUT_SIZE);
   const { output_image } = (await model({ input_image: pixel_values })) as { output_image: Tensor };
@@ -124,25 +108,22 @@ async function cutout({ model }: Loaded, blob: Blob): Promise<Blob> {
   return canvas.convertToBlob({ type: 'image/png' });
 }
 
-// Anfragen nacheinander abarbeiten, damit das Modell nicht doppelt rechnet.
-// Scheitert WebGPU (z. B. Grafikkarten-Limits), meldet der Worker das; die Seite startet dann einen
-// neuen Worker nur mit WebAssembly, weil die ONNX-Laufzeit hier schon auf WebGPU festgelegt ist.
+// Anfragen nacheinander abarbeiten, damit das Modell nicht doppelt rechnet
 let queue = Promise.resolve();
 
 self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
-  const { id, image, cpuOnly } = event.data;
+  const { id, image } = event.data;
   queue = queue.then(async () => {
     let decoded = false;
     try {
       // Nicht lesbare Bilder vorher abfangen, damit sie nicht als WebGPU-Fehler gelten
       (await createImageBitmap(image)).close();
       decoded = true;
-      const loaded = await ready(cpuOnly);
-      post({ type: 'running', device: loaded.device });
-      post({ type: 'done', id, image: await cutout(loaded, image), device: loaded.device });
+      const model = await ready();
+      post({ type: 'running' });
+      post({ type: 'done', id, image: await cutout(model, image) });
     } catch (error) {
-      const gpuFailed = decoded && config?.device === 'webgpu';
-      post({ type: 'error', id, message: error instanceof Error ? error.message : String(error), gpuFailed });
+      post({ type: 'error', id, message: error instanceof Error ? error.message : String(error), gpuFailed: decoded });
     }
   });
 });

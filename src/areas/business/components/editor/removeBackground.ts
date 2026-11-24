@@ -1,25 +1,25 @@
-import type { Device, WorkerRequest, WorkerResponse } from './backgroundRemoval.worker';
-
-export type { Device };
+import type { WorkerRequest, WorkerResponse } from './backgroundRemoval.worker';
 
 export type RemovalStatus =
-  | { phase: 'loading'; device: Device | null; progress: number | null }
-  | { phase: 'running'; device: Device };
+  | { phase: 'loading'; progress: number | null }
+  | { phase: 'running' };
 
-// Merkt sich, dass WebGPU auf diesem Gerät nicht klappt, damit nicht jedes Mal erst die GPU versucht wird
-const CPU_KEY = 'makroklar:hintergrund-cpu';
-
-function readCpuOnly() {
-  try { return localStorage.getItem(CPU_KEY) === '1'; } catch { return false; }
-}
-
-function rememberCpuOnly() {
-  try { localStorage.setItem(CPU_KEY, '1'); } catch { /* ohne Speicher eben nur für diese Sitzung */ }
-}
+// Merkt sich, dass WebGPU auf diesem Gerät scheitert (z. B. Grafikkarten-Limits), damit der Knopf dann gar nicht erscheint
+const UNSUPPORTED_KEY = 'makroklar:hintergrund-nicht-moeglich';
 
 let worker: Worker | null = null;
-let cpuOnly: boolean | null = null;
 let nextId = 0;
+
+/**
+ * Nur anbieten, wenn WebGPU nutzbar ist: Das gibt es nur in sicherer Herkunft (https, localhost)
+ * und mit passender Grafikkarte. Auf dem Prozessor reicht der Speicher für das Modell nicht.
+ */
+export async function canRemoveBackground(): Promise<boolean> {
+  if (!window.isSecureContext) return false;
+  try { if (localStorage.getItem(UNSUPPORTED_KEY) === '1') return false; } catch { /* ohne Speicher einfach prüfen */ }
+  const gpu = (navigator as Navigator & { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
+  return Boolean(await gpu?.requestAdapter().catch(() => null));
+}
 
 // Ein Worker für die ganze Seite: das Modell bleibt nach dem ersten Laden im Speicher
 function getWorker() {
@@ -27,38 +27,25 @@ function getWorker() {
   return worker;
 }
 
-function attempt(image: Blob, onStatus: (status: RemovalStatus) => void) {
+/** Entfernt den Hintergrund lokal im Browser und liefert ein PNG mit Alphakanal */
+export function removeBackground(image: Blob, onStatus: (status: RemovalStatus) => void): Promise<Blob> {
   const target = getWorker();
   const id = ++nextId;
-  return new Promise<{ image: Blob; device: Device }>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const onMessage = (event: MessageEvent<WorkerResponse>) => {
       const message = event.data;
-      if (message.type === 'loading') onStatus({ phase: 'loading', device: message.device, progress: message.progress });
-      else if (message.type === 'running') onStatus({ phase: 'running', device: message.device });
+      if (message.type === 'loading') onStatus({ phase: 'loading', progress: message.progress });
+      else if (message.type === 'running') onStatus({ phase: 'running' });
       else if (message.id === id) {
         target.removeEventListener('message', onMessage);
-        if (message.type === 'done') resolve({ image: message.image, device: message.device });
-        else reject(Object.assign(new Error(message.message), { gpuFailed: message.gpuFailed }));
+        if (message.type === 'done') { resolve(message.image); return; }
+        if (message.gpuFailed) {
+          try { localStorage.setItem(UNSUPPORTED_KEY, '1'); } catch { /* dann eben nur für diese Sitzung */ }
+        }
+        reject(new Error(message.message));
       }
     };
     target.addEventListener('message', onMessage);
-    target.postMessage({ id, image, cpuOnly: cpuOnly ?? false } satisfies WorkerRequest);
+    target.postMessage({ id, image } satisfies WorkerRequest);
   });
-}
-
-/** Entfernt den Hintergrund lokal im Browser und liefert ein PNG mit Alphakanal */
-export async function removeBackground(image: Blob, onStatus: (status: RemovalStatus) => void) {
-  cpuOnly ??= readCpuOnly();
-  try {
-    return await attempt(image, onStatus);
-  } catch (error) {
-    if (!(error instanceof Error && 'gpuFailed' in error && error.gpuFailed)) throw error;
-    // WebGPU gescheitert: neuer Worker nur mit WebAssembly, die alte ONNX-Laufzeit hängt an der GPU
-    console.warn('Hintergrund entfernen: WebGPU gescheitert, weiter auf dem Prozessor', error);
-    worker?.terminate();
-    worker = null;
-    cpuOnly = true;
-    rememberCpuOnly();
-    return attempt(image, onStatus);
-  }
 }

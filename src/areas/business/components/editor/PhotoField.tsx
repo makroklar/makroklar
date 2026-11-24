@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Camera, ImagePlus, SquarePen, Trash2 } from 'lucide-react';
 import { PhotoCropDialog, type CropState } from './PhotoCropDialog';
-import { removeBackground, type RemovalStatus } from './removeBackground';
+import { canRemoveBackground, removeBackground, type RemovalStatus } from './removeBackground';
 import ui from '../dashboard/Dashboard.module.css';
 import styles from './Editor.module.css';
 
@@ -33,6 +33,8 @@ export function PhotoField({ caption }: { caption: string }) {
   const [dropError, setDropError] = useState<string | null>(null);
   const [removal, setRemoval] = useState<RemovalStatus | null>(null);
   const [removalError, setRemovalError] = useState<string | null>(null);
+  const [removalAvailable, setRemovalAvailable] = useState(false);
+  useEffect(() => { canRemoveBackground().then(setRemovalAvailable); }, []);
 
   // Beim Verlassen der Seite die blob:-Adressen freigeben
   const latest = useRef(photo);
@@ -67,10 +69,9 @@ export function PhotoField({ caption }: { caption: string }) {
     if (!photo || photo.cutout || removal) return;
     const { file } = photo;
     setRemovalError(null);
-    setRemoval({ phase: 'loading', device: null, progress: null });
+    setRemoval({ phase: 'loading', progress: null });
     try {
-      const result = await removeBackground(file, setRemoval);
-      const url = URL.createObjectURL(result.image);
+      const url = URL.createObjectURL(await removeBackground(file, setRemoval));
       setPhoto(current => {
         if (current?.file !== file) { URL.revokeObjectURL(url); return current; }
         return { ...current, cutout: url };
@@ -209,6 +210,7 @@ export function PhotoField({ caption }: { caption: string }) {
         transparent={photo?.transparent ?? false}
         cutout={photo?.cutout ?? null}
         initialUseCutout={photo?.useCutout ?? false}
+        canRemoveBackground={removalAvailable || photo?.cutout != null}
         removal={removal}
         removalError={removalError}
         onRemoveBackground={createCutout}
