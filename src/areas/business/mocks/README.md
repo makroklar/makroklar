@@ -4,12 +4,43 @@ The local Lightspeed catalog and its preview/import UI have been removed.
 POS provider cards remain as a preview of the future integration; selecting a
 provider reports that the connection is unavailable. No demo catalog is loaded.
 
-On the menu and POS selection pages, a link below the card lets users skip to
+On the menu, manual entry and POS selection pages, a link below the card lets users skip to
 `/business/onboarding/purchases` without changing or deleting their draft.
 They can add dishes manually in the final dish step or set up the menu later.
 The old `/business/onboarding/menu/pos/complete` URL redirects to POS selection,
 so saved demo dishes cannot be mistaken for a successful live POS connection.
 The original completion component/design is retained for a future integration.
+
+`/business/onboarding/menu/manual` reuses `NewDishForm` and the existing
+`customDishes` Context. It lists manual dishes with their optional price and
+adds new dishes with stable UUIDs. Empty prices stay null; zero is shown as EUR 0.
+The final dish step reads the same entries for assigning foods and bases.
+Weiter/skip opens purchases without requiring any dish. No write occurs here;
+the final initialization saves the draft through the existing onboarding action.
+Photos and editing existing dish metadata are deferred. Read failures show retry
+feedback rather than an empty list. The existing route header keeps this page on
+step 1 and returns to the menu method selection.
+
+`/business/onboarding/menu/import` reads CSV files locally with Papa Parse.
+The file never goes to Storage or a server endpoint. UTF-8 (including BOM),
+semicolon/comma separators and quoted fields are supported; the first nonempty
+record is the header. Limits: 1 MiB, 500 data records and 20 columns. Invalid
+encoding, quoting, column counts or exceeded limits reject the file without
+partial import. A downloadable two-column example is generated from a constant.
+Column mapping uses indices (duplicate titles never overwrite columns). Users
+explicitly build a preview, edit names/prices, and deselect invalid rows before
+accepting. Unselected columns are ignored. Unknown prices remain null, not zero.
+Normalized name matches against selected rows and existing dishes require explicit
+confirmation; names never trigger automatic merging or replacement. Re-reading
+an accepted file raises the same name warnings. Stable preview UUIDs and a batch
+Context method prevent duplicate application of the same preview. CSV entries
+use the existing custom-dish model and final v2 save path, with a total cap of
+1000 custom dishes. Preview edits alone are local to this page; accepted dishes
+survive client navigation but unsaved changes disappear on reload. No database,
+Auth, image, nutrition or schema changes are involved in CSV parsing.
+
+CSV parsing and preview validation tests:
+`node --test src/areas/business/data/csvMenuModel.test.mjs src/areas/business/data/readCsvMenu.test.mjs`
 
 Existing database dishes, import identities and recipes are unchanged.
 `data/savedMenu.ts` still reads saved menu items in `BusinessLayout` and

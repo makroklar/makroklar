@@ -8,7 +8,9 @@ export function MenuImportSkip() {
   const pathname = usePathname();
   if (
     pathname !== '/business/onboarding/menu' &&
-    pathname !== '/business/onboarding/menu/pos'
+    pathname !== '/business/onboarding/menu/pos' &&
+    pathname !== '/business/onboarding/menu/manual' &&
+    pathname !== '/business/onboarding/menu/import'
   ) return null;
 
   return (
