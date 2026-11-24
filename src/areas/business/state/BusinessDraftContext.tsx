@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
   useReducer,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -19,8 +20,11 @@ import { appendCatalogFood } from '../data/foodSearchModel';
 import type { CustomDishDraft, RecipeDraft } from '../types/recipe';
 import type { OnboardingRead } from '../data/readOnboarding';
 import type { CompletionSummary } from '../data/onboardingModel';
-import type { BasisRecipeDraft } from '../data/basisOnboardingModel';
-import { basisDraftReducer, basisLegacySaveError, createBasisDraft, type DishBasisLine } from './basisDraft';
+import type { BasisRecipeDraft, BasisOnboardingPayload } from '../data/basisOnboardingModel';
+import { basisDraftReducer, createBasisDraft, type DishBasisLine } from './basisDraft';
+
+// Raw UI values are acknowledged only after the action validates and saves them.
+type OnboardingSubmission = Omit<BasisOnboardingPayload, 'manualFoods'> & { manualFoods: ManualFoodDraft[] };
 
 interface BusinessDraftValue {
   importedItems: readonly ImportedMenuItem[];
@@ -52,7 +56,10 @@ interface BusinessDraftValue {
   setSelectedDishId: (id: string | null) => void;
   onboardingVersion: number;
   onboardingError: string | null;
-  acceptInitialization: (summary: CompletionSummary) => void;
+  savedSummary: CompletionSummary | null;
+  hasUnsavedChanges: boolean;
+  basisPersistenceReady: boolean;
+  acceptInitialization: (summary: CompletionSummary, submitted: OnboardingSubmission) => void;
 }
 
 const BusinessDraftContext = createContext<BusinessDraftValue | null>(null);
@@ -67,19 +74,25 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
   const [recipes, setRecipes] = useState<Record<string, RecipeDraft>>(onboarding.snapshot?.recipes ?? {});
   const [basisDraft, dispatchBasis] = useReducer(basisDraftReducer, onboarding.snapshot, createBasisDraft);
   const [onboardingVersion, setOnboardingVersion] = useState(onboarding.snapshot?.version ?? 0);
+  const [savedSummary, setSavedSummary] = useState<CompletionSummary | null>(onboarding.snapshot?.summary ?? null);
   const [serverOnboarding, setServerOnboarding] = useState(onboarding.snapshot);
   const [dirty, setDirty] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
+  const latestContents = useRef({ manualFoods, catalogFoods, customDishes, recipes });
+  latestContents.current = { manualFoods, catalogFoods, customDishes, recipes };
+  const basisPersistenceReady = !onboarding.error && onboarding.snapshot !== null
+    && 'schemaVersion' in onboarding.snapshot && onboarding.snapshot.schemaVersion === 2;
   if (serverOnboarding !== onboarding.snapshot) {
     setServerOnboarding(onboarding.snapshot);
     // A refresh must never discard unsaved ingredient/recipe edits.
-    if (onboarding.snapshot && !dirty && !basisDraft.dirty) {
+    if (onboarding.snapshot && onboarding.snapshot.version >= onboardingVersion && !dirty && !basisDraft.dirty) {
       setManualFoods(onboarding.snapshot.manualFoods);
       setCatalogFoods(onboarding.snapshot.catalogFoods);
       setCustomDishes(onboarding.snapshot.customDishes);
       setRecipes(onboarding.snapshot.recipes);
       dispatchBasis({ type: 'restore', snapshot: onboarding.snapshot });
       setOnboardingVersion(onboarding.snapshot.version);
+      setSavedSummary(onboarding.snapshot.summary);
     }
   }
   // Adopt refreshed server data before descendants render, keeping temporary food-source choices.
@@ -100,6 +113,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     dispatchBasis({ type: 'reset' });
     setSelectedDishId(null);
     setDirty(false);
+    setSavedSummary(null);
   }, []);
   const addManualFood = useCallback((food: ManualFoodDraft) => {
     setDirty(true);
@@ -139,12 +153,14 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     ] });
   }, [importedItems, customDishes]);
   const clearBasisError = useCallback(() => dispatchBasis({ type: 'clearError' }), []);
-  const acceptInitialization = useCallback((summary: CompletionSummary) => {
+  const acceptInitialization = useCallback((summary: CompletionSummary, submitted: OnboardingSubmission) => {
     setOnboardingVersion(summary.version);
-    setDirty(false);
-    // v1 can only acknowledge a basis-free draft. Do not clear pending v2 work.
-    if (!basisLegacySaveError(basisDraft)) dispatchBasis({ type: 'reset' });
-  }, [basisDraft]);
+    setSavedSummary(summary);
+    const { manualFoods, catalogFoods, customDishes, recipes } = submitted;
+    // A late response must not mark edits made during the request as saved.
+    setDirty(JSON.stringify(latestContents.current) !== JSON.stringify({ manualFoods, catalogFoods, customDishes, recipes }));
+    dispatchBasis({ type: 'acknowledge', submitted });
+  }, []);
   const value = useMemo(
     () => ({ importedItems, acceptItems, selectedFoodSources, setSelectedFoodSources, resetDraft,
       storageError: snapshot.error, canSaveItems: snapshot.restaurantId !== null && snapshot.error === null,
@@ -153,11 +169,12 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
       basisRecipes: basisDraft.basisRecipes, upsertBasisRecipe, removeBasisRecipe,
       dishBases: basisDraft.dishBases, setDishBases, deletedBasisIds: basisDraft.deletedBasisIds,
       basisError: basisDraft.error, clearBasisError,
-      onboardingVersion, onboardingError: onboarding.error ?? basisLegacySaveError(basisDraft), acceptInitialization }),
+      onboardingVersion, onboardingError: onboarding.error, basisPersistenceReady, acceptInitialization,
+      savedSummary, hasUnsavedChanges: dirty || basisDraft.dirty }),
     [importedItems, acceptItems, selectedFoodSources, resetDraft, snapshot.error, snapshot.restaurantId,
       manualFoods, addManualFood, removeManualFood, catalogFoods, addCatalogFood, removeCatalogFood,
       customDishes, addCustomDish, recipes, setRecipe, selectedDishId, onboardingVersion, onboarding.error, acceptInitialization,
-      basisDraft, upsertBasisRecipe, removeBasisRecipe, setDishBases, clearBasisError],
+      basisDraft, upsertBasisRecipe, removeBasisRecipe, setDishBases, clearBasisError, basisPersistenceReady, savedSummary, dirty],
   );
 
   return (

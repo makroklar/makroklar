@@ -1,6 +1,9 @@
 # Basis recipes: foundation review
 
-Status: tested on isolated PostgreSQL 17.12 on 2026-11-24, not applied to Supabase.
+Status: applied to `makroklar-dev` (`osdbsbbcnftussvgumjh`) on 2026-11-24 after
+isolated PostgreSQL 17.12 testing and explicit deployment approval. All three
+migrations (`20261124000200`, `20261124000300`, `20261124000400`) are recorded in
+the remote migration history; a subsequent dry-run reported no pending migrations.
 The foundation migration adds only the three
 tables in `20261124000200_create_basis_recipes.sql`, indexes, grants and read RLS.
 It does not modify existing data, RPCs, generated types, onboarding or Dashboard.
@@ -8,7 +11,7 @@ The numbering leaves `20261124000100` to the photo-bucket migration on Dashboard
 that migration is not a dependency of this one.
 
 The next prepared migration, `20261124000300_add_basis_nutrition.sql`, adds read-time
-nutrition calculations. It remains unapplied to Supabase. It introduces a private common
+nutrition calculations. It is now applied to Supabase. It introduces a private common
 food contribution function, `get_basis_recipe_nutrition`, and extends the existing
 `get_dish_nutrition` without changing its output columns/statuses. Direct dish food
 lines and basis lines use the same BLS/OFF/manual validation. No UI/generated types
@@ -31,7 +34,7 @@ Application writes directly to the basis tables remain closed.
 
 ## Prepared v2 save/read contract
 
-`20261124000400_save_basis_onboarding.sql` is tested locally, not applied to Supabase. It adds:
+`20261124000400_save_basis_onboarding.sql` is tested locally and applied to Supabase. It adds:
 
 - `save_restaurant_onboarding_v2(restaurant_id, payload, base_version, request_id)`
   using the same owner checks, lock order, optimistic version and retry semantics
@@ -76,18 +79,38 @@ cannot be removed or change units until their links are explicitly cleared. Logo
 clears local state without scheduling database deletions. New unsaved bases that
 are removed do not create deletion requests; undo cancels a saved basis deletion.
 
-The live reader still calls v1; its snapshot type also accepts v2 for the next
-integration step. The Context supplies a temporary `onboardingError` when it has
-basis/v2 state so the existing FinishOnboarding cannot silently save only v1 fields.
-No new UI or persistence is enabled by this state batch. Navigation within the
-mounted provider keeps drafts; unsaved changes still disappear on a full reload.
+The optional onboarding step and dish picker now use this state. The application
+reader, FinishOnboarding and Server Action use v2 together. Only a missing v2
+reader (`PGRST202`) permits a legacy **read**, with an error that blocks finishing.
+Other read failures or invalid snapshots do not fall back. Writes never retry via
+v1. A deployment without the migrations therefore blocks final saving, including
+basis-free onboarding. The linked `makroklar-dev` now has both v2 RPCs deployed.
 
-No Server Action, live read RPC, generated database types or Dashboard adapter has
-switched to v2 yet. Before rollout, update **both** writers/readers and the error
-message for `55000`. Reuse authoritative OFF verification and cache publication
-after the confirmed save in `finishOnboardingAction`; never publish client values.
-SQL checks passed in the isolated database described below. The feature is not
-deployed, and frontend/Supabase-stack integration remains to be tested.
+Successful saves acknowledge the submitted bases and clear confirmed deletion
+requests without erasing recipes or edits made during the request. A newly saved
+basis removed while the request was in flight is queued for explicit deletion.
+Dirty state blocks snapshot replacement; older snapshot versions are not adopted.
+Navigation within the mounted provider keeps drafts; unsaved changes still
+disappear on a full reload.
+
+Authoritative OFF verification and post-save cache publication remain in place.
+The v2 validator rechecks ingredient units after OFF verification; all quantities
+are normalized on a copy. `database.generated.ts` was regenerated from the deployed
+public schema and the temporary v2 aliases were removed from `database.types.ts`.
+Dashboard on the other branch is not
+updated by this batch and must use basis-aware writers before editing these data.
+
+On 2026-11-24, 35 model/action/reader/state tests and TypeScript passed. These include
+normalization, explicit deletion, safe missing-migration behavior, authoritative
+OFF unit changes, and successful/in-flight save acknowledgement. SQL checks passed
+in the isolated database described below in the earlier migration batch.
+After deployment, seven SQL checks passed on Supabase: `basis_recipes.sql`,
+`basis_nutrition.sql`, `basis_onboarding.sql`, `dish_nutrition.sql`,
+`business_onboarding.sql`, `shared_off_cache.sql`, and `restaurant_foundation.sql`.
+Every check rolled back its fixtures. Counts before/after stayed at 3 restaurants,
+3 Auth users, 219 dishes, 37 foods and 57 direct ingredient links. All three new
+basis tables were empty after the checks. The authenticated browser save/reload
+test remains outstanding; SQL role tests do not replace the browser session flow.
 
 ## Model
 

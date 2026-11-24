@@ -19,6 +19,7 @@ export type BasisDraftAction =
   | { type: 'remove'; id: string }
   | { type: 'setLinks'; dishKey: string; lines: readonly DishBasisLine[]; knownDishKeys: readonly string[] }
   | { type: 'restore'; snapshot: Snapshot }
+  | { type: 'acknowledge'; submitted: Pick<BasisOnboardingPayload, 'basisRecipes' | 'dishBases' | 'deletedBasisIds'> }
   | { type: 'clearError' }
   | { type: 'reset' };
 
@@ -38,6 +39,18 @@ export function basisUsedBy(state: BasisDraftState, id: string): string[] {
 
 export function basisDraftReducer(state: BasisDraftState, action: BasisDraftAction): BasisDraftState {
   switch (action.type) {
+    case 'acknowledge': {
+      const { basisRecipes, dishBases, deletedBasisIds } = action.submitted;
+      const unchanged = JSON.stringify([state.basisRecipes, state.dishBases, state.deletedBasisIds])
+        === JSON.stringify([basisRecipes, dishBases, deletedBasisIds]);
+      const savedBasisIds = basisRecipes.map(recipe => recipe.id);
+      return { ...state, savedBasisIds, fromV2: true, dirty: !unchanged,
+        // A basis removed while saving is now persisted and still needs explicit deletion.
+        deletedBasisIds: [...new Set([
+          ...state.deletedBasisIds.filter(id => !deletedBasisIds.includes(id)),
+          ...savedBasisIds.filter(id => !state.basisRecipes.some(recipe => recipe.id === id)),
+        ])] };
+    }
     case 'restore':
       // Background refreshes cannot erase work, pending deletions or unsaved links.
       return state.dirty ? state : createBasisDraft(action.snapshot);
@@ -77,12 +90,4 @@ export function basisDraftReducer(state: BasisDraftState, action: BasisDraftActi
       return { ...state, dishBases: { ...state.dishBases, [action.dishKey]: action.lines.map(line => ({ ...line })) }, dirty: true, error: null };
     }
   }
-}
-
-// Temporary rollout guard: the current FinishOnboarding still writes v1. Remove
-// only when reader, writer and provider all use the deployed v2 contract.
-export function basisLegacySaveError(state: BasisDraftState): string | null {
-  return state.fromV2 || state.basisRecipes.length > 0 || state.deletedBasisIds.length > 0 || Object.keys(state.dishBases).length > 0
-    ? 'Das Speichern von Basisrezepten ist noch nicht freigeschaltet. Deine Eingaben bleiben in dieser Sitzung erhalten.'
-    : null;
 }

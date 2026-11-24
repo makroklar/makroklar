@@ -108,9 +108,20 @@ Official references, checked 2026-11-11:
 - https://openfoodfacts.github.io/openfoodfacts-server/api/ref-barcode-normalization/
 
 Purchases is
-optional: Weiter always navigates to `/business/onboarding/dishes`, even with no
-selected foods. This protected route displays the accepted/restored menu items
-from the existing Context. Step 3 is labelled `Gerichte vervollständigen`.
+optional: Weiter navigates to `/business/onboarding/bases`, even with no
+selected foods. Step 3, `Basisrezepte erstellen`, creates and edits temporary
+food-only bases with a measured output in g or ml. Existing bases are edited in
+the Context immediately, including unfinished quantities, so navigating between
+steps preserves edits. Empty output is an explicit draft, not an inferred yield.
+Deleting a base requires confirmation and is blocked if a dish references it.
+The step can be skipped. The UI uses the v2 read/write contract. The three basis
+migrations were applied to `makroklar-dev` on 2026-11-24. Confirmed saves restore
+bases and links on reload; unsaved edits still disappear on a full reload.
+On an environment missing these migrations, saved legacy data can still be
+displayed but final saving is blocked with a setup message (no v1 write fallback).
+
+Step 4, `/business/onboarding/dishes`, displays the accepted/restored menu items
+from the existing Context and is labelled `Gerichte vervollständigen`.
 Selecting an item opens its name, accounting group, SKU, explicitly selected price
 and recipe editor; one detail panel is open at a time. Selection uses source + source
 ID, so duplicate names cannot open the wrong item. A missing price stays unset;
@@ -121,6 +132,13 @@ and survives navigating back to purchases to add more ingredients.
 
 `NewDishForm` adds a draft with a stable client UUID and an optional price.
 `RecipeEditor` assigns selected foods and amounts for one plated portion.
+Its picker groups Lebensmittel and Basisrezepte. Basis selections retain only
+their stable ID, the quantity used for the dish and the basis output unit in
+`dishBases`; they never copy the base's ingredients into the dish. Name/output
+edits are therefore reflected on reopening the dish. Already linked bases are
+excluded from the picker, and removing the final link keeps an explicit empty
+array for persistence. Incomplete bases can be assigned as drafts with a visible
+reminder; durable saving is reported only after a successful server response.
 There is no servings field; the final Server Action fixes `servings` to 1.
 The database retains support for multi-portion recipes for future use.
 A 100g food requires g; a 100ml food requires ml. An
@@ -129,19 +147,30 @@ There is no implicit density, cooking-yield or mass/volume conversion.
 
 `FinishOnboarding` validates the draft and calls `finishOnboardingAction.ts`.
 The server resolves the owner, verifies OFF data independently of client values,
-and calls one atomic `save_restaurant_onboarding` RPC. BLS calculations always
+and calls one atomic `save_restaurant_onboarding_v2` RPC, including bases, their
+ingredient quantities, dish links and explicit deletions. Authoritative OFF data
+is checked again against basis ingredient units before the write. BLS calculations always
 read the pinned BLS dataset. Missing macro values stay null, never partial totals.
 Empty/incomplete recipes are classified as drafts in the stored summary; no
 allergen or publication workflow is implemented. Processing UI acknowledges
 actual validation/save results, without timed fake intermediate successes.
 `Import jetzt prüfen` returns to the editor; `Zum Dashboard` targets the existing
 placeholder dashboard. Calculation results are stored in the completion summary
-and available through `get_dish_nutrition`; a dish-level results UI is not added yet.
+and available through `get_dish_nutrition`. `SavedDishNutrition` shows the saved
+per-serving energy/protein/fat/carbohydrate values in dish details. It does not
+calculate in the browser. Missing metrics show `Nicht verfügbar`, while genuine
+zero remains 0. Any unsaved food/recipe/basis change conservatively hides all dish
+results until the next confirmed save (including dishes affected by a shared base).
+Read failures and version mismatches also suppress results. Successful saves and
+accepted server snapshots update the summary; logout clears it.
 
 Migration `20261111000100_complete_business_onboarding.sql` was applied to
 `makroklar-dev` on 2026-11-17 and the public TypeScript types were regenerated.
-`readOnboarding.ts` restores saved foods, custom dishes and recipes in
-`BusinessLayout`. Post-application SQL checks passed with their test data rolled
+`readOnboarding.ts` now requests `read_restaurant_onboarding_v2` to restore saved
+foods, custom dishes, recipes, bases and links in `BusinessLayout`. The v2
+migrations are applied to `makroklar-dev` and their SQL checks passed with fixture
+rollback; authenticated browser save/reload verification remains open. For the original v1
+migration, post-application SQL checks passed with their test data rolled
 back; the actual browser save/reload flow still needs manual verification.
 A failed read blocks final save;
 refreshing server data never replaces dirty drafts. Version checks reject stale

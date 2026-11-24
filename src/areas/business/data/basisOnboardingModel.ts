@@ -3,7 +3,7 @@ import { onboardingPayloadSchema, onboardingSnapshotSchema } from './onboardingM
 import { positiveAmount, recipeErrors } from './recipeDraft';
 import type { RecipeFood } from '../types/recipe';
 
-// Prepared contract for the v2 RPCs. No existing UI/save action uses it yet.
+// Shared validation for the v2 reader, UI and save action.
 const quantity = z.string().trim().max(30).refine(value => positiveAmount(value) !== null,
   'Bitte eine Menge größer als 0 eingeben (maximal 1.000.000).');
 const unit = z.enum(['g', 'ml']);

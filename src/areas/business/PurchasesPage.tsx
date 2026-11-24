@@ -64,7 +64,7 @@ export function PurchasesPage() {
       <div className={styles.actions}>
         <Link
           className={styles.continueButton}
-          href="/business/onboarding/dishes"
+          href="/business/onboarding/bases"
         >
           <span>Weiter</span>
           <ArrowIcon tone="inherit" />

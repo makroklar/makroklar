@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { basisDraftReducer as reduce, createBasisDraft, basisUsedBy, basisLegacySaveError } from './basisDraft.ts';
+import { basisDraftReducer as reduce, createBasisDraft, basisUsedBy } from './basisDraft.ts';
 
 const id='ba542400-0000-4000-8000-000000000200';
 const dish='manual-ba542400-0000-4000-8000-000000000300';
@@ -72,10 +72,29 @@ test('reset is local logout cleanup; errors can be dismissed without discarding 
   assert.equal(cleared.error,null);assert.deepEqual(cleared.basisRecipes,blocked.basisRecipes);
   assert.deepEqual(reduce(blocked,{type:'reset'}),createBasisDraft());
 });
-test('old save is blocked for any v2 state, including pending deletes and explicit empty links',()=>{
-  assert.equal(basisLegacySaveError(createBasisDraft()),null);
-  for(const state of [createBasisDraft(snapshot()),reduce(createBasisDraft(),{type:'upsert',recipe:recipe()}),
-    reduce(link(createBasisDraft(snapshot()),[]),{type:'remove',id}),
-    {...createBasisDraft(),dishBases:{[dish]:[]}},
-    {...createBasisDraft(),deletedBasisIds:[id]}]) assert.ok(basisLegacySaveError(state));
+test('save acknowledgement retains bases, clears confirmed deletions and allows server restoration',()=>{
+  const state=link(reduce(createBasisDraft(),{type:'upsert',recipe:recipe()}));
+  const acknowledged=reduce(state,{type:'acknowledge',submitted:structuredClone(state)});
+  assert.equal(acknowledged.dirty,false); assert.equal(acknowledged.fromV2,true);
+  assert.deepEqual(acknowledged.basisRecipes,state.basisRecipes);
+  assert.deepEqual(acknowledged.dishBases,state.dishBases);
+  assert.deepEqual(acknowledged.savedBasisIds,[id]);
+  const removed=reduce(link(acknowledged,[]),{type:'remove',id});
+  assert.deepEqual(removed.deletedBasisIds,[id]);
+  const saved=reduce(removed,{type:'acknowledge',submitted:structuredClone(removed)});
+  assert.deepEqual(saved.deletedBasisIds,[]); assert.deepEqual(saved.savedBasisIds,[]); assert.equal(saved.dirty,false);
+  assert.equal(reduce(saved,{type:'restore',snapshot:snapshot()}).basisRecipes.length,1);
+});
+
+test('save response preserves later edits and queues a newly saved basis removed during the request',()=>{
+  const sent=reduce(createBasisDraft(),{type:'upsert',recipe:recipe()});
+  const later=reduce(sent,{type:'upsert',recipe:{...recipe(),name:'Later edit'}});
+  const ack=reduce(later,{type:'acknowledge',submitted:structuredClone(sent)});
+  assert.equal(ack.dirty,true); assert.equal(ack.basisRecipes[0].name,'Later edit');
+  assert.strictEqual(reduce(ack,{type:'restore',snapshot:snapshot()}),ack);
+  const removed=reduce(sent,{type:'remove',id});
+  assert.deepEqual(removed.deletedBasisIds,[]);
+  const saved=reduce(removed,{type:'acknowledge',submitted:structuredClone(sent)});
+  assert.equal(saved.dirty,true); assert.deepEqual(saved.deletedBasisIds,[id]);
+  assert.equal(saved.basisRecipes.length,0);
 });

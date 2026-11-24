@@ -7,6 +7,7 @@ import { ArrowIcon } from './components/ui/ArrowIcon';
 import { useBusinessDraft } from './state/BusinessDraftContext';
 import { NewDishForm } from './components/onboarding/NewDishForm';
 import { RecipeEditor } from './components/onboarding/RecipeEditor';
+import { SavedDishNutrition } from './components/onboarding/SavedDishNutrition';
 import { FinishOnboarding } from './components/onboarding/FinishOnboarding';
 import styles from './DishesSetupPage.module.css';
 
@@ -31,7 +32,7 @@ export function DishesSetupPage() {
         <h1 className={styles.title} id="dishes-setup-title">Vervollständige deine Gerichte.</h1>
         <p className={styles.description}>
           Wähle ein Gericht aus oder füge ein neues hinzu.
-          Ordne Lebensmittel und Mengen zu, um die Nährwerte pro Portion zu berechnen.
+          Ordne Lebensmittel, Basisrezepte und Mengen für eine Portion zu.
         </p>
       </header>
 
@@ -85,7 +86,10 @@ export function DishesSetupPage() {
                           <dd>{price ? <>{euro.format(price.amount)} <span className={styles.priceName}>({price.name})</span></> : 'Kein Preis ausgewählt'}</dd>
                         </div>
                       </dl>
-                      {selected && <RecipeEditor dishId={id} />}
+                      {selected && <>
+                        <RecipeEditor dishId={id} />
+                        <SavedDishNutrition dishId={id} />
+                      </>}
                     </div>
                   </li>
                 );
