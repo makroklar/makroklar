@@ -128,6 +128,22 @@ export const ADDITIVES = [
 
 export const BASIS_CATEGORIES = ['Sauce', 'Teig', 'Dressing', 'Creme', 'Sonstiges'];
 
+// Dieselben Kategorien wie die Reiter der Gastansicht
+export const DISH_CATEGORIES = ['Vorspeise', 'Hauptspeise', 'Dessert', 'Getränke'];
+
+// Startwert aus der Warengruppe der Kasse ableiten, z. B. „Hauptgerichte“ → „Hauptspeise“. Ohne Treffer: leer.
+const DISH_CATEGORY_HINTS: [RegExp, string][] = [
+  [/vorspeise|starter|antipast|tapas|suppe/i, 'Vorspeise'],
+  [/dessert|nachspeise|nachtisch|eis\b|kuchen/i, 'Dessert'],
+  [/getränk|drink|bier|wein|saft|kaffee|tee\b|softdrink|cocktail/i, 'Getränke'],
+  [/haupt|pizza|pasta|nudel|burger|fleisch|fisch|curry|bowl|grill/i, 'Hauptspeise'],
+];
+
+export function guessDishCategory(group: string): string {
+  if (DISH_CATEGORIES.includes(group)) return group;
+  return DISH_CATEGORY_HINTS.find(([pattern]) => pattern.test(group))?.[1] ?? '';
+}
+
 export const FALLBACK_RESTAURANT_NAME = 'Dein Restaurant';
 
 /** Aufgaben-Detailseite eines Rezepts, z. B. für „Bearbeiten“ in Bibliothek und Speisekarte */

@@ -102,6 +102,51 @@
   color: var(--color-text-strong);
 }
 
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Hinweis „Wert kommt aus der Kasse“ mit Info-Popover */
+.posBadge {
+  anchor-name: --dish-price-pos;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-row);
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.posBadge:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.posInfo {
+  position-anchor: --dish-price-pos;
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-block, flip-inline;
+  max-width: 260px;
+  margin: 6px 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-strong);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+
 /* Foto */
 .photoWrap {
   display: grid;

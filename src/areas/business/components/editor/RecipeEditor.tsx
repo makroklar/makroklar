@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight, ChevronDown, Info } from 'lucide-react';
 import { IconWeightKg } from '@/shared/components/icons/IconWeightKg';
-import { BASIS_CATEGORIES, type Ingredient, type RecipeKind } from '../../data/dashboardModel';
+import { BASIS_CATEGORIES, DISH_CATEGORIES, guessDishCategory, type Ingredient, type RecipeKind } from '../../data/dashboardModel';
 import type { RestaurantFood } from '../../data/restaurantData';
 import { saveDish } from '../../data/saveDashboardAction';
 import { IngredientRows } from './IngredientRows';
@@ -61,7 +61,8 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
   const router = useRouter();
   const [name, setName] = useState('');
   const [ingredients, setIngredients] = useState(initial.ingredients);
-  const [category, setCategory] = useState(initial.category);
+  // Gerichte: Startwert aus der Warengruppe der Kasse ableiten
+  const [category, setCategory] = useState(kind === 'dish' ? guessDishCategory(initial.category) : initial.category);
   const [cooked, setCooked] = useState(initial.cookedWeight?.toString() ?? '');
   const [portionSize, setPortionSize] = useState(initial.portionSize?.toString() ?? '1');
   const [price, setPrice] = useState(initial.price !== undefined ? euro.format(initial.price) : '');
@@ -144,19 +145,32 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
                     <span className={ui.fieldUnit}>{initial.portionUnit ?? 'Portion'}</span>
                   </span>
                 </label>
-                <label className={styles.labeled}>
-                  <span>Verkaufspreis</span>
-                  <span className={`${ui.field} ${weighing && !initial.priceFromPos ? ui.fieldHighlight : ''}`}>
+                <div className={styles.labeled}>
+                  <span className={styles.labelRow}>
+                    <label htmlFor="dish-price">Verkaufspreis</label>
+                    {initial.priceFromPos && (
+                      <>
+                        <button className={styles.posBadge} type="button" popoverTarget="dish-price-pos" aria-label="Preis aus dem Kassensystem – mehr erfahren">
+                          <Info aria-hidden="true" size={12} />
+                          Kasse
+                        </button>
+                        <span id="dish-price-pos" className={styles.posInfo} popover="auto" role="note">
+                          Der Verkaufspreis kommt aus deinem Kassensystem und kann hier nicht geändert werden. Passe ihn in der Kasse an, dann wird er übernommen.
+                        </span>
+                      </>
+                    )}
+                  </span>
+                  <span className={`${ui.field} ${weighing && save.mode !== 'dish' ? ui.fieldHighlight : ''}`}>
                     <input
+                      id="dish-price"
                       inputMode="decimal"
                       value={price}
                       disabled={save.mode === 'dish'}
-                      title={initial.priceFromPos ? 'Preis kommt aus dem Kassensystem' : undefined}
                       onChange={event => setPrice(event.target.value)}
                     />
                     <span className={ui.fieldUnit}>€</span>
                   </span>
-                </label>
+                </div>
                 <label className={styles.labeled}>
                   <span>Zubereitungszeit</span>
                   <span className={ui.field}>
@@ -167,8 +181,7 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
               </div>
               {real && (
                 <p className={styles.fieldsNote}>
-                  Mengen gelten für 1 Portion. {save.mode === 'dish' && initial.priceFromPos ? 'Der Preis kommt aus dem Kassensystem. ' : ''}
-                  Zubereitungszeit wird noch nicht gespeichert.
+                  Mengen gelten für 1 Portion. Kategorie und Zubereitungszeit werden noch nicht gespeichert.
                 </p>
               )}
             </section>
@@ -180,17 +193,13 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
 
           <section className={`${ui.card} ${ui.cardBordered} ${styles.category}`}>
             <label className={styles.categoryLabel} htmlFor="recipe-category">Kategorie</label>
-            {kind === 'basis' ? (
-              <span className={`${ui.field} ${weighing ? ui.fieldHighlight : ''} ${styles.select}`}>
-                <select id="recipe-category" value={category} onChange={event => setCategory(event.target.value)}>
-                  {BASIS_CATEGORIES.map(entry => <option key={entry} value={entry}>{entry}</option>)}
-                </select>
-                <ChevronDown aria-hidden="true" size={16} />
-              </span>
-            ) : (
-              // Gerichte: Warengruppe aus dem Kassensystem bzw. „Eigene Gerichte“
-              <span id="recipe-category" className={styles.categoryValue}>{category}</span>
-            )}
+            <span className={`${ui.field} ${weighing && (kind === 'basis' || category === '') ? ui.fieldHighlight : ''} ${styles.select}`}>
+              <select id="recipe-category" value={category} onChange={event => setCategory(event.target.value)}>
+                {category === '' && <option value="" disabled>Bitte wählen</option>}
+                {(kind === 'basis' ? BASIS_CATEGORIES : DISH_CATEGORIES).map(entry => <option key={entry} value={entry}>{entry}</option>)}
+              </select>
+              <ChevronDown aria-hidden="true" size={16} />
+            </span>
           </section>
 
           <section className={`${ui.card} ${ui.cardBordered}`} aria-labelledby="cooked-title">

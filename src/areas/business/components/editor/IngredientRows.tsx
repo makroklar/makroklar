@@ -58,17 +58,20 @@ export function IngredientRows({ ingredients, onChange, weighing = false, foods 
                     aria-label={`Menge ${entry.name}`}
                     onChange={event => update(entry.id, { quantity: event.target.value === '' ? null : Number(event.target.value) })}
                   />
-                  <select
-                    className={styles.unit}
-                    value={entry.unit}
-                    disabled={entry.basis === '100g' || entry.basis === '100ml'}
-                    title={entry.basis ? 'Einheit passend zur Nährwertangabe' : undefined}
-                    aria-label={`Einheit ${entry.name}`}
-                    onChange={event => update(entry.id, { unit: event.target.value as Ingredient['unit'] })}
-                  >
-                    <option value="g">g</option>
-                    <option value="ml">ml</option>
-                  </select>
+                  {entry.basis === '100g' || entry.basis === '100ml' ? (
+                    // Einheit steht durch die Nährwertangabe fest – keine Auswahl nötig
+                    <span className={ui.fieldUnit}>{entry.unit}</span>
+                  ) : (
+                    <select
+                      className={styles.unit}
+                      value={entry.unit}
+                      aria-label={`Einheit ${entry.name}`}
+                      onChange={event => update(entry.id, { unit: event.target.value as Ingredient['unit'] })}
+                    >
+                      <option value="g">g</option>
+                      <option value="ml">ml</option>
+                    </select>
+                  )}
                 </label>
                 {weighing && (
                   <button className={`${ui.iconButton} ${ui.iconButtonSmall} ${styles.scale}`} type="button" disabled title="Küchenwaage – folgt bald" aria-label={`${entry.name} mit der Waage wiegen (folgt bald)`}>

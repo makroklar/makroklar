@@ -352,6 +352,18 @@ a.row:hover {
   background: var(--color-accent-light);
 }
 
+/* Nur lesbar (z. B. Werte aus dem Kassensystem): gedämpft statt Eingabe-Optik */
+.field:has(> input:disabled) {
+  border-color: var(--color-line);
+  background: var(--color-row);
+}
+
+.field:has(> input:disabled) input {
+  color: var(--color-muted);
+  -webkit-text-fill-color: var(--color-muted);
+  cursor: default;
+}
+
 .fieldLabel {
   position: absolute;
   top: 6px;
