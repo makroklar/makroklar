@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
 import { Crop, Eraser, LoaderCircle, Paintbrush, Undo, WandSparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import type { RemovalStatus } from './removeBackground';
-import { MODEL_URL } from './backgroundModel';
+import { BACKGROUND_MODELS, modelPageUrl, type Device } from './backgroundModel';
 import ui from '../dashboard/Dashboard.module.css';
 import styles from './PhotoCropDialog.module.css';
 
@@ -58,8 +58,8 @@ interface PhotoCropDialogProps {
   initialUseCutout: boolean;
   /** Radierer- und Pinselstriche aus der letzten Bearbeitung */
   initialStrokes: Stroke[];
-  /** false: kein WebGPU (z. B. über http://), dann gibt es den Knopf gar nicht */
-  canRemoveBackground: boolean;
+  /** Womit der Hintergrund entfernt wird (Grafikkarte oder Prozessor); null: Schalter ausblenden */
+  removalDevice: Device | null;
   removal: RemovalStatus | null;
   removalError: string | null;
   onRemoveBackground: () => void;
@@ -68,7 +68,11 @@ interface PhotoCropDialogProps {
 }
 
 function removalText(status: RemovalStatus) {
-  if (status.phase === 'running') return 'Hintergrund wird lokal entfernt (GPU) …';
+  if (status.phase === 'running') {
+    return status.device === 'webgpu'
+      ? 'Hintergrund wird lokal entfernt (GPU) …'
+      : 'Hintergrund wird lokal entfernt (CPU, dauert etwas) …';
+  }
   return status.progress === null
     ? 'Modell wird vorbereitet …'
     : `Modell wird geladen: ${Math.round(status.progress)} %`;
@@ -144,7 +148,7 @@ function drawStroke(context: CanvasRenderingContext2D, stroke: Stroke, original:
 // Overlay „Foto bearbeiten“: verschieben (Ziehen, Pfeiltasten), zoomen (Regler, Mausrad, +/−),
 // radieren und mit dem Pinsel das Original zurückmalen
 export function PhotoCropDialog({
-  open, src, initial, transparent, cutout, initialUseCutout, initialStrokes, canRemoveBackground, removal, removalError,
+  open, src, initial, transparent, cutout, initialUseCutout, initialStrokes, removalDevice, removal, removalError,
   onRemoveBackground, onApply, onClose,
 }: PhotoCropDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -479,7 +483,7 @@ export function PhotoCropDialog({
             </div>
             <div id="photo-panel-background" role="tabpanel" aria-labelledby="photo-tab-background" className={styles.panel} data-active={mode === 'background'} inert={mode !== 'background'}>
               {/* 1. Automatisch: KI stellt frei, als Schalter an/aus */}
-              {canRemoveBackground && (
+              {removalDevice && (
                 <section className={styles.section}>
                   <label className={styles.switchRow}>
                     <WandSparkles className={styles.sectionIcon} aria-hidden="true" size={20} />
@@ -501,8 +505,10 @@ export function PhotoCropDialog({
                   {!cutout && !removal && (
                     <p className={styles.sectionNote}>
                       Beim ersten Mal lädt dein Browser dafür das KI-Modell{' '}
-                      <a href={MODEL_URL} target="_blank" rel="noopener noreferrer">BiRefNet-lite</a>{' '}
-                      <span className={styles.nowrap}>(ca. 120–240 MB)</span> von Hugging Face herunter.
+                      <a href={modelPageUrl(BACKGROUND_MODELS[removalDevice])} target="_blank" rel="noopener noreferrer">
+                        {BACKGROUND_MODELS[removalDevice].name}
+                      </a>{' '}
+                      <span className={styles.nowrap}>({BACKGROUND_MODELS[removalDevice].size})</span> von Hugging Face herunter.
                     </p>
                   )}
                   {removalError && <p className={styles.backgroundError} role="alert">{removalError}</p>}

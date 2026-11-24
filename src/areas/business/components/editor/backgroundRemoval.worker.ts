@@ -1,17 +1,49 @@
-// Hintergrund entfernen, komplett im Browser: BiRefNet-lite (MIT) über transformers.js auf der Grafikkarte (WebGPU).
-// Ohne WebGPU wird die Funktion gar nicht angeboten: auf dem Prozessor (WebAssembly) reicht der Speicher für das Modell nicht.
+// Hintergrund entfernen, komplett im Browser über transformers.js:
+// - Grafikkarte (WebGPU): BiRefNet-lite (MIT), schnell und am genauesten
+// - Prozessor (WebAssembly): ORMBG (Apache-2.0), klein genug für den WebAssembly-Speicher, dafür langsamer
+// Welcher Weg genommen wird, entscheidet die Seite (siehe removeBackground.ts).
 import { AutoModel, RawImage, Tensor, env, type PreTrainedModel } from '@huggingface/transformers';
-import { MODEL_ID, MODEL_REVISION } from './backgroundModel';
+import { BACKGROUND_MODELS, type Device } from './backgroundModel';
 
-// Das Modell erwartet fest 1024 × 1024 Pixel
+export type { Device };
+
+// Beide Modelle erwarten fest 1024 × 1024 Pixel
 const INPUT_SIZE = 1024;
-const MEAN = [0.485, 0.456, 0.406];
-const STD = [0.229, 0.224, 0.225];
 
-export type WorkerRequest = { id: number; image: Blob };
+interface ModelSetup {
+  dtype: (adapterHasF16: boolean) => 'fp16' | 'fp32' | 'q8';
+  input: string;
+  output: string;
+  /** Normalisierung nach dem Teilen durch 255 */
+  mean: number[];
+  std: number[];
+  /** Ausgabe sind Logits (Sigmoid nötig) statt schon Werte von 0 bis 1 */
+  logits: boolean;
+}
+
+const SETUP: Record<Device, ModelSetup> = {
+  webgpu: {
+    dtype: f16 => (f16 ? 'fp16' : 'fp32'),
+    input: 'input_image',
+    output: 'output_image',
+    mean: [0.485, 0.456, 0.406],
+    std: [0.229, 0.224, 0.225],
+    logits: true,
+  },
+  wasm: {
+    dtype: () => 'q8',
+    input: 'pixel_values',
+    output: 'alphas',
+    mean: [0, 0, 0],
+    std: [1, 1, 1],
+    logits: false,
+  },
+};
+
+export type WorkerRequest = { id: number; image: Blob; device: Device };
 export type WorkerResponse =
-  | { type: 'loading'; progress: number | null }
-  | { type: 'running' }
+  | { type: 'loading'; device: Device; progress: number | null }
+  | { type: 'running'; device: Device }
   | { type: 'done'; id: number; image: Blob }
   | { type: 'error'; id: number; message: string; gpuFailed: boolean };
 
@@ -22,40 +54,45 @@ env.allowLocalModels = false;
 
 const post = (message: WorkerResponse) => self.postMessage(message);
 
-async function load(): Promise<PreTrainedModel> {
-  post({ type: 'loading', progress: null });
-  const adapter = await (navigator as GpuNavigator).gpu?.requestAdapter().catch(() => null);
-  if (!adapter) throw new Error('WebGPU nicht verfügbar');
+async function load(device: Device): Promise<PreTrainedModel> {
+  post({ type: 'loading', device, progress: null });
+  let f16 = false;
+  if (device === 'webgpu') {
+    const adapter = await (navigator as GpuNavigator).gpu?.requestAdapter().catch(() => null);
+    if (!adapter) throw new Error('WebGPU nicht verfügbar');
+    f16 = adapter.features.has('shader-f16');
+  }
   const progress_callback = (info: { status: string; progress?: number }) => {
     if (info.status === 'progress_total' && typeof info.progress === 'number') {
-      post({ type: 'loading', progress: info.progress });
+      post({ type: 'loading', device, progress: info.progress });
     }
   };
-  return AutoModel.from_pretrained(MODEL_ID, {
-    revision: MODEL_REVISION,
-    device: 'webgpu',
-    dtype: adapter.features.has('shader-f16') ? 'fp16' : 'fp32',
-    progress_callback,
-  });
+  const { id, revision } = BACKGROUND_MODELS[device];
+  return AutoModel.from_pretrained(id, { revision, device, dtype: SETUP[device].dtype(f16), progress_callback });
 }
 
-let loading: Promise<PreTrainedModel> | null = null;
+// Je Gerät höchstens ein Modell; ein Worker nutzt in der Praxis nur eines
+const loading = new Map<Device, Promise<PreTrainedModel>>();
 
-function ready(): Promise<PreTrainedModel> {
-  loading ??= load();
-  loading.catch(() => { loading = null; });
-  return loading;
+function ready(device: Device): Promise<PreTrainedModel> {
+  let model = loading.get(device);
+  if (!model) {
+    model = load(device);
+    loading.set(device, model);
+    model.catch(() => loading.delete(device));
+  }
+  return model;
 }
 
-/** Quadratisch skalieren und wie beim Training normalisieren (ImageNet-Mittelwerte), Layout 1×3×H×W */
-async function toInput(image: RawImage, size: number): Promise<Tensor> {
-  const { data } = await image.rgb().resize(size, size);
-  const plane = size * size;
+/** Quadratisch skalieren und normalisieren wie beim Training, Layout 1×3×H×W */
+async function toInput(image: RawImage, { mean, std }: ModelSetup): Promise<Tensor> {
+  const { data } = await image.rgb().resize(INPUT_SIZE, INPUT_SIZE);
+  const plane = INPUT_SIZE * INPUT_SIZE;
   const values = new Float32Array(3 * plane);
   for (let i = 0; i < plane; i += 1) {
-    for (let c = 0; c < 3; c += 1) values[c * plane + i] = (data[i * 3 + c] / 255 - MEAN[c]) / STD[c];
+    for (let c = 0; c < 3; c += 1) values[c * plane + i] = (data[i * 3 + c] / 255 - mean[c]) / std[c];
   }
-  return new Tensor('float32', values, [1, 3, size, size]);
+  return new Tensor('float32', values, [1, 3, INPUT_SIZE, INPUT_SIZE]);
 }
 
 /**
@@ -85,11 +122,13 @@ function fillHoles(mask: Uint8Array, width: number, height: number) {
   }
 }
 
-async function cutout(model: PreTrainedModel, blob: Blob): Promise<Blob> {
+async function cutout(model: PreTrainedModel, setup: ModelSetup, blob: Blob): Promise<Blob> {
   const image = await RawImage.fromBlob(blob);
-  const pixel_values = await toInput(image, INPUT_SIZE);
-  const { output_image } = (await model({ input_image: pixel_values })) as { output_image: Tensor };
-  const raw = output_image.squeeze(0).sigmoid().mul(255).to('uint8');
+  const input = await toInput(image, setup);
+  const output = (await model({ [setup.input]: input })) as Record<string, Tensor>;
+  let probabilities = output[setup.output].squeeze(0);
+  if (setup.logits) probabilities = probabilities.sigmoid();
+  const raw = probabilities.mul(255).to('uint8');
   fillHoles(raw.data as Uint8Array, INPUT_SIZE, INPUT_SIZE);
   const mask = await RawImage.fromTensor(raw).resize(image.width, image.height);
 
@@ -112,18 +151,23 @@ async function cutout(model: PreTrainedModel, blob: Blob): Promise<Blob> {
 let queue = Promise.resolve();
 
 self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
-  const { id, image } = event.data;
+  const { id, image, device } = event.data;
   queue = queue.then(async () => {
     let decoded = false;
     try {
       // Nicht lesbare Bilder vorher abfangen, damit sie nicht als WebGPU-Fehler gelten
       (await createImageBitmap(image)).close();
       decoded = true;
-      const model = await ready();
-      post({ type: 'running' });
-      post({ type: 'done', id, image: await cutout(model, image) });
+      const model = await ready(device);
+      post({ type: 'running', device });
+      post({ type: 'done', id, image: await cutout(model, SETUP[device], image) });
     } catch (error) {
-      post({ type: 'error', id, message: error instanceof Error ? error.message : String(error), gpuFailed: decoded });
+      post({
+        type: 'error',
+        id,
+        message: error instanceof Error ? error.message : String(error),
+        gpuFailed: decoded && device === 'webgpu',
+      });
     }
   });
 });

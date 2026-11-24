@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Camera, ImagePlus, SquarePen, Trash2 } from 'lucide-react';
 import { PhotoCropDialog, type CropState, type Stroke } from './PhotoCropDialog';
-import { canRemoveBackground, removeBackground, type RemovalStatus } from './removeBackground';
+import { backgroundRemovalDevice, removeBackground, type Device, type RemovalStatus } from './removeBackground';
 import ui from '../dashboard/Dashboard.module.css';
 import styles from './Editor.module.css';
 
@@ -36,8 +36,9 @@ export function PhotoField({ caption }: { caption: string }) {
   const [dropError, setDropError] = useState<string | null>(null);
   const [removal, setRemoval] = useState<RemovalStatus | null>(null);
   const [removalError, setRemovalError] = useState<string | null>(null);
-  const [removalAvailable, setRemovalAvailable] = useState(false);
-  useEffect(() => { canRemoveBackground().then(setRemovalAvailable); }, []);
+  // Grafikkarte, Prozessor oder gar nicht (null): bestimmt Modell und Hinweis im Dialog
+  const [removalDevice, setRemovalDevice] = useState<Device | null>(null);
+  useEffect(() => { backgroundRemovalDevice().then(setRemovalDevice); }, []);
 
   // Beim Verlassen der Seite die blob:-Adressen freigeben
   const latest = useRef(photo);
@@ -69,12 +70,12 @@ export function PhotoField({ caption }: { caption: string }) {
 
   // Läuft im Web Worker; das Ergebnis gehört nur zum Foto, für das es gestartet wurde
   async function createCutout() {
-    if (!photo || photo.cutout || removal) return;
+    if (!photo || photo.cutout || removal || !removalDevice) return;
     const { file } = photo;
     setRemovalError(null);
-    setRemoval({ phase: 'loading', progress: null });
+    setRemoval({ phase: 'loading', device: removalDevice, progress: null });
     try {
-      const url = URL.createObjectURL(await removeBackground(file, setRemoval));
+      const url = URL.createObjectURL(await removeBackground(file, removalDevice, setRemoval));
       setPhoto(current => {
         if (current?.file !== file) { URL.revokeObjectURL(url); return current; }
         return { ...current, cutout: url };
@@ -215,7 +216,7 @@ export function PhotoField({ caption }: { caption: string }) {
         cutout={photo?.cutout ?? null}
         initialUseCutout={photo?.useCutout ?? false}
         initialStrokes={photo?.strokes ?? NO_STROKES}
-        canRemoveBackground={removalAvailable || photo?.cutout != null}
+        removalDevice={removalDevice}
         removal={removal}
         removalError={removalError}
         onRemoveBackground={createCutout}
