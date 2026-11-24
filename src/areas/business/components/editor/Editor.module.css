@@ -221,6 +221,111 @@
   cursor: pointer;
 }
 
+/* Anpassbares Select (Chrome/Edge 135+, Safari 27): Liste im eigenen Design.
+   Andere Browser behalten das System-Dropdown mit dem Chevron daneben. */
+@supports (appearance: base-select) {
+  .select {
+    padding: 0;
+  }
+
+  /* Pfeil kommt hier von ::picker-icon */
+  .select > svg {
+    display: none;
+  }
+
+  .select select,
+  .select select::picker(select) {
+    appearance: base-select;
+  }
+
+  /* Das Select füllt das ganze Feld, damit die Liste bündig darunter sitzt */
+  .select select {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+  }
+
+  /* Gleicher Chevron wie bei den anderen Feldern (Lucide chevron-down) */
+  .select select::picker-icon {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: rotate 0.2s ease;
+  }
+
+  .select select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  .select select::picker(select) {
+    margin-block: 6px;
+    padding: 6px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-card);
+    opacity: 0;
+    translate: 0 -4px;
+    transition: opacity 0.15s ease, translate 0.15s ease, overlay 0.15s allow-discrete, display 0.15s allow-discrete;
+  }
+
+  .select select:open::picker(select) {
+    opacity: 1;
+    translate: 0;
+  }
+
+  @starting-style {
+    .select select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -4px;
+    }
+  }
+
+  .select option {
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--color-text-strong);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  .select option:hover,
+  .select option:focus-visible {
+    outline: none;
+    background: var(--color-row);
+  }
+
+  .select option:checked {
+    background: var(--color-accent-light);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* Auswahl zeigt nur die Hervorhebung, kein Häkchen */
+  .select option::checkmark {
+    display: none;
+  }
+
+  /* „Bitte wählen“ nur als Platzhalter im Feld, nicht in der Liste */
+  .select option:disabled {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select select::picker-icon,
+  .select select::picker(select) {
+    transition: none;
+  }
+}
+
 /* Gewicht nach dem Kochen */
 .smallLabel {
   margin: var(--space-4) 0 0;
