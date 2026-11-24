@@ -20,6 +20,8 @@ export function PhotoField({ caption }: { caption: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [cropping, setCropping] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
 
   // Beim Verlassen der Seite die blob:-Adressen freigeben
   const latest = useRef(photo);
@@ -33,6 +35,11 @@ export function PhotoField({ caption }: { caption: string }) {
   }
 
   function choose(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setDropError('Bitte eine Bilddatei verwenden, z. B. JPG oder PNG.');
+      return;
+    }
+    setDropError(null);
     release(photo);
     const url = URL.createObjectURL(file);
     setPhoto({ source: url, preview: url, crop: null });
@@ -47,7 +54,20 @@ export function PhotoField({ caption }: { caption: string }) {
 
   return (
     <div className={styles.photoWrap}>
-      <div className={styles.photoFrame}>
+      <div
+        className={styles.photoFrame}
+        data-dragging={dragging}
+        // Bild per Drag-and-drop ablegen (ersetzt ein vorhandenes Foto)
+        onDragEnter={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragging(true); } }}
+        onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; } }}
+        onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }}
+        onDrop={event => {
+          event.preventDefault();
+          setDragging(false);
+          const file = event.dataTransfer.files[0];
+          if (file) choose(file);
+        }}
+      >
         <label className={styles.photo} htmlFor={id} data-filled={photo !== null}>
           {photo ? (
             // Bewusst <img>: lokale blob:-Vorschau, dafür passt next/image nicht
@@ -55,7 +75,8 @@ export function PhotoField({ caption }: { caption: string }) {
           ) : (
             <>
               <Camera aria-hidden="true" size={28} strokeWidth={1.75} />
-              <span>Foto hinzufügen</span>
+              <span>{dragging ? 'Hier ablegen' : 'Foto hinzufügen'}</span>
+              {!dragging && <span className={styles.photoHint}>oder hierher ziehen</span>}
             </>
           )}
           {photo && <span className={ui.visuallyHidden}>Anderes Foto wählen</span>}
@@ -83,6 +104,7 @@ export function PhotoField({ caption }: { caption: string }) {
         }}
       />
       <p className={styles.photoCaption}>{caption}</p>
+      {dropError && <p className={styles.photoError} role="alert">{dropError}</p>}
 
       <PhotoCropDialog
         open={cropping && photo !== null}

@@ -158,6 +158,33 @@
   width: min(100%, 230px);
 }
 
+/* Beim Darüberziehen einer Datei: gestrichelter Rahmen, gelb hinterlegt */
+.photoFrame[data-dragging='true'] .photo {
+  border: 2px dashed var(--color-primary);
+  background: var(--color-accent-light);
+}
+
+.photoFrame[data-dragging='true'] .photo img {
+  opacity: 0.4;
+}
+
+.photoFrame[data-dragging='true'] .photoActions {
+  display: none;
+}
+
+.photoHint {
+  margin-top: calc(var(--space-1) * -1);
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.photoError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 12px;
+  text-align: center;
+}
+
 .photoActions {
   position: absolute;
   top: var(--space-2);
