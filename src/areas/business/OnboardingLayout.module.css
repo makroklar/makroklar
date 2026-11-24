@@ -10,6 +10,14 @@
   padding: var(--space-7) var(--space-5);
 }
 
+.cardGroup {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 49rem;
+}
+
 .card {
   width: 100%;
   max-width: 49rem;

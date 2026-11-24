@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import searchIcon from './assets/search.svg';
-import { LightspeedItemImport } from './components/onboarding/LightspeedItemImport';
 import {
   posProviders,
   type PosProvider,
@@ -135,12 +134,12 @@ export function PosImportPage() {
       <div className={styles.selectionNotice} role="status">
         {selectedProvider && (
           <p>
-            {selectedProvider.name} ausgewählt. Es wurde noch keine Verbindung
-            hergestellt.
+            {selectedProvider.name} ausgewählt. Die Anbindung ist noch nicht
+            verfügbar. Du kannst diesen Schritt überspringen und deine
+            Speisekarte später einrichten.
           </p>
         )}
       </div>
-      {selectedId === 'lightspeed' && <LightspeedItemImport />}
     </section>
   );
 }
