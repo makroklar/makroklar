@@ -128,11 +128,12 @@ export const ADDITIVES = [
 
 export const BASIS_CATEGORIES = ['Sauce', 'Teig', 'Dressing', 'Creme', 'Sonstiges'];
 
-// Dieselben Kategorien wie die Reiter der Gastansicht
-export const DISH_CATEGORIES = ['Vorspeise', 'Hauptspeise', 'Dessert', 'Getränke'];
+// Kategorien der Gastansicht, plus Salate
+export const DISH_CATEGORIES = ['Vorspeise', 'Salate', 'Hauptspeise', 'Dessert', 'Getränke'];
 
 // Startwert aus der Warengruppe der Kasse ableiten, z. B. „Hauptgerichte“ → „Hauptspeise“. Ohne Treffer: leer.
 const DISH_CATEGORY_HINTS: [RegExp, string][] = [
+  [/salat|salad/i, 'Salate'],
   [/vorspeise|starter|antipast|tapas|suppe/i, 'Vorspeise'],
   [/dessert|nachspeise|nachtisch|eis\b|kuchen/i, 'Dessert'],
   [/getränk|drink|bier|wein|saft|kaffee|tee\b|softdrink|cocktail/i, 'Getränke'],
