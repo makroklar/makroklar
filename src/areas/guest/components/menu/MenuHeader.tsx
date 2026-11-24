@@ -24,7 +24,7 @@ export function MenuHeader({
       <h1 className={styles.name}>{restaurantName}</h1>
       <OccupancyBadge status={occupancy} />
       <p className={styles.notice}>
-        Alle Angaben sind Richtwerte und dienen zur Orientierung. Portionsgrößen und Zubereitungszeiten können
+        Alle Angaben stammen vom Restaurant und sind Richtwerte zur Orientierung. Portionsgrößen und Zubereitungszeiten können
         variieren.
       </p>
       <div className={styles.tabs}>

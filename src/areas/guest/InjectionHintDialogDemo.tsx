@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { InjectionHintDialog } from './components/dish-detail/InjectionHintDialog';
 import styles from './ComponentsPage.module.css';
 
-// Öffnet den Hinweis fürs Spritzen auf der Komponentenseite per Knopfdruck
+// Öffnet den Hinweis fürs Insulinspritzen auf der Komponentenseite per Knopfdruck
 export function InjectionHintDialogDemo() {
   const [open, setOpen] = useState(false);
 
