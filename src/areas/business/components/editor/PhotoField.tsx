@@ -1,14 +1,19 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { Camera, Crop, ImagePlus, Trash2 } from 'lucide-react';
+import { Camera, ImagePlus, SquarePen, Trash2 } from 'lucide-react';
 import { PhotoCropDialog, type CropState } from './PhotoCropDialog';
+import { removeBackground, type RemovalStatus } from './removeBackground';
 import ui from '../dashboard/Dashboard.module.css';
 import styles from './Editor.module.css';
 
 interface Photo {
   /** Original-Datei, aus der immer neu zugeschnitten wird */
   source: string;
+  file: File;
+  /** Freigestellte Fassung (PNG), einmal berechnet und dann wiederverwendet */
+  cutout: string | null;
+  useCutout: boolean;
   /** Angezeigtes Bild: zugeschnitten oder (noch) das Original */
   preview: string;
   crop: CropState | null;
@@ -26,6 +31,8 @@ export function PhotoField({ caption }: { caption: string }) {
   const [cropping, setCropping] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
+  const [removal, setRemoval] = useState<RemovalStatus | null>(null);
+  const [removalError, setRemovalError] = useState<string | null>(null);
 
   // Beim Verlassen der Seite die blob:-Adressen freigeben
   const latest = useRef(photo);
@@ -35,6 +42,7 @@ export function PhotoField({ caption }: { caption: string }) {
   function release(entry: Photo | null) {
     if (!entry) return;
     URL.revokeObjectURL(entry.source);
+    if (entry.cutout) URL.revokeObjectURL(entry.cutout);
     if (entry.preview !== entry.source) URL.revokeObjectURL(entry.preview);
   }
 
@@ -44,16 +52,59 @@ export function PhotoField({ caption }: { caption: string }) {
       return;
     }
     setDropError(null);
+    setRemovalError(null);
     release(photo);
     const url = URL.createObjectURL(file);
-    setPhoto({ source: url, preview: url, crop: null, transparent: TRANSPARENT_TYPES.includes(file.type) });
+    setPhoto({
+      source: url, file, cutout: null, useCutout: false, preview: url, crop: null,
+      transparent: TRANSPARENT_TYPES.includes(file.type),
+    });
     setCropping(true);
+  }
+
+  // Läuft im Web Worker; das Ergebnis gehört nur zum Foto, für das es gestartet wurde
+  async function createCutout() {
+    if (!photo || photo.cutout || removal) return;
+    const { file } = photo;
+    setRemovalError(null);
+    setRemoval({ phase: 'loading', device: null, progress: null });
+    try {
+      const result = await removeBackground(file, setRemoval);
+      const url = URL.createObjectURL(result.image);
+      setPhoto(current => {
+        if (current?.file !== file) { URL.revokeObjectURL(url); return current; }
+        return { ...current, cutout: url };
+      });
+    } catch (error) {
+      console.error(error);
+      setRemovalError('Der Hintergrund konnte nicht entfernt werden. Bitte später erneut versuchen.');
+    } finally {
+      setRemoval(null);
+    }
   }
 
   // Drag-and-drop auf das ganze Fenster: Zähler, weil dragenter/dragleave für jedes Kind-Element feuern
   const chooseRef = useRef(choose);
   const croppingRef = useRef(cropping);
-  useEffect(() => { chooseRef.current = choose; croppingRef.current = cropping; });
+  const hasPhotoRef = useRef(photo !== null);
+  useEffect(() => { chooseRef.current = choose; croppingRef.current = cropping; hasPhotoRef.current = photo !== null; });
+
+  // Strg+V / ⌘V fügt ein Bild aus der Zwischenablage ein, aber nur solange noch keins da ist:
+  // ein vorhandenes Foto soll nicht versehentlich überschrieben werden
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      if (hasPhotoRef.current || croppingRef.current) return;
+      // In Textfeldern bleibt Einfügen normales Texteinfügen
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input:not([type=file]), textarea, select, [contenteditable]:not([contenteditable=false])')) return;
+      const file = [...(event.clipboardData?.files ?? [])].find(entry => entry.type.startsWith('image/'));
+      if (!file) return;
+      event.preventDefault();
+      chooseRef.current(file);
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, []);
   useEffect(() => {
     let depth = 0;
     const hasFiles = (event: DragEvent) => event.dataTransfer?.types.includes('Files') ?? false;
@@ -128,8 +179,8 @@ export function PhotoField({ caption }: { caption: string }) {
         </label>
         {photo && (
           <div className={styles.photoActions}>
-            <button className={`${ui.iconButton} ${ui.iconButtonSmall}`} type="button" aria-label="Foto zuschneiden" title="Zuschneiden" onClick={() => setCropping(true)}>
-              <Crop aria-hidden="true" size={16} />
+            <button className={`${ui.iconButton} ${ui.iconButtonSmall}`} type="button" aria-label="Foto bearbeiten" title="Bearbeiten" onClick={() => setCropping(true)}>
+              <SquarePen aria-hidden="true" size={16} />
             </button>
             <button className={`${ui.iconButton} ${ui.iconButtonSmall}`} type="button" aria-label="Foto löschen" title="Löschen" onClick={remove}>
               <Trash2 aria-hidden="true" size={16} />
@@ -156,11 +207,16 @@ export function PhotoField({ caption }: { caption: string }) {
         src={photo?.source ?? null}
         initial={photo?.crop ?? null}
         transparent={photo?.transparent ?? false}
-        onApply={({ url, crop }) => {
+        cutout={photo?.cutout ?? null}
+        initialUseCutout={photo?.useCutout ?? false}
+        removal={removal}
+        removalError={removalError}
+        onRemoveBackground={createCutout}
+        onApply={({ url, crop, useCutout }) => {
           setPhoto(current => {
             if (!current) { URL.revokeObjectURL(url); return current; }
             if (current.preview !== current.source) URL.revokeObjectURL(current.preview);
-            return { ...current, preview: url, crop };
+            return { ...current, preview: url, crop, useCutout };
           });
           setCropping(false);
         }}

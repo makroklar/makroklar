@@ -107,9 +107,69 @@
   color: var(--color-primary);
 }
 
+/* Zoom-Regler: eigene Spur, damit die Füllung genau an der Mitte des Griffs endet
+   (beim System-Regler beginnt die Spur links neben dem Griff) */
 .zoom input {
+  --slider-track-size: 6px;
+  --slider-thumb-size: 20px;
+  --slider-fill: calc(var(--slider-thumb-size) / 2 + (100% - var(--slider-thumb-size)) * var(--progress, 0));
+
   flex: 1;
-  accent-color: var(--color-primary);
+  min-width: 0;
+  block-size: 2.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.zoom input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* WebKit/Blink */
+.zoom input::-webkit-slider-runnable-track {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-primary) var(--slider-fill), var(--color-icon-muted) var(--slider-fill));
+}
+
+.zoom input::-webkit-slider-thumb {
+  appearance: none;
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  margin-block-start: calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2);
+  border: 3px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+/* Firefox */
+.zoom input::-moz-range-track {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: var(--color-icon-muted);
+}
+
+.zoom input::-moz-range-progress {
+  block-size: var(--slider-track-size);
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.zoom input::-moz-range-thumb {
+  box-sizing: border-box;
+  inline-size: var(--slider-thumb-size);
+  block-size: var(--slider-thumb-size);
+  border: 3px solid var(--color-card);
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
 }
 
 .actions {
@@ -121,5 +181,62 @@
 @media (max-width: 479px) {
   .actions > * {
     flex: 1;
+  }
+}
+
+/* Hintergrund entfernen: Knopf mit Statuszeile */
+.background {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.backgroundStatus,
+.backgroundError {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.backgroundStatus {
+  color: var(--color-text-muted);
+}
+
+.backgroundError {
+  color: var(--color-danger);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.backgroundStatus a {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Während das Modell lädt oder rechnet */
+.busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.45);
+  color: var(--color-primary);
+}
+
+.spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.5s;
   }
 }
