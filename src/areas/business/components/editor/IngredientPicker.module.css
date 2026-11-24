@@ -84,9 +84,12 @@
   outline: 2px solid var(--color-primary);
 }
 
-.scan {
-  width: 68px;
-  height: 52px;
+/* Höhe kommt vom Suchfeld (Flex-Stretch), Breite folgt quadratisch. */
+.searchRow .scan {
+  align-self: stretch;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1;
   border-radius: 12px;
 }
 
