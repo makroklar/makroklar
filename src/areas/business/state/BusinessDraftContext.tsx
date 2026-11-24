@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useReducer,
   useState,
   type ReactNode,
 } from 'react';
@@ -18,6 +19,8 @@ import { appendCatalogFood } from '../data/foodSearchModel';
 import type { CustomDishDraft, RecipeDraft } from '../types/recipe';
 import type { OnboardingRead } from '../data/readOnboarding';
 import type { CompletionSummary } from '../data/onboardingModel';
+import type { BasisRecipeDraft } from '../data/basisOnboardingModel';
+import { basisDraftReducer, basisLegacySaveError, createBasisDraft, type DishBasisLine } from './basisDraft';
 
 interface BusinessDraftValue {
   importedItems: readonly ImportedMenuItem[];
@@ -37,6 +40,14 @@ interface BusinessDraftValue {
   addCustomDish: (dish: CustomDishDraft) => void;
   recipes: Readonly<Record<string, RecipeDraft>>;
   setRecipe: (dishId: string, recipe: RecipeDraft) => void;
+  basisRecipes: readonly BasisRecipeDraft[];
+  upsertBasisRecipe: (recipe: BasisRecipeDraft) => void;
+  removeBasisRecipe: (id: string) => void;
+  dishBases: Readonly<Record<string, readonly DishBasisLine[]>>;
+  setDishBases: (dishKey: string, lines: readonly DishBasisLine[]) => void;
+  deletedBasisIds: readonly string[];
+  basisError: string | null;
+  clearBasisError: () => void;
   selectedDishId: string | null;
   setSelectedDishId: (id: string | null) => void;
   onboardingVersion: number;
@@ -54,6 +65,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
   const [catalogFoods, setCatalogFoods] = useState<CatalogFood[]>(onboarding.snapshot?.catalogFoods ?? []);
   const [customDishes, setCustomDishes] = useState<CustomDishDraft[]>(onboarding.snapshot?.customDishes ?? []);
   const [recipes, setRecipes] = useState<Record<string, RecipeDraft>>(onboarding.snapshot?.recipes ?? {});
+  const [basisDraft, dispatchBasis] = useReducer(basisDraftReducer, onboarding.snapshot, createBasisDraft);
   const [onboardingVersion, setOnboardingVersion] = useState(onboarding.snapshot?.version ?? 0);
   const [serverOnboarding, setServerOnboarding] = useState(onboarding.snapshot);
   const [dirty, setDirty] = useState(false);
@@ -61,11 +73,12 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
   if (serverOnboarding !== onboarding.snapshot) {
     setServerOnboarding(onboarding.snapshot);
     // A refresh must never discard unsaved ingredient/recipe edits.
-    if (onboarding.snapshot && !dirty) {
+    if (onboarding.snapshot && !dirty && !basisDraft.dirty) {
       setManualFoods(onboarding.snapshot.manualFoods);
       setCatalogFoods(onboarding.snapshot.catalogFoods);
       setCustomDishes(onboarding.snapshot.customDishes);
       setRecipes(onboarding.snapshot.recipes);
+      dispatchBasis({ type: 'restore', snapshot: onboarding.snapshot });
       setOnboardingVersion(onboarding.snapshot.version);
     }
   }
@@ -84,6 +97,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     setCatalogFoods([]);
     setCustomDishes([]);
     setRecipes({});
+    dispatchBasis({ type: 'reset' });
     setSelectedDishId(null);
     setDirty(false);
   }, []);
@@ -112,19 +126,38 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     setDirty(true);
     setRecipes(current => ({ ...current, [dishId]: { ...recipe, ingredients: recipe.ingredients.map(line => ({ ...line })) } }));
   }, []);
+  const upsertBasisRecipe = useCallback((recipe: BasisRecipeDraft) => {
+    dispatchBasis({ type: 'upsert', recipe });
+  }, []);
+  const removeBasisRecipe = useCallback((id: string) => {
+    dispatchBasis({ type: 'remove', id });
+  }, []);
+  const setDishBases = useCallback((dishKey: string, lines: readonly DishBasisLine[]) => {
+    dispatchBasis({ type: 'setLinks', dishKey, lines, knownDishKeys: [
+      ...importedItems.map(item => `lightspeed-k-series-${item.sourceId}`),
+      ...customDishes.map(dish => `manual-${dish.id}`),
+    ] });
+  }, [importedItems, customDishes]);
+  const clearBasisError = useCallback(() => dispatchBasis({ type: 'clearError' }), []);
   const acceptInitialization = useCallback((summary: CompletionSummary) => {
     setOnboardingVersion(summary.version);
     setDirty(false);
-  }, []);
+    // v1 can only acknowledge a basis-free draft. Do not clear pending v2 work.
+    if (!basisLegacySaveError(basisDraft)) dispatchBasis({ type: 'reset' });
+  }, [basisDraft]);
   const value = useMemo(
     () => ({ importedItems, acceptItems, selectedFoodSources, setSelectedFoodSources, resetDraft,
       storageError: snapshot.error, canSaveItems: snapshot.restaurantId !== null && snapshot.error === null,
       manualFoods, addManualFood, removeManualFood, catalogFoods, addCatalogFood, removeCatalogFood,
       customDishes, addCustomDish, recipes, setRecipe, selectedDishId, setSelectedDishId,
-      onboardingVersion, onboardingError: onboarding.error, acceptInitialization }),
+      basisRecipes: basisDraft.basisRecipes, upsertBasisRecipe, removeBasisRecipe,
+      dishBases: basisDraft.dishBases, setDishBases, deletedBasisIds: basisDraft.deletedBasisIds,
+      basisError: basisDraft.error, clearBasisError,
+      onboardingVersion, onboardingError: onboarding.error ?? basisLegacySaveError(basisDraft), acceptInitialization }),
     [importedItems, acceptItems, selectedFoodSources, resetDraft, snapshot.error, snapshot.restaurantId,
       manualFoods, addManualFood, removeManualFood, catalogFoods, addCatalogFood, removeCatalogFood,
-      customDishes, addCustomDish, recipes, setRecipe, selectedDishId, onboardingVersion, onboarding.error, acceptInitialization],
+      customDishes, addCustomDish, recipes, setRecipe, selectedDishId, onboardingVersion, onboarding.error, acceptInitialization,
+      basisDraft, upsertBasisRecipe, removeBasisRecipe, setDishBases, clearBasisError],
   );
 
   return (

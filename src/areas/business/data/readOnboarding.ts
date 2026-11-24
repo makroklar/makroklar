@@ -1,8 +1,10 @@
 import { cache } from 'react';
 import { getMenuSession } from './savedMenu';
 import { onboardingSnapshotSchema, type OnboardingSnapshot } from './onboardingModel';
+import type { BasisOnboardingSnapshot } from './basisOnboardingModel';
 
-export interface OnboardingRead { snapshot: OnboardingSnapshot | null; error: string | null; }
+// Provider accepts v2 snapshots; switching the RPC/validator waits for deployment.
+export interface OnboardingRead { snapshot: OnboardingSnapshot | BasisOnboardingSnapshot | null; error: string | null; }
 
 export const readOnboarding = cache(async (): Promise<OnboardingRead> => {
   try {
