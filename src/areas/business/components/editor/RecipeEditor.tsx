@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ChevronDown, Weight } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
+import { IconWeightKg } from '@/shared/components/icons/IconWeightKg';
 import { BASIS_CATEGORIES, type Ingredient, type RecipeKind } from '../../data/dashboardModel';
 import type { RestaurantFood } from '../../data/restaurantData';
 import { saveDish } from '../../data/saveDashboardAction';
@@ -212,7 +213,7 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
                 <span className={ui.fieldUnit}>g</span>
               </label>
               <button className={`${ui.iconButton} ${ui.iconButtonSmall} ${styles.scale}`} type="button" disabled title="Küchenwaage – folgt bald" aria-label="Mit der Waage wiegen (folgt bald)">
-                <Weight aria-hidden="true" size={18} />
+                <IconWeightKg size={18} />
               </button>
             </div>
             {kind === 'basis' && (

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Plus, ScanLine, Trash2, Weight } from 'lucide-react';
+import { Pencil, Plus, ScanLine, Trash2 } from 'lucide-react';
+import { IconWeightKg } from '@/shared/components/icons/IconWeightKg';
 import type { Ingredient } from '../../data/dashboardModel';
 import type { RestaurantFood } from '../../data/restaurantData';
 import { IngredientPicker, type PickedIngredient } from './IngredientPicker';
@@ -71,7 +72,7 @@ export function IngredientRows({ ingredients, onChange, weighing = false, foods 
                 </label>
                 {weighing && (
                   <button className={`${ui.iconButton} ${ui.iconButtonSmall} ${styles.scale}`} type="button" disabled title="Küchenwaage – folgt bald" aria-label={`${entry.name} mit der Waage wiegen (folgt bald)`}>
-                    <Weight aria-hidden="true" size={18} />
+                    <IconWeightKg size={18} />
                   </button>
                 )}
                 <button className={`${ui.iconButton} ${ui.iconButtonSmall}`} type="button" aria-label={`${entry.name} ersetzen`} onClick={() => setPicker(entry.id)}>

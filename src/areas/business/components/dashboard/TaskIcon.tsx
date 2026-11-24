@@ -1,9 +1,10 @@
-import { ConciergeBell, FileText, ShieldCheck, Weight } from 'lucide-react';
+import { ConciergeBell, FileText, ShieldCheck } from 'lucide-react';
+import { IconWeightKg } from '@/shared/components/icons/IconWeightKg';
 import type { TaskId } from '../../data/dashboardModel';
 
 const icons = {
   'import-pruefen': FileText,
-  'basis-abwiegen': Weight,
+  'basis-abwiegen': IconWeightKg,
   'gerichte-einrichten': ConciergeBell,
   'lmiv-freigabe': ShieldCheck,
 } satisfies Record<TaskId, unknown>;
