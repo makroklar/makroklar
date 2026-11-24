@@ -50,7 +50,7 @@ interface PhotoCropDialogProps {
   open: boolean;
   src: string | null;
   initial: CropState | null;
-  /** Bild kann transparent sein: als PNG statt JPEG exportieren, damit der Alphakanal bleibt */
+  /** Bild kann transparent sein: als WebP statt JPEG exportieren, damit der Alphakanal bleibt */
   transparent: boolean;
   /** Freigestellte Fassung des Bilds (PNG), falls schon berechnet */
   cutout: string | null;
@@ -72,6 +72,32 @@ function removalText(status: RemovalStatus) {
   return status.progress === null
     ? 'Modell wird vorbereitet …'
     : `Modell wird geladen: ${Math.round(status.progress)} %`;
+}
+
+/** Hartes Limit für das gespeicherte Foto; normal liegt es weit darunter (meist 0,1–0,5 MB) */
+const MAX_BYTES = 5 * 1024 * 1024;
+
+const toBlob = (canvas: HTMLCanvasElement, type: string, quality: number) =>
+  new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, quality));
+
+/**
+ * Kodieren und, falls nötig, so lange nachkomprimieren, bis das Foto unter MAX_BYTES liegt:
+ * erst die Qualität senken, dann die Maße verkleinern (der PNG-Ersatz in Safari kennt keine Qualität).
+ */
+async function encodeWithinLimit(draw: (width: number) => HTMLCanvasElement | null, startWidth: number, type: string) {
+  let width = startWidth;
+  for (;;) {
+    const canvas = draw(width);
+    if (!canvas) return null;
+    for (const quality of [0.9, 0.8, 0.7, 0.6]) {
+      const blob = await toBlob(canvas, type, quality);
+      if (!blob || blob.size <= MAX_BYTES) return blob;
+      // Liefert der Browser PNG statt des gewünschten Formats, hilft weniger Qualität nicht
+      if (blob.type !== type) break;
+    }
+    if (width <= 200) return toBlob(canvas, type, 0.5);
+    width = Math.round(width * 0.8);
+  }
 }
 
 /** Bildgröße auf der Fläche: füllt den Ausschnitt mindestens ganz aus („cover“), dann gezoomt */
@@ -313,29 +339,34 @@ export function PhotoCropDialog({
     event.preventDefault();
   }
 
-  function apply() {
+  async function apply() {
     const picture = canvasRef.current;
     if (!picture || !image || !ready) return;
     const { scale } = geometry(stage, image, crop.zoom);
     const sourceWidth = stage.w / scale;
     const sourceHeight = stage.h / scale;
-    const width = Math.min(OUTPUT_WIDTH, Math.round(sourceWidth));
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = Math.round(width / PHOTO_ASPECT);
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(
-      picture,
-      crop.cx * image.w - sourceWidth / 2, crop.cy * image.h - sourceHeight / 2, sourceWidth, sourceHeight,
-      0, 0, canvas.width, canvas.height,
-    );
+    const draw = (width: number) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = Math.round(width / PHOTO_ASPECT);
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(
+        picture,
+        crop.cx * image.w - sourceWidth / 2, crop.cy * image.h - sourceHeight / 2, sourceWidth, sourceHeight,
+        0, 0, canvas.width, canvas.height,
+      );
+      return canvas;
+    };
     setSaving(true);
-    canvas.toBlob(blob => {
-      setSaving(false);
+    try {
+      // Mit Transparenz WebP (deutlich kleiner als PNG); Browser ohne WebP-Export liefern automatisch PNG
+      const blob = await encodeWithinLimit(draw, Math.min(OUTPUT_WIDTH, Math.round(sourceWidth)), exportTransparent ? 'image/webp' : 'image/jpeg');
       if (blob) onApply({ url: URL.createObjectURL(blob), crop, useCutout: shownSrc === cutout, strokes });
-    }, exportTransparent ? 'image/png' : 'image/jpeg', 0.9);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function toggleBackground() {
