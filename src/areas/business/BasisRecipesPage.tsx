@@ -8,8 +8,8 @@ import { useBusinessDraft } from './state/BusinessDraftContext';
 import styles from './BasisRecipesPage.module.css';
 
 export function BasisRecipesPage() {
-  const { basisRecipes, upsertBasisRecipe, basisError, clearBasisError, basisPersistenceReady } = useBusinessDraft();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { basisRecipes, upsertBasisRecipe, basisError, clearBasisError, basisPersistenceReady,
+    selectedBasisId: selectedId, setSelectedBasisId: setSelectedId } = useBusinessDraft();
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState(false);
   const nameInput = useRef<HTMLInputElement>(null);

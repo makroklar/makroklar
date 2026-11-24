@@ -22,6 +22,7 @@ import type { OnboardingRead } from '../data/readOnboarding';
 import type { CompletionSummary } from '../data/onboardingModel';
 import type { BasisRecipeDraft, BasisOnboardingPayload } from '../data/basisOnboardingModel';
 import { basisDraftReducer, createBasisDraft, type DishBasisLine } from './basisDraft';
+import { buildFoodUsageIndex, removeUnusedFood, type FoodUsageIndex } from './foodUsage';
 
 // Raw UI values are acknowledged only after the action validates and saves them.
 type OnboardingSubmission = Omit<BasisOnboardingPayload, 'manualFoods'> & { manualFoods: ManualFoodDraft[] };
@@ -40,6 +41,8 @@ interface BusinessDraftValue {
   catalogFoods: readonly CatalogFood[];
   addCatalogFood: (food: CatalogFood) => void;
   removeCatalogFood: (id: string) => void;
+  foodUsages: FoodUsageIndex;
+  canRemoveFoods: boolean;
   customDishes: readonly CustomDishDraft[];
   addCustomDish: (dish: CustomDishDraft) => void;
   recipes: Readonly<Record<string, RecipeDraft>>;
@@ -54,6 +57,8 @@ interface BusinessDraftValue {
   clearBasisError: () => void;
   selectedDishId: string | null;
   setSelectedDishId: (id: string | null) => void;
+  selectedBasisId: string | null;
+  setSelectedBasisId: (id: string | null) => void;
   onboardingVersion: number;
   onboardingError: string | null;
   savedSummary: CompletionSummary | null;
@@ -78,6 +83,10 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
   const [serverOnboarding, setServerOnboarding] = useState(onboarding.snapshot);
   const [dirty, setDirty] = useState(false);
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null);
+  const [selectedBasisId, setSelectedBasisId] = useState<string | null>(null);
+  const foodUsages = useMemo(() => buildFoodUsageIndex({ recipes, basisRecipes: basisDraft.basisRecipes, importedItems, customDishes }),
+    [recipes, basisDraft.basisRecipes, importedItems, customDishes]);
+  const canRemoveFoods = onboarding.snapshot !== null && !onboarding.error && !snapshot.error;
   const latestContents = useRef({ manualFoods, catalogFoods, customDishes, recipes });
   latestContents.current = { manualFoods, catalogFoods, customDishes, recipes };
   const basisPersistenceReady = !onboarding.error && onboarding.snapshot !== null
@@ -112,6 +121,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     setRecipes({});
     dispatchBasis({ type: 'reset' });
     setSelectedDishId(null);
+    setSelectedBasisId(null);
     setDirty(false);
     setSavedSummary(null);
   }, []);
@@ -120,17 +130,21 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     setManualFoods(current => [...current, { ...food }]);
   }, []);
   const removeManualFood = useCallback((id: string) => {
+    const next = removeUnusedFood(manualFoods, id, foodUsages, canRemoveFoods);
+    if (next === manualFoods) return;
     setDirty(true);
-    setManualFoods(current => current.filter(food => food.id !== id));
-  }, []);
+    setManualFoods(next);
+  }, [manualFoods, foodUsages, canRemoveFoods]);
   const addCatalogFood = useCallback((food: CatalogFood) => {
     setDirty(true);
     setCatalogFoods(current => appendCatalogFood(current, food));
   }, []);
   const removeCatalogFood = useCallback((id: string) => {
+    const next = removeUnusedFood(catalogFoods, id, foodUsages, canRemoveFoods);
+    if (next === catalogFoods) return;
     setDirty(true);
-    setCatalogFoods(current => current.filter(food => food.id !== id));
-  }, []);
+    setCatalogFoods(next);
+  }, [catalogFoods, foodUsages, canRemoveFoods]);
   const addCustomDish = useCallback((dish: CustomDishDraft) => {
     setDirty(true);
     setCustomDishes(current => current.some(item => item.id === dish.id) ? current : [...current, { ...dish }]);
@@ -165,6 +179,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
     () => ({ importedItems, acceptItems, selectedFoodSources, setSelectedFoodSources, resetDraft,
       storageError: snapshot.error, canSaveItems: snapshot.restaurantId !== null && snapshot.error === null,
       manualFoods, addManualFood, removeManualFood, catalogFoods, addCatalogFood, removeCatalogFood,
+      foodUsages, canRemoveFoods, selectedBasisId, setSelectedBasisId,
       customDishes, addCustomDish, recipes, setRecipe, selectedDishId, setSelectedDishId,
       basisRecipes: basisDraft.basisRecipes, upsertBasisRecipe, removeBasisRecipe,
       dishBases: basisDraft.dishBases, setDishBases, deletedBasisIds: basisDraft.deletedBasisIds,
@@ -173,6 +188,7 @@ export function BusinessDraftProvider({ children, snapshot, onboarding }: { chil
       savedSummary, hasUnsavedChanges: dirty || basisDraft.dirty }),
     [importedItems, acceptItems, selectedFoodSources, resetDraft, snapshot.error, snapshot.restaurantId,
       manualFoods, addManualFood, removeManualFood, catalogFoods, addCatalogFood, removeCatalogFood,
+      foodUsages, canRemoveFoods, selectedBasisId,
       customDishes, addCustomDish, recipes, setRecipe, selectedDishId, onboardingVersion, onboarding.error, acceptInitialization,
       basisDraft, upsertBasisRecipe, removeBasisRecipe, setDishBases, clearBasisError, basisPersistenceReady, savedSummary, dirty],
   );

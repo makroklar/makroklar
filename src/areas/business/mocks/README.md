@@ -108,6 +108,15 @@ Official references, checked 2026-11-11:
 - https://openfoodfacts.github.io/openfoodfacts-server/api/ref-barcode-normalization/
 
 Purchases is
+protected against removing foods used by direct dish recipes or Basisrezepte.
+`state/foodUsage.ts` builds an ID-based index from the current Context, including
+unfinished ingredient quantities. The UI disables removal and lists links to
+the referring recipes; the Context enforces the same check before changing food
+or dirty state. Foods inside an unused basis are still referenced. Removing all
+direct references unlocks removal. Read errors block removal until recipes are
+loaded again; no database write or automatic unlink is performed by this UI.
+
+Purchases is
 optional: Weiter navigates to `/business/onboarding/bases`, even with no
 selected foods. Step 3, `Basisrezepte erstellen`, creates and edits temporary
 food-only bases with a measured output in g or ml. Existing bases are edited in
