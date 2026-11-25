@@ -14,6 +14,7 @@
   height: 100vh;
   height: 100dvh;
   padding: 28px 22px;
+  overflow-x: clip;
   background: var(--color-card);
   box-shadow: 1px 0 4px rgb(0 0 0 / 0.04);
 }
@@ -39,6 +40,15 @@
   font-weight: var(--font-weight-medium);
   text-decoration: none;
   cursor: pointer;
+}
+
+/* Beschriftung ist immer im Layout: Icon darf nicht schrumpfen, Text wird abgeschnitten */
+.item {
+  overflow: hidden;
+}
+
+.item > svg {
+  flex-shrink: 0;
 }
 
 .item:hover {
@@ -76,22 +86,27 @@
   color: var(--color-primary);
 }
 
+/* Beschriftung bleibt im Layout und wird nur ausgeblendet, damit sie einblenden kann */
 .label {
-  display: none;
   white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .rail[data-expanded='true'] .label {
-  display: inline;
+  opacity: 1;
+  visibility: visible;
 }
 
+/* Eingeklappt ein Kreis; Icon sitzt links, damit es beim Ausklappen nicht springt */
 .profile {
   margin-top: auto;
-  justify-content: center;
+  justify-content: flex-start;
   width: 44px;
-  padding: 0;
+  padding: 0 11px;
+  overflow: hidden;
   border: 1px solid var(--color-accent-light);
-  border-radius: 50%;
+  border-radius: 22px;
   color: var(--color-primary);
 }
 
@@ -100,10 +115,31 @@
 }
 
 .rail[data-expanded='true'] .profile {
-  justify-content: flex-start;
-  width: auto;
-  padding: 0 12px;
+  width: 100%;
   border-radius: 10px;
+}
+
+/* Ausklappen animiert, im Takt der übrigen Dashboard-Übergänge */
+@media (min-width: 768px) {
+  .rail {
+    transition: width 0.2s ease;
+  }
+
+  .label {
+    transition: opacity 0.2s ease, visibility 0.2s;
+  }
+
+  .profile {
+    transition: width 0.2s ease, border-radius 0.2s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail,
+  .label,
+  .profile {
+    transition: none;
+  }
 }
 
 .rail a:focus-visible,
