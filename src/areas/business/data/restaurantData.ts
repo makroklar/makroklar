@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { readOnboarding } from './readOnboarding';
 import { getMenuSession, readSavedMenu } from './savedMenu';
 import type { CompletionSummary, OnboardingSnapshot } from './onboardingModel';
+import type { BasisOnboardingSnapshot, BasisRecipeDraft } from './basisOnboardingModel';
 import type { ImportedMenuItem } from '../types/importedMenuItem';
 import {
   FALLBACK_RESTAURANT_NAME, TASK_TEMPLATES,
@@ -21,16 +22,20 @@ export interface RestaurantFood {
 export interface RestaurantData {
   restaurantName: string;
   dishes: Recipe[];
+  /** Basisrezepte (Saucen, Teige …) aus dem Onboarding-Stand v2 */
+  bases: Recipe[];
   foods: RestaurantFood[];
   importedCount: number;
   error: string | null;
 }
 
-type Snapshot = OnboardingSnapshot;
+type Snapshot = OnboardingSnapshot | BasisOnboardingSnapshot;
 type Food = Snapshot['catalogFoods'][number] | Snapshot['manualFoods'][number];
 
 export const importedKey = (sourceId: number) => `lightspeed-k-series-${sourceId}`;
 export const manualKey = (id: string) => `manual-${id}`;
+export const basisKey = (id: string) => `basis-${id}`;
+export const basisIdFromKey = (key: string) => key.startsWith('basis-') ? key.slice('basis-'.length) : null;
 
 function supplierLabel(food: Food): string {
   if ('sourceKind' in food) return `Eigene Angabe · ${food.sourceDescription}`;
@@ -60,27 +65,52 @@ function missingText(ingredients: Ingredient[], nutrition: Nutrition | undefined
   return 'Nährwerte unvollständig';
 }
 
+const toNumber = (value: string) => {
+  const number = Number(value.replace(',', '.'));
+  return Number.isFinite(number) ? number : null;
+};
+
+function toIngredients(lines: readonly { foodId: string; quantity: string; unit: string }[], foods: Map<string, Food>): Ingredient[] {
+  return lines.flatMap(line => {
+    const food = foods.get(line.foodId);
+    if (!food) return [];
+    return [{
+      id: line.foodId,
+      foodId: line.foodId,
+      name: food.name,
+      supplier: supplierLabel(food),
+      quantity: toNumber(line.quantity),
+      unit: line.unit === 'ml' || food.basis === '100ml' ? 'ml' as const : 'g' as const,
+      basis: food.basis,
+    }];
+  });
+}
+
+/** Basisrezept als Recipe. Das gekochte Gewicht ist die gemessene Nettomenge (outputQuantity). */
+function buildBasis(basis: BasisRecipeDraft, usedInDishes: number, foods: Map<string, Food>): Recipe {
+  const ingredients = toIngredients(basis.ingredients, foods);
+  const cookedWeight = basis.outputQuantity === null ? null : toNumber(basis.outputQuantity);
+  return {
+    slug: basisKey(basis.id),
+    kind: 'basis',
+    name: basis.name,
+    category: 'Basis',
+    source: 'Eigene Basis',
+    ingredients,
+    usedInDishes,
+    cookedWeight,
+    onMenu: false,
+    missing: ingredients.length === 0 ? 'Zutaten fehlen' : cookedWeight === null ? 'Gekochtes Gewicht fehlt' : null,
+  };
+}
+
 function buildDish(
   key: string,
   base: Pick<Recipe, 'name' | 'category' | 'source' | 'price' | 'priceFromPos'>,
   snapshot: Snapshot | null,
   foods: Map<string, Food>,
 ): Recipe {
-  const draft = snapshot?.recipes[key];
-  const ingredients: Ingredient[] = (draft?.ingredients ?? []).flatMap(line => {
-    const food = foods.get(line.foodId);
-    if (!food) return [];
-    const quantity = Number(line.quantity.replace(',', '.'));
-    return [{
-      id: line.foodId,
-      foodId: line.foodId,
-      name: food.name,
-      supplier: supplierLabel(food),
-      quantity: Number.isFinite(quantity) ? quantity : null,
-      unit: line.unit === 'ml' || food.basis === '100ml' ? 'ml' : 'g',
-      basis: food.basis,
-    }];
-  });
+  const ingredients = toIngredients(snapshot?.recipes[key]?.ingredients ?? [], foods);
   const nutrition = nutritionFrom(snapshot?.summary ?? null, key);
   return {
     slug: key,
@@ -134,9 +164,14 @@ export const getRestaurantData = cache(async (): Promise<RestaurantData> => {
     }, snapshot, foods)),
   ];
 
+  const v2 = snapshot && 'schemaVersion' in snapshot ? snapshot : null;
+  const usage = (id: string) => Object.values(v2?.dishBases ?? {}).filter(lines => lines.some(line => line.basisId === id)).length;
+  const bases = (v2?.basisRecipes ?? []).map(basis => buildBasis(basis, usage(basis.id), foods));
+
   return {
     restaurantName: snapshot?.restaurantName ?? await readRestaurantName() ?? FALLBACK_RESTAURANT_NAME,
     dishes,
+    bases,
     foods: foodList
       .map(food => ({ id: food.id, name: food.name, supplier: supplierLabel(food), basis: food.basis }))
       .sort((a, b) => a.name.localeCompare(b.name, 'de')),
@@ -146,8 +181,8 @@ export const getRestaurantData = cache(async (): Promise<RestaurantData> => {
 });
 
 export async function getRecipe(slug: string): Promise<Recipe | undefined> {
-  const { dishes } = await getRestaurantData();
-  return dishes.find(dish => dish.slug === slug);
+  const { dishes, bases } = await getRestaurantData();
+  return [...dishes, ...bases].find(recipe => recipe.slug === slug);
 }
 
 /**
@@ -156,17 +191,18 @@ export async function getRecipe(slug: string): Promise<Recipe | undefined> {
  * und setzen `available` auf true.
  */
 export async function getTasks(): Promise<Task[]> {
-  const { dishes } = await getRestaurantData();
+  const { dishes, bases } = await getRestaurantData();
   const task = (id: TaskId, items: Recipe[], total: number, done: number, available = true): Task =>
     ({ ...TASK_TEMPLATES[id], items: items.map(recipe => recipe.slug), open: items.length, total, done, available });
 
   const incomplete = dishes.filter(dish => dish.missing !== null);
   const ready = dishes.filter(dish => dish.nutrition !== undefined);
+  const unweighed = bases.filter(basis => basis.missing !== null);
   return [
     // Braucht einen „Rezept geprüft“-Merker pro Gericht; bis dahin keine Einträge.
     task('import-pruefen', [], 0, 0, false),
-    // Braucht Basen (Teilrezepte) in der Datenbank; bis dahin keine Einträge.
-    task('basis-abwiegen', [], 0, 0, false),
+    // Offen: Basen ohne Zutaten oder ohne gewogenes Endgewicht
+    task('basis-abwiegen', unweighed, bases.length, bases.length - unweighed.length),
     task('gerichte-einrichten', incomplete, dishes.length, dishes.length - incomplete.length),
     // Freigegeben ist ein Gericht erst mit bestätigten Allergenen. Die gibt es noch nicht in der
     // Datenbank, daher sind alle Gerichte mit fertigen Nährwerten offen und keines erledigt.

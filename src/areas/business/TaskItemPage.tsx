@@ -43,10 +43,10 @@ export async function TaskItemPage({ taskId, slug }: { taskId: string; slug: str
           kind="basis"
           initial={editorValues}
           ingredientsTitle="Rezeptgrundlage"
-          ingredientsHint={`Erkannte Mengen aus ${recipe.source}`}
+          ingredientsHint="Mengen für die ganze Zubereitung. Danach das fertige Ergebnis einmal wiegen."
           weighing
           foods={foods}
-          save={{ mode: 'preview', href: '/business' }}
+          save={{ mode: 'basis', id: recipe.slug.slice('basis-'.length), href: '/business/aufgaben/basis-abwiegen' }}
         />
       </div>
     );

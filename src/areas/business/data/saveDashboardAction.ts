@@ -5,12 +5,14 @@ import { z } from 'zod';
 import { finishOnboarding } from './finishOnboardingAction';
 import { readOnboarding } from './readOnboarding';
 import { readSavedMenu } from './savedMenu';
-import { catalogFoodSchema, manualFoodSchema, type OnboardingPayload } from './onboardingModel';
+import { catalogFoodSchema, manualFoodSchema } from './onboardingModel';
+import type { BasisOnboardingPayload } from './basisOnboardingModel';
 import { manualFoodNoticeVersion } from './manualFood';
-import { manualKey } from './restaurantData';
+import { basisKey, manualKey } from './restaurantData';
 
 // Änderungen aus dem Dashboard laufen über denselben geprüften Speicherweg wie das Onboarding
-// (save_restaurant_onboarding): aktueller Stand laden, eine Stelle ändern, alles zurückschreiben.
+// (save_restaurant_onboarding_v2): aktueller Stand laden, eine Stelle ändern, alles zurückschreiben.
+// Basisrezepte und ihre Verknüpfungen werden unverändert mitgeschickt, damit nichts verloren geht.
 
 export type DashboardSaveResult = { status: 'saved'; key: string } | { status: 'error'; message: string };
 
@@ -28,25 +30,45 @@ const dishInput = z.object({
   newFoods: z.array(catalogFoodSchema).max(100),
 }).refine(value => (value.key === undefined) !== (value.newDish === undefined));
 
-async function currentPayload(): Promise<{ payload: OnboardingPayload; version: number } | { error: string }> {
+async function currentPayload(): Promise<{ payload: BasisOnboardingPayload; version: number } | { error: string }> {
   const [menu, onboarding] = await Promise.all([readSavedMenu(), readOnboarding()]);
   if (menu.error || onboarding.error) return { error: menu.error ?? onboarding.error ?? 'Deine Daten konnten nicht geladen werden.' };
   const snapshot = onboarding.snapshot;
+  const basis = snapshot && 'schemaVersion' in snapshot ? snapshot : null;
+  const importedIds = menu.items.map(item => item.sourceId);
+  const customDishes = snapshot?.customDishes ?? [];
+  const dishKeys = new Set([...importedIds.map(id => `lightspeed-k-series-${id}`), ...customDishes.map(dish => manualKey(dish.id))]);
   return {
     version: snapshot?.version ?? 0,
     payload: {
-      importedIds: menu.items.map(item => item.sourceId),
-      customDishes: snapshot?.customDishes ?? [],
+      schemaVersion: 2,
+      importedIds,
+      customDishes,
       catalogFoods: snapshot?.catalogFoods ?? [],
       manualFoods: snapshot?.manualFoods ?? [],
       recipes: structuredClone(snapshot?.recipes ?? {}),
+      basisRecipes: structuredClone(basis?.basisRecipes ?? []),
+      // Nicht mitgeschickte Gerichte behalten ihre Verknüpfungen (siehe save_restaurant_onboarding_v2).
+      dishBases: Object.fromEntries(Object.entries(structuredClone(basis?.dishBases ?? {})).filter(([key]) => dishKeys.has(key))),
+      deletedBasisIds: [],
     },
   };
 }
 
-async function save(payload: OnboardingPayload, version: number, key: string): Promise<DashboardSaveResult> {
+async function save(payload: BasisOnboardingPayload, version: number, key: string): Promise<DashboardSaveResult> {
   const result = await finishOnboarding({ payload, version, requestId: randomUUID() });
   return result.status === 'saved' ? { status: 'saved', key } : result;
+}
+
+/** Neu gesuchte Lebensmittel übernehmen; prüft, dass jede Zeile ein bekanntes Lebensmittel hat. */
+function addFoods(payload: BasisOnboardingPayload, newFoods: z.infer<typeof catalogFoodSchema>[], lines: { foodId: string }[]) {
+  const known = new Set([...payload.catalogFoods, ...payload.manualFoods].map(food => food.id));
+  for (const food of newFoods) {
+    if (!known.has(food.id)) { payload.catalogFoods = [...payload.catalogFoods, food]; known.add(food.id); }
+  }
+  return lines.some(entry => !known.has(entry.foodId))
+    ? { status: 'error' as const, message: 'Eine Zutat fehlt in deiner Lebensmittelliste. Bitte wähle sie erneut aus.' }
+    : null;
 }
 
 export async function saveDish(input: unknown): Promise<DashboardSaveResult> {
@@ -67,16 +89,11 @@ export async function saveDish(input: unknown): Promise<DashboardSaveResult> {
     || payload.customDishes.some(dish => manualKey(dish.id) === key);
   if (!key || !knownDish) return { status: 'error', message: 'Dieses Gericht wurde nicht gefunden. Bitte lade die Seite neu.' };
 
-  const known = new Set([...payload.catalogFoods, ...payload.manualFoods].map(food => food.id));
-  for (const food of newFoods) {
-    if (!known.has(food.id)) { payload.catalogFoods = [...payload.catalogFoods, food]; known.add(food.id); }
-  }
-  if (lines.some(entry => !known.has(entry.foodId))) {
-    return { status: 'error', message: 'Eine Zutat fehlt in deiner Lebensmittelliste. Bitte wähle sie erneut aus.' };
-  }
+  const missingFood = addFoods(payload, newFoods, lines);
+  if (missingFood) return missingFood;
 
-  if (lines.length === 0) delete payload.recipes[key];
-  else payload.recipes[key] = { servings: '1', ingredients: lines };
+  // Leere Liste statt Löschen: nur so entfernt die Datenbank auch die gespeicherten Zutaten.
+  payload.recipes[key] = { servings: '1', ingredients: lines };
   return save(payload, version, key);
 }
 
@@ -92,4 +109,37 @@ export async function saveManualFood(input: unknown): Promise<DashboardSaveResul
   const id = randomUUID();
   payload.manualFoods = [...payload.manualFoods, { ...parsed.data, id, noticeVersion: manualFoodNoticeVersion }];
   return save(payload, version, id);
+}
+
+const basisInput = z.object({
+  /** ID eines vorhandenen Basisrezepts; fehlt bei einer neuen Basis */
+  id: z.uuid().optional(),
+  newBasis: z.object({ name: z.string().trim().min(1).max(500) }).optional(),
+  lines: z.array(line).max(1000),
+  newFoods: z.array(catalogFoodSchema).max(100),
+  /** Gewogenes Endgewicht der ganzen Zubereitung; null = noch nicht gewogen */
+  cookedWeight: z.string().trim().min(1).max(30).nullable(),
+}).refine(value => (value.id === undefined) !== (value.newBasis === undefined));
+
+/** „Basis abwiegen“ / „Neue Basis“: Zutaten und gekochtes Endgewicht eines Basisrezepts speichern */
+export async function saveBasis(input: unknown): Promise<DashboardSaveResult> {
+  const parsed = basisInput.safeParse(input);
+  if (!parsed.success) return { status: 'error', message: 'Bitte prüfe Name, Zutaten, Mengen und das gekochte Gewicht.' };
+  const current = await currentPayload();
+  if ('error' in current) return { status: 'error', message: current.error };
+  const { payload, version } = current;
+  const { id: existingId, newBasis, lines, newFoods, cookedWeight } = parsed.data;
+
+  const existing = payload.basisRecipes.find(basis => basis.id === existingId);
+  if (existingId && !existing) return { status: 'error', message: 'Diese Basis wurde nicht gefunden. Bitte lade die Seite neu.' };
+  const missingFood = addFoods(payload, newFoods, lines);
+  if (missingFood) return missingFood;
+
+  const basis = existing
+    ? { ...existing, ingredients: lines, outputQuantity: cookedWeight }
+    : { id: randomUUID(), name: newBasis!.name, outputUnit: 'g' as const, ingredients: lines, outputQuantity: cookedWeight };
+  payload.basisRecipes = existing
+    ? payload.basisRecipes.map(item => item.id === basis.id ? basis : item)
+    : [...payload.basisRecipes, basis];
+  return save(payload, version, basisKey(basis.id));
 }

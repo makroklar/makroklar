@@ -6,7 +6,7 @@ import { getRestaurantData } from './data/restaurantData';
 import ui from './components/dashboard/Dashboard.module.css';
 
 export async function RecipeLibraryPage() {
-  const { dishes } = await getRestaurantData();
+  const { dishes, bases } = await getRestaurantData();
 
   return (
     <div className={ui.page}>
@@ -19,7 +19,7 @@ export async function RecipeLibraryPage() {
           </Link>
         )}
       />
-      <RecipeLibrary recipes={dishes} />
+      <RecipeLibrary recipes={[...dishes, ...bases]} />
     </div>
   );
 }

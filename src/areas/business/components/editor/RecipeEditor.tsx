@@ -7,7 +7,7 @@ import { ArrowRight, ChevronDown, Info } from 'lucide-react';
 import { IconWeightKg } from '@/shared/components/icons/IconWeightKg';
 import { BASIS_CATEGORIES, DISH_CATEGORIES, guessDishCategory, type Ingredient, type RecipeKind } from '../../data/dashboardModel';
 import type { RestaurantFood } from '../../data/restaurantData';
-import { saveDish } from '../../data/saveDashboardAction';
+import { saveBasis, saveDish } from '../../data/saveDashboardAction';
 import { IngredientRows } from './IngredientRows';
 import { PhotoField } from './PhotoField';
 import ui from '../dashboard/Dashboard.module.css';
@@ -25,12 +25,14 @@ export interface RecipeEditorValues {
 }
 
 /**
- * dish: vorhandenes Gericht in Supabase speichern; newDish: neues eigenes Gericht anlegen;
- * preview: Formular ohne Speicherziel (Basen gibt es noch nicht in der Datenbank) – „Speichern“ führt nur weiter.
+ * dish / basis: vorhandenes Gericht bzw. Basisrezept in Supabase speichern; newDish / newBasis: neu anlegen;
+ * preview: Formular ohne Speicherziel – „Speichern“ führt nur weiter.
  */
 export type EditorSave =
   | { mode: 'dish'; key: string; href: string }
   | { mode: 'newDish'; href: string }
+  | { mode: 'basis'; id: string; href: string }
+  | { mode: 'newBasis'; href: string }
   | { mode: 'preview'; href: string };
 
 interface RecipeEditorProps {
@@ -71,20 +73,27 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
   const [error, setError] = useState<string | null>(null);
 
   const real = save.mode !== 'preview';
+  const isNew = save.mode === 'newDish' || save.mode === 'newBasis';
+  const basisSave = save.mode === 'basis' || save.mode === 'newBasis';
   const rawTotal = ingredients.reduce((sum, entry) => sum + (entry.quantity ?? 0), 0);
   const cookedValue = toNumber(cooked);
   const loss = rawTotal > 0 && cookedValue !== undefined ? ((rawTotal - cookedValue) / rawTotal) * 100 : 0;
   const priceValue = toNumber(price);
 
   const quantitiesComplete = ingredients.every(entry => entry.quantity !== null && entry.quantity > 0);
-  const complete = real
-    // Gespeichert werden Zutaten, Mengen (und bei neuen Gerichten Name und Preis)
-    ? quantitiesComplete && (save.mode !== 'newDish' || (name.trim() !== '' && ingredients.length > 0
-      && (price.trim() === '' || (priceValue !== undefined && priceValue >= 0))))
-    : ingredients.length > 0 && quantitiesComplete && cookedValue !== undefined && cookedValue > 0;
-  const hint = save.mode === 'newDish'
+  // Basen: gekochtes Endgewicht ist optional, muss aber größer als 0 sein, wenn es eingetragen ist
+  const cookedValid = cooked.trim() === '' || (cookedValue !== undefined && cookedValue > 0 && cookedValue <= 1_000_000);
+  const complete = basisSave
+    ? quantitiesComplete && cookedValid && (save.mode !== 'newBasis' || (name.trim() !== '' && ingredients.length > 0))
+    : real
+      // Gespeichert werden Zutaten, Mengen (und bei neuen Gerichten Name und Preis)
+      ? quantitiesComplete && (save.mode !== 'newDish' || (name.trim() !== '' && ingredients.length > 0
+        && (price.trim() === '' || (priceValue !== undefined && priceValue >= 0))))
+      : ingredients.length > 0 && quantitiesComplete && cookedValue !== undefined && cookedValue > 0;
+  const hint = isNew
     ? 'Bitte Namen, mindestens eine Zutat und alle Mengen eintragen'
-    : real ? 'Bitte alle Mengen eintragen' : 'Bitte alle Mengen und das gekochte Endgewicht eintragen';
+    : basisSave ? 'Bitte alle Mengen und ein gekochtes Gewicht größer als 0 eintragen'
+      : real ? 'Bitte alle Mengen eintragen' : 'Bitte alle Mengen und das gekochte Endgewicht eintragen';
 
   async function submit() {
     if (save.mode === 'preview') { router.push(save.href); return; }
@@ -97,9 +106,12 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
         unit: entry.unit,
       }));
       const newFoods = ingredients.flatMap(entry => entry.catalogFood ? [entry.catalogFood] : []);
-      const result = await saveDish(save.mode === 'dish'
-        ? { key: save.key, lines, newFoods }
-        : { newDish: { name: name.trim(), price: priceValue === undefined ? null : Math.round(priceValue * 100) / 100 }, lines, newFoods });
+      const cookedWeight = cookedValue === undefined ? null : String(cookedValue);
+      const result = save.mode === 'basis' ? await saveBasis({ id: save.id, lines, newFoods, cookedWeight })
+        : save.mode === 'newBasis' ? await saveBasis({ newBasis: { name: name.trim() }, lines, newFoods, cookedWeight })
+          : await saveDish(save.mode === 'dish'
+            ? { key: save.key, lines, newFoods }
+            : { newDish: { name: name.trim(), price: priceValue === undefined ? null : Math.round(priceValue * 100) / 100 }, lines, newFoods });
       if (result.status === 'error') { setError(result.message); return; }
       router.push(save.href);
       router.refresh();
@@ -118,12 +130,12 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
 
       <div className={styles.layout}>
         <div className={styles.mainColumn}>
-          {save.mode === 'newDish' && (
-            <section className={`${ui.card} ${ui.cardBordered}`} aria-label="Name des Gerichts">
+          {isNew && (
+            <section className={`${ui.card} ${ui.cardBordered}`} aria-label={kind === 'basis' ? 'Name der Basis' : 'Name des Gerichts'}>
               <label className={styles.labeled}>
-                <span>Name des Gerichts</span>
+                <span>{kind === 'basis' ? 'Name der Basis' : 'Name des Gerichts'}</span>
                 <span className={ui.field}>
-                  <input value={name} maxLength={200} placeholder="z. B. Pizza Margherita" onChange={event => setName(event.target.value)} />
+                  <input value={name} maxLength={kind === 'basis' ? 500 : 200} placeholder={kind === 'basis' ? 'z. B. Tomatensauce' : 'z. B. Pizza Margherita'} onChange={event => setName(event.target.value)} />
                 </span>
               </label>
             </section>
@@ -200,6 +212,7 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
               </select>
               <ChevronDown aria-hidden="true" size={16} />
             </span>
+            {basisSave && <p className={styles.fieldsNote}>Wird noch nicht gespeichert.</p>}
           </section>
 
           <section className={`${ui.card} ${ui.cardBordered}`} aria-labelledby="cooked-title">
@@ -231,7 +244,8 @@ export function RecipeEditor({ kind, initial, ingredientsTitle, ingredientsHint,
                 <strong>{number.format(Math.max(loss, 0))} %</strong>
               </div>
             )}
-            {real && <p className={styles.fieldsNote}>Wird noch nicht gespeichert.</p>}
+            {real && !basisSave && <p className={styles.fieldsNote}>Wird noch nicht gespeichert.</p>}
+            {basisSave && <p className={styles.fieldsNote}>Gesamtgewicht der fertigen Basis. Ohne dieses Gewicht bleiben die Nährwerte offen.</p>}
           </section>
         </div>
       </div>

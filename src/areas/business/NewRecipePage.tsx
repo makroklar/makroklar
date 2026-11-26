@@ -28,7 +28,7 @@ export async function NewRecipePage({ kind }: { kind: RecipeKind }) {
         ingredientsTitle={dish ? 'Zutaten & Mengen' : 'Rezeptgrundlage'}
         weighing={false}
         foods={foods}
-        save={dish ? { mode: 'newDish', href: '/business/rezepte' } : { mode: 'preview', href: '/business' }}
+        save={dish ? { mode: 'newDish', href: '/business/rezepte' } : { mode: 'newBasis', href: '/business/rezepte' }}
       />
     </div>
   );
