@@ -1,4 +1,4 @@
-export type OnboardingStepId = 'menu' | 'purchases' | 'dishes';
+export type OnboardingStepId = 'menu' | 'purchases' | 'bases' | 'dishes';
 
 export interface OnboardingStep {
   id: OnboardingStepId;
@@ -16,6 +16,11 @@ export const onboardingSteps: readonly OnboardingStep[] = [
     id: 'purchases',
     label: 'Einkäufe hinzufügen',
     href: '/business/onboarding/purchases',
+  },
+  {
+    id: 'bases',
+    label: 'Basisrezepte erstellen',
+    href: '/business/onboarding/bases',
   },
   {
     id: 'dishes',

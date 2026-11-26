@@ -15,6 +15,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      basis_recipe_ingredients: {
+        Row: {
+          basis_recipe_id: string
+          ingredient_id: string
+          quantity: number
+          restaurant_id: string
+          unit: string
+        }
+        Insert: {
+          basis_recipe_id: string
+          ingredient_id: string
+          quantity: number
+          restaurant_id: string
+          unit: string
+        }
+        Update: {
+          basis_recipe_id?: string
+          ingredient_id?: string
+          quantity?: number
+          restaurant_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basis_recipe_ingredients_own_food"
+            columns: ["restaurant_id", "ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_ingredients"
+            referencedColumns: ["restaurant_id", "id"]
+          },
+          {
+            foreignKeyName: "basis_recipe_ingredients_own_recipe"
+            columns: ["restaurant_id", "basis_recipe_id"]
+            isOneToOne: false
+            referencedRelation: "basis_recipes"
+            referencedColumns: ["restaurant_id", "id"]
+          },
+        ]
+      }
+      basis_recipes: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          name: string
+          output_quantity: number | null
+          output_unit: string
+          restaurant_id: string
+        }
+        Insert: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          name: string
+          output_quantity?: number | null
+          output_unit?: string
+          restaurant_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          output_quantity?: number | null
+          output_unit?: string
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basis_recipes_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bls_food_nutrients: {
         Row: {
           bls_code: string
@@ -95,6 +172,45 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nutrition_datasets"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      dish_basis_recipes: {
+        Row: {
+          basis_recipe_id: string
+          dish_id: string
+          quantity: number
+          restaurant_id: string
+          unit: string
+        }
+        Insert: {
+          basis_recipe_id: string
+          dish_id: string
+          quantity: number
+          restaurant_id: string
+          unit: string
+        }
+        Update: {
+          basis_recipe_id?: string
+          dish_id?: string
+          quantity?: number
+          restaurant_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_basis_recipes_own_basis_unit"
+            columns: ["restaurant_id", "basis_recipe_id", "unit"]
+            isOneToOne: false
+            referencedRelation: "basis_recipes"
+            referencedColumns: ["restaurant_id", "id", "output_unit"]
+          },
+          {
+            foreignKeyName: "dish_basis_recipes_own_dish"
+            columns: ["restaurant_id", "dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["restaurant_id", "id"]
           },
         ]
       }
@@ -484,6 +600,21 @@ export type Database = {
     Functions: {
       complete_restaurant_registration: { Args: never; Returns: string }
       create_restaurant: { Args: { restaurant_name: string }; Returns: string }
+      get_basis_recipe_nutrition: {
+        Args: { target_basis_recipe_id: string }
+        Returns: {
+          ingredient_count: number
+          issues: Json
+          known_ingredient_count: number
+          nutrient_code: string
+          output_quantity: number
+          output_unit: string
+          per_100: number
+          recipe_total: number
+          status: string
+          unit: string
+        }[]
+      }
       get_dish_nutrition: {
         Args: { target_dish_id: string }
         Returns: {
@@ -513,9 +644,22 @@ export type Database = {
         Args: { target_restaurant_id: string }
         Returns: Json
       }
+      read_restaurant_onboarding_v2: {
+        Args: { target_restaurant_id: string }
+        Returns: Json
+      }
       read_saved_off_product: { Args: { barcode: string }; Returns: Json }
       read_shared_off_product: { Args: { barcode: string }; Returns: Json }
       save_restaurant_onboarding: {
+        Args: {
+          base_version: number
+          payload: Json
+          request_id: string
+          target_restaurant_id: string
+        }
+        Returns: Json
+      }
+      save_restaurant_onboarding_v2: {
         Args: {
           base_version: number
           payload: Json

@@ -1,54 +1,60 @@
-# Lightspeed item fixtures
+# Business onboarding data
 
-`lightspeed-items.json` contains 70 local examples of the documented K-Series
-`items-apiItemDTO`. Its outer array is our fixture collection, not a confirmed
-Get All Items API response. The published OpenAPI currently describes that
-endpoint's `200 application/json` as a single item object.
+The local Lightspeed catalog and its preview/import UI have been removed.
+POS provider cards remain as a preview of the future integration; selecting a
+provider reports that the connection is unavailable. No demo catalog is loaded.
 
-Official references (checked 2026-11-03):
-- https://api-docs.lsk.lightspeed.app/operation/operation-items-apigetitems
-- https://api-docs.lsk.lightspeed.app/source.json
+On the menu, manual entry and POS selection pages, a link below the card lets users skip to
+`/business/onboarding/purchases` without changing or deleting their draft.
+They can add dishes manually in the final dish step or set up the menu later.
+The old `/business/onboarding/menu/pos/complete` URL redirects to POS selection,
+so saved demo dishes cannot be mistaken for a successful live POS connection.
+The original completion component/design is retained for a future integration.
 
-IDs and SKUs are fixed demo values. Accounting groups are consistent. Each item
-has one `AMOUNT` price named `Standard`. EUR is a display assumption for this
-German restaurant fixture; the documented item DTO has no currency field.
+`/business/onboarding/menu/manual` reuses `NewDishForm` and the existing
+`customDishes` Context. It lists manual dishes with their optional price and
+adds new dishes with stable UUIDs. Empty prices stay null; zero is shown as EUR 0.
+The final dish step reads the same entries for assigning foods and bases.
+Weiter/skip opens purchases without requiring any dish. No write occurs here;
+the final initialization saves the draft through the existing onboarding action.
+Photos and editing existing dish metadata are deferred. Read failures show retry
+feedback rather than an empty list. The existing route header keeps this page on
+step 1 and returns to the menu method selection.
 
-The UI calls `getItems()` in `data/lightspeedItems.ts`. Replace only its local
-JSON source with a backend request once the real collection response is verified;
-keep `mapLightspeedItem()` and the internal UI model at that boundary.
-Multiple prices are retained without automatically selecting one.
+`/business/onboarding/menu/import` reads CSV files locally with Papa Parse.
+The file never goes to Storage or a server endpoint. UTF-8 (including BOM),
+semicolon/comma separators and quoted fields are supported; the first nonempty
+record is the header. Limits: 1 MiB, 500 data records and 20 columns. Invalid
+encoding, quoting, column counts or exceeded limits reject the file without
+partial import. A downloadable two-column example is generated from a constant.
+Column mapping uses indices (duplicate titles never overwrite columns). Users
+explicitly build a preview, edit names/prices, and deselect invalid rows before
+accepting. Unselected columns are ignored. Unknown prices remain null, not zero.
+Normalized name matches against selected rows and existing dishes require explicit
+confirmation; names never trigger automatic merging or replacement. Re-reading
+an accepted file raises the same name warnings. Stable preview UUIDs and a batch
+Context method prevent duplicate application of the same preview. CSV entries
+use the existing custom-dish model and final v2 save path, with a total cap of
+1000 custom dishes. Preview edits alone are local to this page; accepted dishes
+survive client navigation but unsaved changes disappear on reload. No database,
+Auth, image, nutrition or schema changes are involved in CSV parsing.
 
-Reviewed selections are saved by `data/saveMenuAction.ts`, using the atomic
-`import_lightspeed_items` RPC under the signed-in owner's RLS. The restaurant is
-resolved on the server; accounts with zero or multiple owned restaurants cannot
-save until setup or restaurant selection is resolved. Reimporting updates the
-same source identities. Unselected, previously saved items are not deleted.
+CSV parsing and preview validation tests:
+`node --test src/areas/business/data/csvMenuModel.test.mjs src/areas/business/data/readCsvMenu.test.mjs`
 
-`data/savedMenu.ts` reads the saved items in `BusinessLayout` and initializes
-`BusinessDraftProvider` before its children render, including on a full reload.
-Business pages use `useBusinessDraft()` across client-side navigation. The
-context only knows the internal `ImportedMenuItem` model. It does not import
-the JSON fixture, the Supabase client, or the Lightspeed DTO. Its account and
-restaurant key prevents one account's draft from being reused by another.
+Existing database dishes, import identities and recipes are unchanged.
+`data/savedMenu.ts` still reads saved menu items in `BusinessLayout` and
+initializes the account-scoped `BusinessDraftProvider`, including on reload.
+The internal `ImportedMenuItem` model, storage validation and authenticated
+`saveMenuAction.ts`/RPC remain available for a future verified POS integration;
+no onboarding UI currently invokes that import action. BLS, Open Food Facts
+and the complete development recipes are unaffected.
 
-Unaccepted edits remain local to the preview. Returning to it restores accepted
-names, prices, and selections; loading the catalog adds the other example items
-without replacing the accepted values. Reloading restores saved selections from
-Supabase; unaccepted edits are lost. `resetDraft()` only clears client state and
-never deletes saved database rows. Names, all price options and the explicit
-price choice are validated at the server boundary in `data/menuStorageModel.ts`.
-The current fixture's EUR assumption is stored explicitly. Source IDs are
-converted between safe internal numbers and database strings at this boundary.
+A failed read is shown as an error rather than treated as an empty menu.
+`resetDraft()` only clears client state and never deletes saved database rows.
+Unsaved edits survive client-side navigation but are lost on a full reload.
 
-Only a confirmed save opens `/business/onboarding/menu/pos/complete`. During the
-request, editing and resubmission are disabled. Failures keep the review and show
-retry feedback, without accepting the selection or navigating. A failed read is
-displayed as an error rather than treated as an empty menu.
-That view deliberately retains the Figma prototype's connection-success copy;
-there is no real Lightspeed connection or background import. It returns to POS
-selection when a successfully loaded menu is empty. Its next-stage link opens
-`/business/onboarding/purchases` to begin collecting ingredients. The current
-increment shows a food table with a primary-green text link underneath it.
+Purchases shows a food table with a primary-green text link underneath it.
 The link opens `/business/onboarding/purchases/manual`, where the form is ready
 to fill in. The nutrition table explicitly uses 100 g / 100 ml; all four macros,
 preparation state and label/supplier provenance are required. An unchecked
@@ -108,9 +114,29 @@ Official references, checked 2026-11-11:
 - https://openfoodfacts.github.io/openfoodfacts-server/api/ref-barcode-normalization/
 
 Purchases is
-optional: Weiter always navigates to `/business/onboarding/dishes`, even with no
-selected foods. This protected route displays the accepted/restored menu items
-from the existing Context. Step 3 is labelled `Gerichte vervollständigen`.
+protected against removing foods used by direct dish recipes or Basisrezepte.
+`state/foodUsage.ts` builds an ID-based index from the current Context, including
+unfinished ingredient quantities. The UI disables removal and lists links to
+the referring recipes; the Context enforces the same check before changing food
+or dirty state. Foods inside an unused basis are still referenced. Removing all
+direct references unlocks removal. Read errors block removal until recipes are
+loaded again; no database write or automatic unlink is performed by this UI.
+
+Purchases is
+optional: Weiter navigates to `/business/onboarding/bases`, even with no
+selected foods. Step 3, `Basisrezepte erstellen`, creates and edits temporary
+food-only bases with a measured output in g or ml. Existing bases are edited in
+the Context immediately, including unfinished quantities, so navigating between
+steps preserves edits. Empty output is an explicit draft, not an inferred yield.
+Deleting a base requires confirmation and is blocked if a dish references it.
+The step can be skipped. The UI uses the v2 read/write contract. The three basis
+migrations were applied to `makroklar-dev` on 2026-11-24. Confirmed saves restore
+bases and links on reload; unsaved edits still disappear on a full reload.
+On an environment missing these migrations, saved legacy data can still be
+displayed but final saving is blocked with a setup message (no v1 write fallback).
+
+Step 4, `/business/onboarding/dishes`, displays the accepted/restored menu items
+from the existing Context and is labelled `Gerichte vervollständigen`.
 Selecting an item opens its name, accounting group, SKU, explicitly selected price
 and recipe editor; one detail panel is open at a time. Selection uses source + source
 ID, so duplicate names cannot open the wrong item. A missing price stays unset;
@@ -121,6 +147,13 @@ and survives navigating back to purchases to add more ingredients.
 
 `NewDishForm` adds a draft with a stable client UUID and an optional price.
 `RecipeEditor` assigns selected foods and amounts for one plated portion.
+Its picker groups Lebensmittel and Basisrezepte. Basis selections retain only
+their stable ID, the quantity used for the dish and the basis output unit in
+`dishBases`; they never copy the base's ingredients into the dish. Name/output
+edits are therefore reflected on reopening the dish. Already linked bases are
+excluded from the picker, and removing the final link keeps an explicit empty
+array for persistence. Incomplete bases can be assigned as drafts with a visible
+reminder; durable saving is reported only after a successful server response.
 There is no servings field; the final Server Action fixes `servings` to 1.
 The database retains support for multi-portion recipes for future use.
 A 100g food requires g; a 100ml food requires ml. An
@@ -129,19 +162,30 @@ There is no implicit density, cooking-yield or mass/volume conversion.
 
 `FinishOnboarding` validates the draft and calls `finishOnboardingAction.ts`.
 The server resolves the owner, verifies OFF data independently of client values,
-and calls one atomic `save_restaurant_onboarding` RPC. BLS calculations always
+and calls one atomic `save_restaurant_onboarding_v2` RPC, including bases, their
+ingredient quantities, dish links and explicit deletions. Authoritative OFF data
+is checked again against basis ingredient units before the write. BLS calculations always
 read the pinned BLS dataset. Missing macro values stay null, never partial totals.
 Empty/incomplete recipes are classified as drafts in the stored summary; no
 allergen or publication workflow is implemented. Processing UI acknowledges
 actual validation/save results, without timed fake intermediate successes.
 `Import jetzt prüfen` returns to the editor; `Zum Dashboard` targets the existing
 placeholder dashboard. Calculation results are stored in the completion summary
-and available through `get_dish_nutrition`; a dish-level results UI is not added yet.
+and available through `get_dish_nutrition`. `SavedDishNutrition` shows the saved
+per-serving energy/protein/fat/carbohydrate values in dish details. It does not
+calculate in the browser. Missing metrics show `Nicht verfügbar`, while genuine
+zero remains 0. Any unsaved food/recipe/basis change conservatively hides all dish
+results until the next confirmed save (including dishes affected by a shared base).
+Read failures and version mismatches also suppress results. Successful saves and
+accepted server snapshots update the summary; logout clears it.
 
 Migration `20261111000100_complete_business_onboarding.sql` was applied to
 `makroklar-dev` on 2026-11-17 and the public TypeScript types were regenerated.
-`readOnboarding.ts` restores saved foods, custom dishes and recipes in
-`BusinessLayout`. Post-application SQL checks passed with their test data rolled
+`readOnboarding.ts` now requests `read_restaurant_onboarding_v2` to restore saved
+foods, custom dishes, recipes, bases and links in `BusinessLayout`. The v2
+migrations are applied to `makroklar-dev` and their SQL checks passed with fixture
+rollback; authenticated browser save/reload verification remains open. For the original v1
+migration, post-application SQL checks passed with their test data rolled
 back; the actual browser save/reload flow still needs manual verification.
 A failed read blocks final save;
 refreshing server data never replaces dirty drafts. Version checks reject stale
@@ -175,9 +219,6 @@ request timeout. Missing configuration, publication failure or process interrupt
 does not undo that save. There is no durable retry queue/backfill: such a product
 may require another OFF call for a different restaurant. An existing accepted
 snapshot stays private and is not refreshed just to populate the shared cache.
-
-Run the fixture/adapter tests from the repository root:
-`node --test src/areas/business/data/lightspeedItems.test.mjs`
 
 Draft merge/restore tests:
 `node --test src/areas/business/state/businessDraft.test.mjs`

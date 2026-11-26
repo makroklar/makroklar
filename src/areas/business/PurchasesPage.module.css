@@ -95,6 +95,20 @@
   cursor: pointer;
 }
 
+.textButton:disabled {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+.foodAction { min-width: 12rem; }
+.usage { margin-top: var(--space-2); max-width: 20rem; overflow-wrap: anywhere; }
+.usage summary { color: var(--color-primary); cursor: pointer; }
+.usage summary:hover { text-decoration: underline; }
+.usage summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }
+.usage p { margin: var(--space-2) 0; color: var(--color-text-muted); }
+.usage ul { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-4); }
+
 .manualLink:focus-visible,
 .textButton:focus-visible,
 .tableWrapper:focus-visible {

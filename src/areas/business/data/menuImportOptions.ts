@@ -26,8 +26,9 @@ export const menuImportOptions: readonly MenuImportOption[] = [
     id: 'upload',
     title: 'Speisekarte importieren.',
     description:
-      'Lade deine Speisekarte als Datei (z. B. PDF) hoch, um deine Gerichte vom System automatisch auslesen zu lassen.',
+      'Lies deine Gerichte aus einer CSV-Datei ein und prüfe Namen und Preise vor der Übernahme.',
     icon: uploadIcon,
+    href: '/business/onboarding/menu/import',
   },
   {
     id: 'manual',
@@ -35,5 +36,6 @@ export const menuImportOptions: readonly MenuImportOption[] = [
     description:
       'Trage deine Gerichte händisch ein und baue deine Speisekarte flexibel selbst auf.',
     icon: manualIcon,
+    href: '/business/onboarding/menu/manual',
   },
 ];

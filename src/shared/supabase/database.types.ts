@@ -14,7 +14,7 @@ export type DishNutritionRow = NutritionFields & (
   | { status: 'incomplete' | 'empty_recipe'; recipe_total: null; per_serving: null }
 );
 
-// Preserve generated table relationships and metadata; correct this RPC contract only.
+// Preserve generated tables/metadata; correct nutrition nullability.
 export type Database = Omit<GeneratedDatabase, 'public'> & {
   public: Omit<GeneratedDatabase['public'], 'Functions'> & {
     Functions: Omit<GeneratedDatabase['public']['Functions'], 'get_dish_nutrition'> & {

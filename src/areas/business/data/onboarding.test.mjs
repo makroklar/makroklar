@@ -8,7 +8,7 @@ registerHooks({ resolve(specifier, context, next) {
   if (specifier === './offProducts') return moduleFor('export const getOffProduct = async () => globalThis.__offVerification;');
   if (specifier === './offCache') return moduleFor('export const publishOffCache = (...args) => globalThis.__publishOffCache(...args);');
   if (specifier === 'next/cache') return moduleFor('export const revalidatePath = () => {};');
-  if (['./onboardingModel','./foodSearchModel','./recipeDraft'].includes(specifier)) return next(specifier + '.ts', context);
+  if (['./onboardingModel','./foodSearchModel','./recipeDraft','./basisOnboardingModel'].includes(specifier)) return next(specifier + '.ts', context);
   return next(specifier, context);
 } });
 const { newDishSchema, recipeErrors } = await import('./recipeDraft.ts');
@@ -20,7 +20,8 @@ const dishId = 'f7110000-0000-4000-8000-000000000300';
 const key = `manual-${dishId}`;
 const food = { id, name: 'Test', basis: '100g', preparation: 'as_sold', energyKcal: 100, proteinG: 10, fatG: 1, carbohydrateG: 20,
   sourceKind: 'label', sourceDescription: 'Packaging', noticeVersion: '2026-11-10.2' };
-const payload = () => ({ importedIds: [], customDishes: [{ id: dishId, name: 'Suppe', price: null }], manualFoods: [{ ...food }], catalogFoods: [],
+const payload = () => ({ schemaVersion: 2, basisRecipes: [], dishBases: {}, deletedBasisIds: [],
+  importedIds: [], customDishes: [{ id: dishId, name: 'Suppe', price: null }], manualFoods: [{ ...food }], catalogFoods: [],
   recipes: { [key]: { servings: '2', ingredients: [{ foodId: id, quantity: '12,50', unit: 'g' }] } } });
 const emptySummary = { version: 1, restaurantName: 'Restaurant', dishCount: 0, foodCount: 0, completeCount: 0, draftCount: 0, dishes: [] };
 const input = () => ({ payload: payload(), version: 0, requestId: 'f7110000-0000-4000-8000-000000000090' });
@@ -58,7 +59,7 @@ test('empty recipes and unknown nutrition can be kept as drafts, not invented va
 test('save resolves restaurant, fixes one portion and preserves decimal input and caller state', async () => {
   const value = input();
   assert.equal((await finishOnboarding(value)).status, 'saved');
-  assert.equal(calls[0][0], 'save_restaurant_onboarding');
+  assert.equal(calls[0][0], 'save_restaurant_onboarding_v2');
   assert.equal(calls[0][1].target_restaurant_id, 'owned-restaurant');
   assert.equal(calls[0][1].payload.recipes[key].servings, '1');
   assert.equal(value.payload.recipes[key].servings, '2');
@@ -124,10 +125,86 @@ test('conflicts and RPC failures are visible without leaking provider details or
 test('restoration validates complete snapshots; failures are not treated as an empty saved list', async () => {
   rpcResult = { data: { version: 0, restaurantName: 'Restaurant', ...payload(), summary: null }, error: null };
   assert.equal((await readOnboarding()).snapshot.recipes[key].servings, '2');
+  assert.equal(calls[0][0], 'read_restaurant_onboarding_v2');
   rpcResult = { data: null, error: { code: 'PGRST202' } };
   assert.match((await readOnboarding()).error, /noch nicht eingerichtet/);
   rpcResult = { data: { version: 1 }, error: null };
   assert.equal((await readOnboarding()).snapshot, null);
+});
+
+const baseId = 'f7110000-0000-4000-8000-000000000200';
+const basisPayload = () => ({ ...payload(),
+  basisRecipes: [{ id: baseId, name: 'Teig', outputQuantity: '400,50', outputUnit: 'g',
+    ingredients: [{ foodId: id, quantity: '200,25', unit: 'g' }] }],
+  dishBases: { [key]: [{ basisId: baseId, quantity: '80,25', unit: 'g' }] },
+});
+
+test('v2 saves basis ingredients, yield and links with stable IDs and normalized decimals', async () => {
+  const value = { ...input(), payload: basisPayload() };
+  const before = structuredClone(value);
+  assert.equal((await finishOnboarding(value)).status, 'saved');
+  const saved = calls[0][1].payload;
+  assert.equal(saved.schemaVersion, 2);
+  assert.equal(saved.basisRecipes[0].id, baseId);
+  assert.equal(saved.basisRecipes[0].outputQuantity, '400.50');
+  assert.equal(saved.basisRecipes[0].ingredients[0].quantity, '200.25');
+  assert.equal(saved.dishBases[key][0].quantity, '80.25');
+  assert.deepEqual(value, before);
+  calls = [];
+  const deletion = { ...value, payload: { ...value.payload, basisRecipes: [], dishBases: { [key]: [] }, deletedBasisIds: [baseId] } };
+  assert.equal((await finishOnboarding(deletion)).status, 'saved');
+  assert.deepEqual(calls[0][1].payload.deletedBasisIds, [baseId]);
+  assert.deepEqual(calls[0][1].payload.dishBases[key], []);
+});
+
+test('v2 rejects old or incomplete contracts and never retries saving through v1', async () => {
+  const old = input(); delete old.payload.schemaVersion;
+  assert.equal((await finishOnboarding(old)).status, 'error');
+  assert.equal(calls.length, 0);
+  rpcResult = { data: null, error: { code: 'PGRST202' } };
+  assert.equal((await finishOnboarding({ ...input(), payload: basisPayload() })).status, 'error');
+  assert.deepEqual(calls.map(call => call[0]), ['save_restaurant_onboarding_v2']);
+  assert.equal(publications.length, 0);
+});
+
+test('OFF verification rechecks basis ingredient units before any write', async () => {
+  const value = { ...input(), payload: basisPayload() };
+  const off = { id: 'off:3017620422003', name: 'OFF', detail: '', basis: '100g', preparation: 'as_sold',
+    energyKcal: 99, proteinG: null, fatG: 0, carbohydrateG: null,
+    source: { kind: 'off', barcode: '3017620422003', fetchedAt: '2026-11-17T10:00:00Z', modifiedAt: null } };
+  value.payload.catalogFoods = [off];
+  value.payload.basisRecipes[0].ingredients[0].foodId = off.id;
+  globalThis.__offVerification = { status: 'success', foods: [{ ...off, basis: '100ml' }], hasMore: false };
+  assert.equal((await finishOnboarding(value)).status, 'error');
+  assert.equal(calls.length, 0);
+  assert.equal(publications.length, 0);
+});
+
+test('v2 reads restore bases and links; invalid v2 data and permission errors never fall back', async () => {
+  rpcResult = { data: { ...basisPayload(), version: 1, restaurantName: 'Test', summary: null }, error: null };
+  const result = await readOnboarding();
+  assert.equal(result.error, null);
+  assert.equal(result.snapshot.basisRecipes[0].id, baseId);
+  assert.equal(result.snapshot.dishBases[key][0].quantity, '80,25');
+  for (const failure of [{ data: { version: 1 }, error: null }, { data: null, error: { code: '42501' } }]) {
+    calls = []; rpcResult = failure;
+    const result = await readOnboarding();
+    assert.equal(result.snapshot, null); assert.ok(result.error);
+    assert.deepEqual(calls.map(call => call[0]), ['read_restaurant_onboarding_v2']);
+  }
+});
+
+test('missing v2 reader can display legacy data but leaves saving blocked', async () => {
+  globalThis.__onboardingSession.supabase.rpc = async (name, args) => {
+    calls.push([name, args]);
+    return name.endsWith('_v2') ? { data: null, error: { code: 'PGRST202' } }
+      : { data: { ...payload(), version: 1, restaurantName: 'Test', summary: null }, error: null };
+  };
+  const result = await readOnboarding();
+  assert.equal(result.snapshot.restaurantName, 'Test');
+  assert.match(result.error, /noch nicht eingerichtet/);
+  assert.equal('schemaVersion' in result.snapshot, false);
+  assert.deepEqual(calls.map(call => call[0]), ['read_restaurant_onboarding_v2', 'read_restaurant_onboarding']);
 });
 test('completion summary rejects inconsistent counts, partial totals, duplicates and wrong units', () => {
   const metrics = ['ENERCC','PROT625','FAT','CHO'].map(nutrient_code => ({ nutrient_code, unit: nutrient_code === 'ENERCC' ? 'kcal' : 'g', recipe_total: null, per_serving: null, status: 'incomplete' }));
