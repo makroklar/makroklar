@@ -1,0 +1,30 @@
+.editor { padding: var(--space-4); font-size: var(--font-size-sm); }
+.title { margin: var(--space-5) 0 var(--space-2); font-size: var(--font-size-md); font-weight: var(--font-weight-medium); }
+.note { color: var(--color-text-muted); }
+.field { display: grid; min-width: 0; gap: var(--space-1); }
+.field input, .field select { width: 100%; min-width: 0; min-height: 2.75rem; padding: var(--space-2); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; }
+.field input[aria-invalid='true'] { border-color: var(--color-danger); }
+.field select:disabled { color: var(--color-text-muted); border-color: var(--color-border); }
+.addRow { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); margin: var(--space-4) 0 var(--space-3); }
+.addRow .field:first-child { flex: 1 1 13rem; }
+.outputRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.primaryButton { min-height: 2.75rem; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-accent); font: inherit; font-weight: var(--font-weight-semibold); cursor: pointer; }
+.primaryButton:hover:not(:disabled) { background: var(--color-accent-light); color: var(--color-primary); }
+.primaryButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.link, .textButton { color: var(--color-primary); font: inherit; text-decoration: underline; text-underline-offset: var(--space-1); }
+.textButton { border: 0; padding: var(--space-2) 0; background: transparent; cursor: pointer; }
+.link:hover, .textButton:hover { text-decoration-thickness: 2px; }
+.lines { display: grid; gap: var(--space-3); padding: 0; list-style: none; }
+.line { display: grid; grid-template-columns: minmax(0, 2fr) minmax(4rem, 1fr) minmax(4rem, 1fr) auto; gap: var(--space-2); align-items: center; border-bottom: 1px solid var(--color-border); padding: var(--space-3) 0; }
+.foodName { min-width: 0; overflow-wrap: anywhere; }
+.foodName small { display: block; color: var(--color-text-muted); }
+.error { color: var(--color-danger); }
+.removeArea { margin-top: var(--space-5); border-top: 1px solid var(--color-border); padding-top: var(--space-3); overflow-wrap: anywhere; }
+.removeActions { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.editor :focus-visible { outline: 2px solid var(--color-primary); outline-offset: var(--space-1); }
+@media (max-width: 600px) {
+  .outputRow { grid-template-columns: 1fr; }
+  .line { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foodName { grid-column: 1 / -1; }
+  .line .textButton { justify-self: start; }
+}

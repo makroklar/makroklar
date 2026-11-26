@@ -1,10 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getItems } from '../data/lightspeedItems.ts';
 import { getImportedItemKey, mergeImportedItems } from './businessDraft.ts';
 
+// Small, test-only saved records; no runtime demo catalog.
+function savedItems() {
+  return [101, 102, 103].map(sourceId => ({
+    source: 'lightspeed-k-series', sourceId, sku: `TEST-${sourceId}`,
+    name: `Gespeichertes Gericht ${sourceId}`,
+    accountingGroup: { sourceId: 1, name: 'Hauptgerichte' },
+    prices: [{ name: 'Standard', amount: 12.5 }], selectedPriceIndex: 0,
+  }));
+}
+
 test('acceptance updates an existing source item and retains other accepted items', async () => {
-  const [first, second, third] = await getItems();
+  const [first, second, third] = savedItems();
   const current = mergeImportedItems([], [first, second]);
   const edited = {
     ...first,
@@ -23,7 +32,7 @@ test('acceptance updates an existing source item and retains other accepted item
 });
 
 test('the draft owns copies of incoming prices and accounting groups', async () => {
-  const [incoming] = await getItems();
+  const [incoming] = savedItems();
   const accepted = mergeImportedItems([], [incoming]);
   incoming.name = 'Noch nicht übernommen';
   incoming.prices[0].amount = 1;
@@ -33,26 +42,26 @@ test('the draft owns copies of incoming prices and accounting groups', async () 
   assert.notEqual(accepted[0].accountingGroup.name, incoming.accountingGroup.name);
 });
 
-test('loading the catalog restores accepted edits without changing the fixture', async () => {
-  const catalog = await getItems();
+test('restoring saved items retains accepted edits without mutating the source', () => {
+  const catalog = savedItems();
   const accepted = mergeImportedItems([], [{
     ...catalog[0],
     name: 'Übernommener Artikelname',
     prices: [{ name: 'Standard', amount: 27.9 }],
   }]);
-  const restored = mergeImportedItems(await getItems(), accepted);
-  assert.equal(restored.length, 70);
-  assert.equal(new Set(restored.map(getImportedItemKey)).size, 70);
+  const restored = mergeImportedItems(savedItems(), accepted);
+  assert.equal(restored.length, 3);
+  assert.equal(new Set(restored.map(getImportedItemKey)).size, 3);
   assert.equal(restored[0].name, accepted[0].name);
   assert.equal(restored[0].prices[0].amount, 27.9);
   assert.deepEqual(restored[1], catalog[1]);
   restored[0].prices[0].amount = 1;
   assert.equal(accepted[0].prices[0].amount, 27.9);
-  assert.equal((await getItems())[0].name, catalog[0].name);
+  assert.equal(savedItems()[0].name, catalog[0].name);
 });
 
 test('price choices and original identity survive acceptance and restoration', async () => {
-  const [item] = await getItems();
+  const [item] = savedItems();
   const accepted = mergeImportedItems([], [{
     ...item,
     prices: [{name:'Standard', amount:24.9}, {name:'Mittag', amount:19.9}],

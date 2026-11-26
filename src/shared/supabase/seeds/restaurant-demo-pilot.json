@@ -1,0 +1,67 @@
+{
+  "id": "restaurant-demo-pilot-v1",
+  "projectRef": "osdbsbbcnftussvgumjh",
+  "restaurantId": "349b07ad-d552-4c0a-b2ff-8a6ca1ff8d00",
+  "restaurantName": "Dönerladen",
+  "datasetId": "509945e3-a674-43d3-a242-20ea80ee79d5",
+  "datasetVersion": "4.0",
+  "purpose": "Development only. Not approved for guest publication. Images deferred.",
+  "foods": {
+    "chicken": { "kind": "bls", "code": "V416182", "name": "Hähnchen Brustfilet, gebraten ohne Fett (Pfanne)" },
+    "rice": { "kind": "bls", "code": "C352032", "name": "Reis poliert, gekocht" },
+    "tomato": { "kind": "bls", "code": "G561100", "name": "Tomate roh" },
+    "cucumber": { "kind": "bls", "code": "G520100", "name": "Gurke roh" },
+    "pepper": { "kind": "bls", "code": "G543100", "name": "Gemüsepaprika rot, roh" },
+    "feta": { "kind": "bls", "code": "M012200", "name": "Feta mind. 45 % Fett i. Tr." },
+    "oil": { "kind": "bls", "code": "Q120000", "name": "Olivenöl" },
+    "salt": { "kind": "bls", "code": "R111100", "name": "Steinsalz" },
+    "blackPepper": { "kind": "bls", "code": "R258100", "name": "Pfeffer schwarz, getrocknet" },
+    "oats": { "kind": "bls", "code": "C133000", "name": "Hafer Flocken" },
+    "banana": { "kind": "bls", "code": "F503100", "name": "Banane roh" },
+    "skyr": { "kind": "off", "barcode": "4337185761577", "name": "Skyr Erdbeere" }
+  },
+  "dishes": [
+    {
+      "id": "de202611-1124-4000-8000-000000000001",
+      "name": "Demo · Hähnchen-Reis-Bowl mit Rohkost",
+      "price": 12.9,
+      "note": "Eine verzehrfertige Portion. Hähnchen ohne Fett gebraten und Reis gekocht wiegen; Gemüse roh. Die 10 g Öl sind ein vollständig mitgegessenes Dressing, kein geschätzter Bratverlust.",
+      "ingredients": [
+        { "food": "chicken", "quantity": "150", "unit": "g" },
+        { "food": "rice", "quantity": "180", "unit": "g" },
+        { "food": "tomato", "quantity": "80", "unit": "g" },
+        { "food": "cucumber", "quantity": "70", "unit": "g" },
+        { "food": "pepper", "quantity": "50", "unit": "g" },
+        { "food": "oil", "quantity": "10", "unit": "g" },
+        { "food": "salt", "quantity": "1", "unit": "g" },
+        { "food": "blackPepper", "quantity": "0.2", "unit": "g" }
+      ]
+    },
+    {
+      "id": "de202611-1124-4000-8000-000000000002",
+      "name": "Demo · Tomaten-Gurken-Salat mit Feta",
+      "price": 8.5,
+      "note": "Eine Portion. Gemüse roh, Feta verzehrfertig; das gesamte Dressing wird mitgegessen. Keine ungezählten Garnituren.",
+      "ingredients": [
+        { "food": "tomato", "quantity": "150", "unit": "g" },
+        { "food": "cucumber", "quantity": "150", "unit": "g" },
+        { "food": "pepper", "quantity": "50", "unit": "g" },
+        { "food": "feta", "quantity": "60", "unit": "g" },
+        { "food": "oil", "quantity": "8", "unit": "g" },
+        { "food": "salt", "quantity": "0.5", "unit": "g" },
+        { "food": "blackPepper", "quantity": "0.2", "unit": "g" }
+      ]
+    },
+    {
+      "id": "de202611-1124-4000-8000-000000000003",
+      "name": "Demo · Erdbeer-Skyr mit Hafer und Banane",
+      "price": 5.9,
+      "note": "Eine Portion. Konkretes OFF-Produkt Skyr Erdbeere (Kaufland), Haferflocken trocken, Banane geschält gewogen. Keine zusätzlichen Erdbeeren oder Milch; Erdbeere ist bereits Teil des Markenprodukts.",
+      "ingredients": [
+        { "food": "skyr", "quantity": "200", "unit": "g" },
+        { "food": "oats", "quantity": "30", "unit": "g" },
+        { "food": "banana", "quantity": "80", "unit": "g" }
+      ]
+    }
+  ]
+}

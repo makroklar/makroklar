@@ -6,7 +6,8 @@ import { CheckCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBusinessDraft } from '../../state/BusinessDraftContext';
-import { onboardingPayloadSchema, type CompletionSummary } from '../../data/onboardingModel';
+import type { CompletionSummary } from '../../data/onboardingModel';
+import { basisOnboardingPayloadSchema } from '../../data/basisOnboardingModel';
 import { finishOnboarding } from '../../data/finishOnboardingAction';
 import processing from '../../assets/onboarding/processing.svg';
 import arrowRight from '../../assets/onboarding/arrow-right.svg';
@@ -31,9 +32,19 @@ export function FinishOnboarding() {
 
   async function finish() {
     if (busy.current) return;
-    const payload = onboardingPayloadSchema.safeParse({ importedIds: draft.importedItems.map(item => item.sourceId),
-      customDishes: draft.customDishes, recipes: draft.recipes, catalogFoods: draft.catalogFoods, manualFoods: draft.manualFoods });
-    if (!payload.success) { setError(payload.error.issues[0]?.message ?? 'Bitte prüfe deine Eingaben.'); setPhase('error'); return; }
+    const submitted = structuredClone({ schemaVersion: 2 as const, importedIds: draft.importedItems.map(item => item.sourceId),
+      customDishes: [...draft.customDishes], recipes: { ...draft.recipes }, catalogFoods: [...draft.catalogFoods], manualFoods: [...draft.manualFoods],
+      basisRecipes: [...draft.basisRecipes], dishBases: Object.fromEntries(Object.entries(draft.dishBases).map(([key, lines]) => [key, [...lines]])),
+      deletedBasisIds: [...draft.deletedBasisIds] });
+    const payload = basisOnboardingPayloadSchema.safeParse(submitted);
+    if (!payload.success) {
+      const issue = payload.error.issues[0];
+      // Name the affected Basisrezept; its quantity errors carry no name of their own.
+      const basis = issue?.path[0] === 'basisRecipes' && typeof issue.path[1] === 'number' ? submitted.basisRecipes[issue.path[1]] : undefined;
+      const message = issue?.message ?? 'Bitte prüfe deine Eingaben.';
+      setError(basis ? `Basisrezept „${basis.name.trim() || 'ohne Namen'}“: ${message}` : message);
+      setPhase('error'); return;
+    }
     if (draft.storageError || draft.onboardingError) { setError(draft.storageError ?? draft.onboardingError ?? 'Bitte lade deine Daten erneut.'); setPhase('error'); return; }
     const input = JSON.stringify({ payload: payload.data, version: draft.onboardingVersion });
     if (request.current?.input !== input) request.current = { input, id: crypto.randomUUID() };
@@ -41,7 +52,7 @@ export function FinishOnboarding() {
     try {
       const result = await finishOnboarding({ payload: payload.data, version: draft.onboardingVersion, requestId: request.current.id });
       if (result.status === 'error') { setError(result.message); setPhase('error'); return; }
-      draft.acceptInitialization(result.summary);
+      draft.acceptInitialization(result.summary, submitted);
       setSummary(result.summary); setPhase('complete');
       router.refresh();
     } catch { setError('Das Speichern konnte nicht bestätigt werden. Bitte versuche es erneut.'); setPhase('error'); }
