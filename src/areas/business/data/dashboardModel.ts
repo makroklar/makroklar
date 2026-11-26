@@ -52,6 +52,15 @@ export interface Recipe {
   /** Berechnete Nährwerte pro Portion (nur wenn vollständig) */
   nutrition?: Nutrition;
   onMenu: boolean;
+  /** Nur Gerichte: Zeile in der Tabelle dishes (für Freigabe und Veröffentlichung) */
+  dishId?: string;
+  /** Codes aus ALLERGENS / ADDITIVES, wie in der Datenbank gespeichert */
+  allergens?: string[];
+  additives?: string[];
+  /** Allergene und Zusatzstoffe vom Restaurant bestätigt (LMIV) */
+  allergensConfirmed?: boolean;
+  /** Für Gäste veröffentlicht */
+  published?: boolean;
   /** Was im Datenstand noch fehlt; leer = vollständig */
   missing: string | null;
 }
@@ -117,13 +126,21 @@ export const TASK_TEMPLATES: Record<TaskId, TaskTemplate> = {
   },
 };
 
-/** Die 14 Hauptallergene nach LMIV, Anhang II */
+/** Die 14 Hauptallergene nach LMIV, Anhang II. code = Wert in dishes.allergens */
 export const ALLERGENS = [
-  'Glutenhaltiges Getreide', 'Schalenfrüchte (Nüsse)', 'Krebstiere', 'Sellerie', 'Eier', 'Senf', 'Fisch', 'Sesam',
-  'Erdnüsse', 'Schwefeldioxid/Sulfite', 'Soja', 'Lupinen', 'Milch / Laktose', 'Weichtiere',
+  { code: 'gluten', label: 'Glutenhaltiges Getreide' }, { code: 'nuts', label: 'Schalenfrüchte (Nüsse)' },
+  { code: 'crustaceans', label: 'Krebstiere' }, { code: 'celery', label: 'Sellerie' },
+  { code: 'eggs', label: 'Eier' }, { code: 'mustard', label: 'Senf' },
+  { code: 'fish', label: 'Fisch' }, { code: 'sesame', label: 'Sesam' },
+  { code: 'peanuts', label: 'Erdnüsse' }, { code: 'sulphites', label: 'Schwefeldioxid/Sulfite' },
+  { code: 'soy', label: 'Soja' }, { code: 'lupin', label: 'Lupinen' },
+  { code: 'milk', label: 'Milch / Laktose' }, { code: 'molluscs', label: 'Weichtiere' },
 ] as const;
+/** Kennzeichnungspflichtige Zusatzstoffe. code = Wert in dishes.additives */
 export const ADDITIVES = [
-  'Farbstoffe', 'Geschmacksverstärker', 'Konservierungsstoffe', 'Süßungsmittel', 'Antioxidationsmittel', 'Phosphat',
+  { code: 'colourings', label: 'Farbstoffe' }, { code: 'flavour_enhancers', label: 'Geschmacksverstärker' },
+  { code: 'preservatives', label: 'Konservierungsstoffe' }, { code: 'sweeteners', label: 'Süßungsmittel' },
+  { code: 'antioxidants', label: 'Antioxidationsmittel' }, { code: 'phosphate', label: 'Phosphat' },
 ] as const;
 
 export const BASIS_CATEGORIES = ['Sauce', 'Teig', 'Dressing', 'Creme', 'Sonstiges'];

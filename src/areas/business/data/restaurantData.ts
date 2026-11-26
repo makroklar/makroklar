@@ -21,6 +21,8 @@ export interface RestaurantFood {
 
 export interface RestaurantData {
   restaurantName: string;
+  /** false, wenn die Status-Felder (Allergene, veröffentlicht) nicht gelesen werden konnten */
+  statusAvailable: boolean;
   dishes: Recipe[];
   /** Basisrezepte (Saucen, Teige …) aus dem Onboarding-Stand v2 */
   bases: Recipe[];
@@ -104,12 +106,44 @@ function buildBasis(basis: BasisRecipeDraft, usedInDishes: number, foods: Map<st
   };
 }
 
+/** Freigabe-Status eines Gerichts aus der Tabelle dishes */
+interface DishStatus {
+  dishId: string;
+  allergens: string[];
+  additives: string[];
+  allergensConfirmed: boolean;
+  published: boolean;
+}
+
+/** Status aller Gerichte, Schlüssel wie im Onboarding-Stand. null = nicht lesbar. */
+async function readDishStatus(): Promise<Map<string, DishStatus> | null> {
+  try {
+    const session = await getMenuSession();
+    if (!session.restaurantId) return null;
+    const { data, error } = await session.supabase.from('dishes')
+      .select('id,source,source_id,client_id,allergens,additives,allergens_confirmed_at,published_at')
+      .eq('restaurant_id', session.restaurantId);
+    if (error) return null;
+    return new Map(data.flatMap(row => {
+      const key = row.source ? `${row.source}-${row.source_id}` : row.client_id ? manualKey(row.client_id) : null;
+      return key ? [[key, {
+        dishId: row.id, allergens: row.allergens, additives: row.additives,
+        allergensConfirmed: row.allergens_confirmed_at !== null, published: row.published_at !== null,
+      }] as const] : [];
+    }));
+  } catch {
+    return null;
+  }
+}
+
 function buildDish(
   key: string,
   base: Pick<Recipe, 'name' | 'category' | 'source' | 'price' | 'priceFromPos'>,
   snapshot: Snapshot | null,
   foods: Map<string, Food>,
+  statuses: Map<string, DishStatus> | null,
 ): Recipe {
+  const status = statuses?.get(key);
   const ingredients = toIngredients(snapshot?.recipes[key]?.ingredients ?? [], foods);
   const nutrition = nutritionFrom(snapshot?.summary ?? null, key);
   return {
@@ -120,20 +154,25 @@ function buildDish(
     cookedWeight: null,
     portion: { size: 1, unit: 'Portion' },
     nutrition,
-    // Ohne „veröffentlicht“-Merker in der Datenbank zählt ein Gericht mit vollständigen Nährwerten als live.
-    onMenu: nutrition !== undefined,
+    // Ohne lesbaren Status (z. B. Datenbankfehler) zählt ein Gericht mit vollständigen Nährwerten als live.
+    onMenu: statuses ? status?.published === true : nutrition !== undefined,
+    dishId: status?.dishId,
+    allergens: status?.allergens ?? [],
+    additives: status?.additives ?? [],
+    allergensConfirmed: status?.allergensConfirmed ?? false,
+    published: status?.published ?? false,
     missing: missingText(ingredients, nutrition),
   };
 }
 
-function importedDish(item: ImportedMenuItem, snapshot: Snapshot | null, foods: Map<string, Food>) {
+function importedDish(item: ImportedMenuItem, snapshot: Snapshot | null, foods: Map<string, Food>, statuses: Map<string, DishStatus> | null) {
   return buildDish(importedKey(item.sourceId), {
     name: item.name,
     category: item.accountingGroup?.name ?? 'Ohne Kategorie',
     source: 'Kassensystem (Lightspeed)',
     price: item.selectedPriceIndex === null ? undefined : item.prices[item.selectedPriceIndex]?.amount,
     priceFromPos: true,
-  }, snapshot, foods);
+  }, snapshot, foods, statuses);
 }
 
 /** Name aus der Tabelle restaurants (falls das Onboarding noch nicht gespeichert wurde) */
@@ -149,19 +188,19 @@ async function readRestaurantName(): Promise<string | null> {
 }
 
 export const getRestaurantData = cache(async (): Promise<RestaurantData> => {
-  const [menu, onboarding] = await Promise.all([readSavedMenu(), readOnboarding()]);
+  const [menu, onboarding, statuses] = await Promise.all([readSavedMenu(), readOnboarding(), readDishStatus()]);
   const snapshot = onboarding.snapshot;
   const foodList: Food[] = [...(snapshot?.catalogFoods ?? []), ...(snapshot?.manualFoods ?? [])];
   const foods = new Map(foodList.map(food => [food.id, food]));
 
   const dishes = [
-    ...menu.items.map(item => importedDish(item, snapshot, foods)),
+    ...menu.items.map(item => importedDish(item, snapshot, foods, statuses)),
     ...(snapshot?.customDishes ?? []).map(dish => buildDish(manualKey(dish.id), {
       name: dish.name,
       category: 'Eigene Gerichte',
       source: 'Manuell angelegt',
       price: dish.price ?? undefined,
-    }, snapshot, foods)),
+    }, snapshot, foods, statuses)),
   ];
 
   const v2 = snapshot && 'schemaVersion' in snapshot ? snapshot : null;
@@ -170,6 +209,7 @@ export const getRestaurantData = cache(async (): Promise<RestaurantData> => {
 
   return {
     restaurantName: snapshot?.restaurantName ?? await readRestaurantName() ?? FALLBACK_RESTAURANT_NAME,
+    statusAvailable: statuses !== null,
     dishes,
     bases,
     foods: foodList
@@ -204,9 +244,9 @@ export async function getTasks(): Promise<Task[]> {
     // Offen: Basen ohne Zutaten oder ohne gewogenes Endgewicht
     task('basis-abwiegen', unweighed, bases.length, bases.length - unweighed.length),
     task('gerichte-einrichten', incomplete, dishes.length, dishes.length - incomplete.length),
-    // Freigegeben ist ein Gericht erst mit bestätigten Allergenen. Die gibt es noch nicht in der
-    // Datenbank, daher sind alle Gerichte mit fertigen Nährwerten offen und keines erledigt.
-    task('lmiv-freigabe', ready, dishes.length, 0),
+    // Erledigt = veröffentlicht. Offen = fertige Nährwerte, aber noch nicht veröffentlicht.
+    task('lmiv-freigabe', ready.filter(dish => !dish.published), dishes.length,
+      dishes.filter(dish => dish.published).length),
   ];
 }
 

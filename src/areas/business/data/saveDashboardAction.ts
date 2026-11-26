@@ -4,11 +4,11 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { finishOnboarding } from './finishOnboardingAction';
 import { readOnboarding } from './readOnboarding';
-import { readSavedMenu } from './savedMenu';
+import { getMenuSession, readSavedMenu } from './savedMenu';
 import { catalogFoodSchema, manualFoodSchema } from './onboardingModel';
 import type { BasisOnboardingPayload } from './basisOnboardingModel';
 import { manualFoodNoticeVersion } from './manualFood';
-import { basisKey, manualKey } from './restaurantData';
+import { basisKey, getRestaurantData, manualKey } from './restaurantData';
 
 // Änderungen aus dem Dashboard laufen über denselben geprüften Speicherweg wie das Onboarding
 // (save_restaurant_onboarding_v2): aktueller Stand laden, eine Stelle ändern, alles zurückschreiben.
@@ -71,6 +71,31 @@ function addFoods(payload: BasisOnboardingPayload, newFoods: z.infer<typeof cata
     : null;
 }
 
+type Line = { foodId: string; quantity: string; unit: string };
+
+/** Gleiche Zutaten und Mengen? Reihenfolge und Schreibweise (1,5 / 1.5) zählen nicht. */
+function sameLines(before: readonly Line[], after: readonly Line[]): boolean {
+  const normal = (lines: readonly Line[]) => lines
+    .map(entry => `${entry.foodId}|${Number(entry.quantity.replace(',', '.'))}|${entry.unit}`).sort().join(';');
+  return normal(before) === normal(after);
+}
+
+/**
+ * Rezept hat sich geändert: Prüfung, Allergen-Bestätigung und Veröffentlichung aufheben
+ * (reset_dish_confirmations). Schlägt das fehl, bleibt das Rezept trotzdem gespeichert.
+ */
+async function resetConfirmations(keys: readonly string[]) {
+  if (keys.length === 0) return;
+  try {
+    const [session, { dishes }] = await Promise.all([getMenuSession(), getRestaurantData()]);
+    const ids = dishes.filter(dish => keys.includes(dish.slug) && (dish.allergensConfirmed || dish.published))
+      .flatMap(dish => dish.dishId ? [dish.dishId] : []);
+    for (const id of ids) await session.supabase.rpc('reset_dish_confirmations', { target_dish_id: id });
+  } catch {
+    console.warn('[Dashboard] Freigabe konnte nach einer Rezeptänderung nicht zurückgesetzt werden.');
+  }
+}
+
 export async function saveDish(input: unknown): Promise<DashboardSaveResult> {
   const parsed = dishInput.safeParse(input);
   if (!parsed.success) return { status: 'error', message: 'Bitte prüfe Name, Zutaten und Mengen.' };
@@ -92,9 +117,12 @@ export async function saveDish(input: unknown): Promise<DashboardSaveResult> {
   const missingFood = addFoods(payload, newFoods, lines);
   if (missingFood) return missingFood;
 
+  const changed = !newDish && !sameLines(payload.recipes[key]?.ingredients ?? [], lines);
   // Leere Liste statt Löschen: nur so entfernt die Datenbank auch die gespeicherten Zutaten.
   payload.recipes[key] = { servings: '1', ingredients: lines };
-  return save(payload, version, key);
+  const result = await save(payload, version, key);
+  if (result.status === 'saved' && changed) await resetConfirmations([key]);
+  return result;
 }
 
 const manualInput = manualFoodSchema.omit({ id: true, noticeVersion: true });
@@ -141,5 +169,12 @@ export async function saveBasis(input: unknown): Promise<DashboardSaveResult> {
   payload.basisRecipes = existing
     ? payload.basisRecipes.map(item => item.id === basis.id ? basis : item)
     : [...payload.basisRecipes, basis];
-  return save(payload, version, basisKey(basis.id));
+  const changed = existing !== undefined && (existing.outputQuantity !== cookedWeight || !sameLines(existing.ingredients, lines));
+  const result = await save(payload, version, basisKey(basis.id));
+  // Gerichte, die diese Basis verwenden, müssen neu geprüft werden.
+  if (result.status === 'saved' && changed) {
+    await resetConfirmations(Object.entries(payload.dishBases)
+      .filter(([, links]) => links.some(link => link.basisId === basis.id)).map(([key]) => key));
+  }
+  return result;
 }

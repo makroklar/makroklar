@@ -13,7 +13,7 @@ export async function MenuPage() {
     <div className={ui.page}>
       <PageHeader
         title="Speisekarte"
-        subtitle="Gerichte mit vollständig berechneten Nährwerten – so sehen deine Gäste sie."
+        subtitle="Veröffentlichte Gerichte – so sehen deine Gäste sie. Veröffentlicht wird über die LMIV-Freigabe."
         actions={(
           <Link className={ui.primaryButton} href="/business/rezepte">
             Aus Bibliothek hinzufügen <Plus aria-hidden="true" size={20} />
