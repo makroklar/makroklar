@@ -1,5 +1,4 @@
--- VORSCHLAG – noch nicht angewendet. Erst nach Review und nach den Basen-Migrationen
--- 20261124000200–20261124000400 (Branch unternehmenansicht) anwenden.
+-- Läuft nach den Basen-Migrationen 20261124000200–20261124000400.
 --
 -- Status-Felder für den Dashboard-Flow (To-do-Liste, LMIV-Freigabe, Speisekarte):
 --   1. Import prüfen      → recipe_confirmed_at / _by
@@ -12,10 +11,10 @@
 -- direktes UPDATE-Recht, damit die Regeln (z. B. „veröffentlichen nur mit vollständigen
 -- Nährwerten und bestätigten Allergenen“) nicht im Frontend umgangen werden können.
 --
--- Offen für die Speicherfunktion v2: Wenn sich Zutaten oder Mengen eines Gerichts wirklich
--- ändern, sollten recipe_confirmed_at, allergens_confirmed_at und published_at zurückgesetzt
--- werden. Ein Trigger auf dish_ingredients passt nicht, weil das Onboarding-Speichern alle
+-- Rezeptänderungen: Ein Trigger auf dish_ingredients passt nicht, weil das Onboarding-Speichern alle
 -- Rezeptzeilen löscht und neu schreibt – auch unveränderte – und damit jede Bestätigung verwerfen würde.
+-- Stattdessen ruft das Dashboard reset_dish_confirmations auf, wenn sich Zutaten oder Mengen wirklich
+-- ändern. Änderungen über das Onboarding setzen (noch) nichts zurück.
 begin;
 
 alter table public.dishes
@@ -156,6 +155,22 @@ begin
 end;
 $$;
 
+-- 5. Rezept geändert: Bestätigungen und Veröffentlichung aufheben, Allergen-Auswahl bleibt als Vorschlag.
+-- Wird vom Dashboard nach dem Speichern aufgerufen, wenn sich Zutaten oder Mengen wirklich geändert haben.
+create function public.reset_dish_confirmations(target_dish_id uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  perform makroklar_private.lock_owned_dish(target_dish_id);
+  update public.dishes
+    set recipe_confirmed_at = null, recipe_confirmed_by = null,
+        allergens_confirmed_at = null, allergens_confirmed_by = null,
+        published_at = null, published_by = null
+    where id = target_dish_id;
+end;
+$$;
+
+revoke all on function public.reset_dish_confirmations(uuid) from public, anon, service_role;
+grant execute on function public.reset_dish_confirmations(uuid) to authenticated;
 revoke all on function public.set_dish_recipe_confirmed(uuid, boolean) from public, anon, service_role;
 revoke all on function public.save_dish_allergens(uuid, text[], text[], boolean) from public, anon, service_role;
 revoke all on function public.set_dish_published(uuid, boolean) from public, anon, service_role;
