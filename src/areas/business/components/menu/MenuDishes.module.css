@@ -1,0 +1,102 @@
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dish {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-row);
+  background: var(--color-card);
+}
+
+.photo {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-accent-light);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.text {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-7);
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 14px;
+}
+
+.nameRow span {
+  font-weight: var(--font-weight-semibold);
+}
+
+.description {
+  margin: var(--space-1) 0 0;
+  font-size: 12px;
+}
+
+.macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.macros li {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: var(--color-text-strong);
+  font-size: 13px;
+}
+
+/* Kohlenhydrate hervorgehoben – sie sind für Diabetiker der wichtigste Wert */
+.macros .carbs {
+  background: var(--color-warning);
+}
+
+.none {
+  margin: 0;
+  font-size: 14px;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  max-width: 620px;
+  margin: clamp(var(--space-6), 15vh, 200px) auto 0;
+  text-align: center;
+}
+
+.empty h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: var(--font-weight-bold);
+}
+
+.empty p {
+  margin: 0 0 var(--space-4);
+  font-size: 1.125rem;
+}

@@ -1,0 +1,108 @@
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-5);
+}
+
+.progressCard {
+  background: var(--color-accent-light);
+}
+
+.progressValue {
+  margin: var(--space-4) 0 var(--space-3);
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.progressTrack {
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-card);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+}
+
+.cardHeading {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.cardCopy {
+  margin: var(--space-4) 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.scanValue {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 0;
+  color: var(--color-primary);
+}
+
+.scanValue span {
+  font-size: 2.25rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.scanValue small {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.mutedLink {
+  display: inline-block;
+  margin-top: var(--space-4);
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.todoTitle {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 1.375rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.todoRow {
+  min-height: 92px;
+  padding-inline: var(--space-4) var(--space-3);
+}
+
+.todoMeta {
+  font-size: 13px;
+}
+
+/* Handy: „X offen“ unter den Text, damit der Text nicht in eine schmale Spalte gequetscht wird */
+@media (max-width: 600px) {
+  .todoRow {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .todoRow > span:nth-child(2) {
+    flex-basis: calc(100% - 52px);
+  }
+
+  .todoRow > span:last-child {
+    margin-left: 52px;
+  }
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 13px;
+}

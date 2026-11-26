@@ -1,0 +1,497 @@
+/* Bearbeitungsseiten: Import prüfen, Basis abwiegen, Gericht einrichten, LMIV-Freigabe */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.mainColumn,
+.sideColumn {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ingredientsCard {
+  min-height: 340px;
+}
+
+/* Zutatenzeilen */
+.ingredient {
+  flex-wrap: wrap;
+  padding: var(--space-3);
+}
+
+.supplier {
+  font-size: 9px;
+}
+
+.ingredientActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.quantity {
+  width: 136px;
+}
+
+.unit {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  padding-top: 0 !important;
+  color: var(--color-primary) !important;
+  font-weight: var(--font-weight-bold) !important;
+  cursor: pointer;
+}
+
+/* Waage wie die anderen Aktions-Buttons: weiß mit Rand, Icon in Primärgrün (Figma 590:6247) */
+.scale {
+  color: var(--color-primary);
+}
+
+.add {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+.addEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 260px;
+}
+
+/* Gerichtsfelder */
+.dishFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.fieldsNote {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+}
+
+.categoryValue {
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.labeled {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.labeled > span:first-child {
+  color: var(--color-text-strong);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Hinweis „Wert kommt aus der Kasse“ mit Info-Popover */
+.posBadge {
+  anchor-name: --dish-price-pos;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-row);
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.posBadge:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.posInfo {
+  position-anchor: --dish-price-pos;
+  position-area: bottom span-right;
+  position-try-fallbacks: flip-block, flip-inline;
+  max-width: 260px;
+  margin: 6px 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-card);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-strong);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+
+/* Foto */
+.photoWrap {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+/* Rahmen für Foto und die Aktionen oben rechts */
+.photoFrame {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 230px);
+}
+
+/* Beim Darüberziehen einer Datei: gestrichelter Rahmen, gelb hinterlegt */
+.photoFrame[data-dragging='true'] .photo {
+  border: 2px dashed var(--color-primary);
+  background: var(--color-accent-light);
+}
+
+.photoFrame[data-dragging='true'] .photo img {
+  opacity: 0.4;
+}
+
+.photoFrame[data-dragging='true'] .photoActions {
+  display: none;
+}
+
+/* Ablagefläche über dem ganzen Fenster, solange eine Datei hereingezogen wird */
+.dropOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--color-primary-transparent);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+}
+
+.dropOverlay::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-4);
+  border: 3px dashed var(--color-primary);
+  border-radius: 24px;
+}
+
+.dropCard {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-7);
+  border-radius: 24px;
+  background: var(--color-card);
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.18);
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.dropCard strong {
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.dropCard span {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.photoHint {
+  margin-top: calc(var(--space-1) * -1);
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.photoError {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 12px;
+  text-align: center;
+}
+
+.photoActions {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
+}
+
+.photo {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-2);
+  width: min(100%, 230px);
+  aspect-ratio: 1.1;
+  overflow: hidden;
+  border: 2px solid var(--color-primary);
+  border-radius: 20px;
+  background: var(--color-card);
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Mit Foto ist das Feld ein Knopf, der die Bearbeitung öffnet */
+.photo[data-filled='true'] {
+  padding: 0;
+  border: 1px solid var(--color-line);
+  font: inherit;
+}
+
+.photo[data-filled='true']:hover {
+  border-color: var(--color-primary);
+}
+
+.photo[data-filled='true']:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoWrap:has(.fileInput:focus-visible) .photo {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.photoCaption {
+  margin: 0;
+  font-size: 10px;
+}
+
+/* Kategorie */
+.category {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.categoryLabel {
+  color: var(--color-text-strong);
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.select {
+  width: min(100%, 200px);
+}
+
+.select select {
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Anpassbares Select (Chrome/Edge 135+, Safari 27): Liste im eigenen Design.
+   Andere Browser behalten das System-Dropdown mit dem Chevron daneben. */
+@supports (appearance: base-select) {
+  .select {
+    padding: 0;
+  }
+
+  /* Pfeil kommt hier von ::picker-icon */
+  .select > svg {
+    display: none;
+  }
+
+  .select select,
+  .select select::picker(select) {
+    appearance: base-select;
+  }
+
+  /* Das Select füllt das ganze Feld, damit die Liste bündig darunter sitzt */
+  .select select {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+  }
+
+  /* Gleicher Chevron wie bei den anderen Feldern (Lucide chevron-down) */
+  .select select::picker-icon {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: var(--color-primary);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: rotate 0.2s ease;
+  }
+
+  .select select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  .select select::picker(select) {
+    margin-block: 6px;
+    padding: 6px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background: var(--color-card);
+    box-shadow: var(--shadow-card);
+    opacity: 0;
+    translate: 0 -4px;
+    transition: opacity 0.15s ease, translate 0.15s ease, overlay 0.15s allow-discrete, display 0.15s allow-discrete;
+  }
+
+  .select select:open::picker(select) {
+    opacity: 1;
+    translate: 0;
+  }
+
+  @starting-style {
+    .select select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -4px;
+    }
+  }
+
+  .select option {
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--color-text-strong);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+  }
+
+  .select option:hover,
+  .select option:focus-visible {
+    outline: none;
+    background: var(--color-row);
+  }
+
+  .select option:checked {
+    background: var(--color-accent-light);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* Auswahl zeigt nur die Hervorhebung, kein Häkchen */
+  .select option::checkmark {
+    display: none;
+  }
+
+  /* „Bitte wählen“ nur als Platzhalter im Feld, nicht in der Liste */
+  .select option:disabled {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select select::picker-icon,
+  .select select::picker(select) {
+    transition: none;
+  }
+}
+
+/* Gewicht nach dem Kochen */
+.smallLabel {
+  margin: var(--space-4) 0 0;
+  font-size: 12px;
+}
+
+.rawTotal {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-strong);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.cookedRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.cookedRow .quantity {
+  width: 160px;
+}
+
+.loss {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 10px;
+  background: var(--color-row);
+}
+
+.loss span {
+  font-size: 9px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+}
+
+.loss strong {
+  color: var(--color-primary);
+  font-size: 1.125rem;
+}
+
+/* Fußzeile mit Aktionen */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dishFields {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredientActions {
+    width: 100%;
+  }
+
+  .quantity {
+    flex: 1;
+  }
+
+  .footer > * {
+    flex: 1;
+  }
+}

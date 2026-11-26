@@ -35,12 +35,32 @@ export async function handleRegistrationCallback(request: NextRequest) {
       return response;
     }
 
-    // Fixed local destination. Never trust next/redirect_to parameters from a link.
-    response.headers.set('Location', new URL('/business/welcome', request.url).href);
+    // Fixed local destinations. Never trust next/redirect_to parameters from a link.
+    // Accounts with a finished onboarding go straight to the dashboard.
+    const destination = (await hasFinishedOnboarding(supabase, result.data))
+      ? '/business'
+      : '/business/welcome';
+    response.headers.set('Location', new URL(destination, request.url).href);
   } catch {
     if (authenticated) {
       response.headers.set('Location', new URL('/business/register?registration=setup-error', request.url).href);
     }
   }
   return response;
+}
+
+type CallbackClient = Awaited<ReturnType<typeof createClient>>;
+
+// A saved onboarding row marks the setup as finished. On any doubt, show the welcome page.
+async function hasFinishedOnboarding(supabase: CallbackClient, restaurantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('restaurant_onboarding')
+      .select('restaurant_id')
+      .eq('restaurant_id', restaurantId)
+      .maybeSingle();
+    return !error && data !== null;
+  } catch {
+    return false;
+  }
 }

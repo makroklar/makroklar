@@ -299,33 +299,66 @@ export type Database = {
       }
       dishes: {
         Row: {
+          additives: string[]
+          allergens: string[]
+          allergens_confirmed_at: string | null
+          allergens_confirmed_by: string | null
+          category: string | null
           client_id: string | null
+          cooked_weight_g: number | null
           created_at: string
           id: string
           manual_price: number | null
           name: string
+          prep_minutes: number | null
+          published_at: string | null
+          published_by: string | null
+          recipe_confirmed_at: string | null
+          recipe_confirmed_by: string | null
           restaurant_id: string
           servings: number
           source: string | null
           source_id: string | null
         }
         Insert: {
+          additives?: string[]
+          allergens?: string[]
+          allergens_confirmed_at?: string | null
+          allergens_confirmed_by?: string | null
+          category?: string | null
           client_id?: string | null
+          cooked_weight_g?: number | null
           created_at?: string
           id?: string
           manual_price?: number | null
           name: string
+          prep_minutes?: number | null
+          published_at?: string | null
+          published_by?: string | null
+          recipe_confirmed_at?: string | null
+          recipe_confirmed_by?: string | null
           restaurant_id: string
           servings?: number
           source?: string | null
           source_id?: string | null
         }
         Update: {
+          additives?: string[]
+          allergens?: string[]
+          allergens_confirmed_at?: string | null
+          allergens_confirmed_by?: string | null
+          category?: string | null
           client_id?: string | null
+          cooked_weight_g?: number | null
           created_at?: string
           id?: string
           manual_price?: number | null
           name?: string
+          prep_minutes?: number | null
+          published_at?: string | null
+          published_by?: string | null
+          recipe_confirmed_at?: string | null
+          recipe_confirmed_by?: string | null
           restaurant_id?: string
           servings?: number
           source?: string | null
@@ -650,6 +683,28 @@ export type Database = {
       }
       read_saved_off_product: { Args: { barcode: string }; Returns: Json }
       read_shared_off_product: { Args: { barcode: string }; Returns: Json }
+      reset_dish_confirmations: {
+        Args: { target_dish_id: string }
+        Returns: undefined
+      }
+      save_dish_allergens: {
+        Args: {
+          additive_codes: string[]
+          allergen_codes: string[]
+          confirm: boolean
+          target_dish_id: string
+        }
+        Returns: string
+      }
+      save_dish_details: {
+        Args: {
+          dish_category: string
+          dish_cooked_weight_g: number
+          dish_prep_minutes: number
+          target_dish_id: string
+        }
+        Returns: undefined
+      }
       save_restaurant_onboarding: {
         Args: {
           base_version: number
@@ -667,6 +722,14 @@ export type Database = {
           target_restaurant_id: string
         }
         Returns: Json
+      }
+      set_dish_published: {
+        Args: { published: boolean; target_dish_id: string }
+        Returns: string
+      }
+      set_dish_recipe_confirmed: {
+        Args: { confirmed: boolean; target_dish_id: string }
+        Returns: string
       }
     }
     Enums: {

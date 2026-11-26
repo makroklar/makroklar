@@ -4,6 +4,8 @@ Klickbarer Prototyp für eine Nährwert-Speisekarte: Restaurants pflegen ihre Ge
 
 > **Stand:** Grundgerüst mit leeren Platzhalterseiten auf Basis von [Next.js](https://nextjs.org/) (App Router). Noch kein Backend, keine echte Datenbank, keine Kassenanbindung – geplant sind Supabase als Datenbank und Vercel als Hosting.
 
+Offene Punkte stehen in [TODO.md](TODO.md).
+
 ## Voraussetzungen
 
 - [Node.js](https://nodejs.org/) **22.22 oder neuer** (am einfachsten die aktuelle LTS-Version installieren)
