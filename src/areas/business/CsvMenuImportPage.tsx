@@ -31,7 +31,9 @@ export function CsvMenuImportPage() {
   const duplicates = duplicateCsvRowIds(rows, existingNames);
   const selected = rows.filter(row => row.selected);
   const invalid = selected.some(row => Object.keys(csvRowErrors(row)).length > 0);
-  const overLimit = customDishes.length + selected.length > MENU_MAX_CUSTOM_DISHES;
+  // The save allows at most 1000 dishes in total, POS dishes included.
+  const existingCount = customDishes.length + importedItems.length;
+  const overLimit = existingCount + selected.length > MENU_MAX_CUSTOM_DISHES;
 
   useEffect(() => () => { request.current++; }, []);
 
@@ -83,7 +85,7 @@ export function CsvMenuImportPage() {
   function accept() {
     if (submitted.current || readError || loading) return;
     try {
-      const dishes = acceptCsvPreview(rows, existingNames, customDishes.length, allowDuplicates);
+      const dishes = acceptCsvPreview(rows, existingNames, existingCount, allowDuplicates);
       submitted.current = true;
       addCustomDishes(dishes); setAccepted(dishes.length); setError('');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Die Auswahl konnte nicht übernommen werden.'); }

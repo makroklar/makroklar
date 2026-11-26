@@ -37,7 +37,14 @@ export function FinishOnboarding() {
       basisRecipes: [...draft.basisRecipes], dishBases: Object.fromEntries(Object.entries(draft.dishBases).map(([key, lines]) => [key, [...lines]])),
       deletedBasisIds: [...draft.deletedBasisIds] });
     const payload = basisOnboardingPayloadSchema.safeParse(submitted);
-    if (!payload.success) { setError(payload.error.issues[0]?.message ?? 'Bitte prüfe deine Eingaben.'); setPhase('error'); return; }
+    if (!payload.success) {
+      const issue = payload.error.issues[0];
+      // Name the affected Basisrezept; its quantity errors carry no name of their own.
+      const basis = issue?.path[0] === 'basisRecipes' && typeof issue.path[1] === 'number' ? submitted.basisRecipes[issue.path[1]] : undefined;
+      const message = issue?.message ?? 'Bitte prüfe deine Eingaben.';
+      setError(basis ? `Basisrezept „${basis.name.trim() || 'ohne Namen'}“: ${message}` : message);
+      setPhase('error'); return;
+    }
     if (draft.storageError || draft.onboardingError) { setError(draft.storageError ?? draft.onboardingError ?? 'Bitte lade deine Daten erneut.'); setPhase('error'); return; }
     const input = JSON.stringify({ payload: payload.data, version: draft.onboardingVersion });
     if (request.current?.input !== input) request.current = { input, id: crypto.randomUUID() };

@@ -51,6 +51,23 @@ test('merging is immutable and keeps all existing dishes, recipes and accepted f
   assert.equal(result.catalogFoods.find(food => food.id === resolved.skyr.id).energyKcal, 75);
 });
 
+test('existing Basisrezepte and dish links are passed through to the v2 save unchanged', () => {
+  const state = empty();
+  const basis = { id: 'de202611-1124-4000-8000-0000000000b1', name: 'Tomatensauce', outputQuantity: '800', outputUnit: 'g',
+    ingredients: [{ foodId: resolved.rice.id, quantity: '500', unit: 'g' }] };
+  state.catalogFoods.push(resolved.rice);
+  state.recipes['lightspeed-k-series-7'] = { servings: '1', ingredients: [] };
+  state.basisRecipes = [basis];
+  state.dishBases = { 'lightspeed-k-series-7': [{ basisId: basis.id, quantity: '120', unit: 'g' }] };
+  const before = structuredClone(state);
+  const payload = mergePilot(state, [7], manifest, resolved);
+  assert.deepEqual(state, before);
+  assert.equal(payload.schemaVersion, 2);
+  assert.deepEqual(payload.basisRecipes, [basis]);
+  assert.deepEqual(payload.dishBases, before.dishBases);
+  assert.deepEqual(payload.deletedBasisIds, []);
+});
+
 test('repeated seeding preserves edited demo dishes; partial sets require manual review', () => {
   const state = empty();
   state.customDishes = manifest.dishes.map(dish => ({ id: dish.id, name: 'Edited by owner', price: 1 }));

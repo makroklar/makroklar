@@ -10,11 +10,13 @@ import { connectionConfig } from '../imports/import-bls.mjs';
 
 // Reuse the application's validation without adding a TS runner dependency.
 registerHooks({ resolve(specifier, context, next) {
-  if (['./foodSearchModel', './recipeDraft'].includes(specifier)) return next(specifier + '.ts', context);
+  if (['./foodSearchModel', './recipeDraft', './onboardingModel'].includes(specifier)) return next(specifier + '.ts', context);
   return next(specifier, context);
 } });
-const { catalogFoodSchema, onboardingSnapshotSchema, onboardingPayloadSchema, completionSummarySchema } =
-  await import('../../../areas/business/data/onboardingModel.ts');
+const { catalogFoodSchema, completionSummarySchema } = await import('../../../areas/business/data/onboardingModel.ts');
+// v2 only: after 20261124000400 the v1 save rejects restaurants that already have Basisrezepte.
+const { basisOnboardingSnapshotSchema, basisOnboardingPayloadSchema, normalizeBasisPayload } =
+  await import('../../../areas/business/data/basisOnboardingModel.ts');
 
 export const metrics = { ENERCC: 'energyKcal', PROT625: 'proteinG', FAT: 'fatG', CHO: 'carbohydrateG' };
 const fail = message => { throw new Error(`Demo seed: ${message}`); };
@@ -42,8 +44,10 @@ export function existingPilotState(snapshot, manifest) {
 
 export function mergePilot(snapshot, importedIds, manifest, resolvedFoods) {
   if (existingPilotState(snapshot, manifest) !== 'new') fail('Pilot already exists; preserve user edits.');
-  const payload = structuredClone({ importedIds, customDishes: snapshot.customDishes,
-    catalogFoods: snapshot.catalogFoods, manualFoods: snapshot.manualFoods, recipes: snapshot.recipes });
+  // Existing Basisrezepte and dish links are passed through unchanged; nothing is deleted.
+  const payload = structuredClone({ schemaVersion: 2, importedIds, customDishes: snapshot.customDishes,
+    catalogFoods: snapshot.catalogFoods, manualFoods: snapshot.manualFoods, recipes: snapshot.recipes,
+    basisRecipes: snapshot.basisRecipes ?? [], dishBases: snapshot.dishBases ?? {}, deletedBasisIds: [] });
   const accepted = new Map(payload.catalogFoods.map(food => [food.id, food]));
   const aliases = new Map();
   for (const [alias, resolved] of Object.entries(resolvedFoods)) {
@@ -60,7 +64,7 @@ export function mergePilot(snapshot, importedIds, manifest, resolvedFoods) {
       return { foodId: food.id, quantity: line.quantity, unit: line.unit };
     }) };
   }
-  return onboardingPayloadSchema.parse(payload);
+  return basisOnboardingPayloadSchema.parse(payload);
 }
 
 // Independent test oracle, never persisted as a fabricated dish total.
@@ -107,7 +111,8 @@ async function resolveFoods(client, manifest) {
 
 async function otherRestaurantsFingerprint(client, target) {
   const hashes = {};
-  for (const table of ['dishes','dish_import_details','restaurant_ingredients','dish_ingredients','restaurant_onboarding']) {
+  for (const table of ['dishes','dish_import_details','restaurant_ingredients','dish_ingredients','restaurant_onboarding',
+    'basis_recipes','basis_recipe_ingredients','dish_basis_recipes']) {
     const result = await client.query(`select md5(coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text,'[]')) as hash
       from public.${table} t where restaurant_id<>$1`, [target]);
     hashes[table] = result.rows[0].hash;
@@ -122,12 +127,12 @@ function comparableRecipe(recipe) {
 }
 
 async function readSnapshot(client, restaurantId) {
-  return onboardingSnapshotSchema.parse((await client.query('select public.read_restaurant_onboarding($1) as data', [restaurantId])).rows[0].data);
+  return basisOnboardingSnapshotSchema.parse((await client.query('select public.read_restaurant_onboarding_v2($1) as data', [restaurantId])).rows[0].data);
 }
 
 async function save(client, restaurantId, payload, version, requestId = randomUUID()) {
-  const row = (await client.query('select public.save_restaurant_onboarding($1,$2::jsonb,$3,$4) as data',
-    [restaurantId, JSON.stringify(payload), version, requestId])).rows[0];
+  const row = (await client.query('select public.save_restaurant_onboarding_v2($1,$2::jsonb,$3,$4) as data',
+    [restaurantId, JSON.stringify(normalizeBasisPayload(payload)), version, requestId])).rows[0];
   return completionSummarySchema.parse(row.data);
 }
 
@@ -161,7 +166,7 @@ async function verifyDynamicChanges(client, restaurantId, manifest, payload, ver
     await client.query('savepoint dynamic_recipe');
     try {
       const modified = structuredClone(payload); change(modified.recipes[key]);
-      const summary = await save(client, restaurantId, onboardingPayloadSchema.parse(modified), version);
+      const summary = await save(client, restaurantId, basisOnboardingPayloadSchema.parse(modified), version);
       await verifyDish(client, restaurantId, dish, modified, summary);
       const restored = await readSnapshot(client, restaurantId);
       assert.deepEqual(comparableRecipe(restored.recipes[key]), comparableRecipe(modified.recipes[key]));
@@ -204,6 +209,7 @@ export async function seedPilot(client, manifest, { restaurantId, projectRef, ap
     for (const [key, recipe] of Object.entries(snapshot.recipes)) assert.deepEqual(comparableRecipe(restored.recipes[key]), comparableRecipe(recipe));
     for (const dish of manifest.dishes) assert.deepEqual(comparableRecipe(restored.recipes[recipeKey(dish.id)]), comparableRecipe(payload.recipes[recipeKey(dish.id)]));
     assert.equal(restored.customDishes.length, snapshot.customDishes.length + manifest.dishes.length);
+    assert.deepEqual(restored.basisRecipes, snapshot.basisRecipes);
     assert.deepEqual(restored.summary, summary);
     await client.query('reset role');
     assert.deepEqual(await otherRestaurantsFingerprint(client, restaurantId), otherBefore);
